@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f1219"/>
+      <stop offset="100%" style="stop-color:#080a0f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="38" fill="url(#bg)"/>
+  <rect x="24" y="24" width="144" height="144" rx="24" fill="none" stroke="url(#accent)" stroke-width="9"/>
+  <text x="96" y="112" font-family="Arial,sans-serif" font-size="48" font-weight="900" fill="url(#accent)" text-anchor="middle">AG</text>
+  <text x="96" y="144" font-family="Arial,sans-serif" font-size="16" font-weight="600" fill="#4a5680" text-anchor="middle">TASKS</text>
+</svg>
