@@ -56,7 +56,7 @@ html,body{height:100%;overflow:hidden;font-family:"DM Sans",sans-serif;backgroun
 .phone-notch{width:88px;height:24px;background:#090c12;border-radius:0 0 16px 16px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:7px;}
 .n-cam{width:7px;height:7px;border-radius:50%;background:#1a2035;}
 .n-spk{width:36px;height:3px;border-radius:2px;background:#1a2035;}
-.phone-body{height:540px;overflow-y:auto;position:relative;scrollbar-width:none;}
+.phone-body{height:560px;overflow-y:auto;position:relative;scrollbar-width:none;}
 .phone-body::-webkit-scrollbar{display:none;}
 .phone-bar{padding:8px 0 4px;display:flex;justify-content:center;background:#090c12;}
 .home-pill{width:72px;height:4px;border-radius:2px;background:#1e2540;}
@@ -105,12 +105,19 @@ html,body{height:100%;overflow:hidden;font-family:"DM Sans",sans-serif;backgroun
 .es-l{font-size:9px;color:var(--muted);margin-top:1px;}
 .emp-tasks{padding:0 12px 12px;}
 .emp-task-c{background:var(--card);border-radius:10px;padding:11px;margin-bottom:8px;border:1px solid var(--border);}
+.task-from-partner{border-left:3px solid var(--accent);background:rgba(99,102,241,0.06);}
+.task-from-senior{border-left:3px solid var(--yellow);background:rgba(245,158,11,0.06);}
+.task-from-self{border-left:3px solid var(--green);background:rgba(16,185,129,0.06);}
+.task-source-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-bottom:6px;}
+.tsb-partner{background:rgba(99,102,241,0.2);color:var(--accent);}
+.tsb-senior{background:rgba(245,158,11,0.2);color:var(--yellow);}
+.tsb-self{background:rgba(16,185,129,0.2);color:var(--green);}
 .complete-btn{width:100%;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:var(--green);border-radius:8px;padding:7px;font-size:10px;font-weight:700;cursor:pointer;margin-top:8px;font-family:"DM Sans",sans-serif;}
-.pg-form{background:var(--bg);padding:14px 14px 20px;}
+.pg-form{background:var(--bg);padding:14px 14px 80px;min-height:100%;}
 .ct-head{display:flex;align-items:center;gap:9px;margin-bottom:14px;}
 .back-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}
 .ct-ttl{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;color:#fff;}
-.fg{margin-bottom:10px;}
+.fg{margin-bottom:10px;position:relative;}
 .fg-lbl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
 .fg-inp{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);font-family:"DM Sans",sans-serif;}
 .fg-ta{min-height:46px;}
@@ -120,7 +127,7 @@ html,body{height:100%;overflow:hidden;font-family:"DM Sans",sans-serif;backgroun
 .po-m.sel{background:rgba(245,158,11,0.2);color:var(--yellow);border-color:var(--yellow);}
 .po-l.sel{background:rgba(16,185,129,0.2);color:var(--green);border-color:var(--green);}
 .drop-trigger{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
-.drop-menu{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:4px;overflow:hidden;max-height:160px;overflow-y:auto;}
+.drop-menu{z-index:200;position:absolute;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;overflow-x:hidden;max-height:160px;overflow-y:auto;}
 .drop-opt{padding:8px 12px;font-size:11px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);}
 .drop-opt:last-child{border-bottom:none;}
 .drop-opt:hover,.drop-opt.sel{background:rgba(99,102,241,0.12);color:var(--accent);}
@@ -147,8 +154,19 @@ html,body{height:100%;overflow:hidden;font-family:"DM Sans",sans-serif;backgroun
 .login-sub{font-family:"Syne",sans-serif;font-size:13px;font-weight:700;color:var(--soft);text-align:center;margin:3px 0 14px;}
 .sec-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
 .f-label{font-size:10px;color:var(--soft);font-weight:600;margin-bottom:4px;}
-.f-inp{width:100%;background:#141923;border:1px solid #1e2846;border-radius:8px;padding:8px 11px;font-size:12px;color:var(--text);margin-bottom:10px;font-family:"DM Sans",sans-serif;}
+.f-inp{width:100%;background:#141923;border:1px solid #1e2846;border-radius:8px;padding:8px 11px;font-size:12px;color:#dde4f0;margin-bottom:10px;font-family:"DM Sans",sans-serif;-webkit-text-fill-color:#dde4f0;}
 .f-inp:focus{outline:none;border-color:var(--accent);}
+.f-inp::placeholder{color:#4a5680;}
+.f-inp:-webkit-autofill,.f-inp:-webkit-autofill:focus{
+  -webkit-text-fill-color:#dde4f0 !important;
+  -webkit-box-shadow:0 0 0 1000px #141923 inset !important;
+  background-color:#141923 !important;
+}
+:root.light .f-inp{background:#ffffff;border-color:#d0d7e8;color:#1a2035;-webkit-text-fill-color:#1a2035;}
+:root.light .f-inp:-webkit-autofill,.f-inp:-webkit-autofill:focus{
+  -webkit-text-fill-color:#1a2035 !important;
+  -webkit-box-shadow:0 0 0 1000px #ffffff inset !important;
+}
 .app-btn{width:100%;border:none;border-radius:10px;padding:11px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
 .btn-emp{background:var(--green);color:#fff;box-shadow:0 4px 18px rgba(16,185,129,0.4);margin-bottom:12px;}
 .btn-boss{background:var(--accent);color:#fff;box-shadow:0 4px 18px rgba(99,102,241,0.4);}
@@ -368,6 +386,7 @@ const state = window._st = {
   theme: "dark",
   reportFrom: "", reportTo: "",
   pinInput: "", pinMode: "set", pinTarget: null,
+  reassignTaskId: null, reassignTo: "",
   lastLat: null, lastLng: null,
   empCodeReset: "",
   f: { // form fields
@@ -452,13 +471,18 @@ function navigate(s,dir="forward"){
 }
 
 // ═══════════════════════ RENDER ═══════════════════════
-// Request location permission early on page load
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(
-    pos=>{ if(window.state){state.lastLat=pos.coords.latitude;state.lastLng=pos.coords.longitude;} },
-    ()=>{}
+// Location — single watchPosition with long cache, no repeat prompts
+let _gpsStarted=false;
+function initGPS(){
+  if(_gpsStarted||!navigator.geolocation) return;
+  _gpsStarted=true;
+  navigator.geolocation.watchPosition(
+    p=>{ if(window.state){state.lastLat=p.coords.latitude;state.lastLng=p.coords.longitude;} },
+    ()=>{ _gpsStarted=false; }, // reset so we can retry
+    {enableHighAccuracy:true, timeout:20000, maximumAge:120000}
   );
 }
+initGPS();
 window._re=function(){try{if(window.render)window.render();}catch(e){}};
 function render(dir="forward"){
   window._re=render;
@@ -473,6 +497,7 @@ function buildScreen(){
   if(state.screen==="changePass") return buildChangePass();
   if(state.screen==="register")  return buildRegister();
   if(state.screen==="taskReport") return buildTaskReport();
+  if(state.screen==="reassign") return buildReassign();
   if(state.screen==="manageUsers") return buildManageUsers();
   if(state.screen==="boss")     return buildBoss();
   if(state.screen==="employee") return buildEmployee();
@@ -501,7 +526,7 @@ function buildLogin(){
     <button class="app-btn btn-emp" onclick="doEmpLogin()">\ud83d\udc64 Login as Employee</button>
     <div style="text-align:center;margin:6px 0 4px;"><span style="font-size:10px;color:var(--muted);">New employee? </span><span style="font-size:10px;color:var(--accent);cursor:pointer;font-weight:600;" onclick="navigate(\'register\')">Register here →</span></div>
     <div class="or-row"><div class="or-line"></div><div class="or-text">OR</div><div class="or-line"></div></div>
-    <button class="app-btn btn-boss" onclick="navigate(\'google\')">
+    <button class="app-btn btn-boss" onclick="navigate(\'partnerLogin\')">
       <svg width="14" height="14" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.7 33.2 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.7 1.1 7.8 2.9l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.3 0-9.7-2.8-11.3-7H6.3C9.7 39.7 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.3-2.3 4.2-4.1 5.6l6.2 5.2C40.9 35.6 44 30.2 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
       Login as Partner (Google)
     </button>
@@ -509,13 +534,13 @@ function buildLogin(){
 }
 
 function doEmpLogin(){
-  const code=state.f.empCode.trim();
-  const pass=state.f.empPass.trim();
-  if(!code){toast("Enter employee code",true);return;}
+  const name=(state.f.empName||"").trim();
+  const pass=(state.f.empPass||"").trim();
+  if(!name){toast("Enter your name",true);return;}
   if(!pass){toast("Enter password",true);return;}
-  const emp=state.employees.find(e=>e.code===code);
-  if(!emp){toast("Invalid employee code",true);log("\u274c Wrong code: "+code,"error");return;}
-  if(pass!==emp.password){toast("Incorrect password",true);log("\u274c Wrong password for "+emp.name,"error");return;}
+  const emp=state.employees.find(e=>e.name.trim().toLowerCase()===name.toLowerCase());
+  if(!emp){toast("Employee not found — check your name",true);log("❌ Not found: "+name,"error");return;}
+  if(pass!==emp.password){toast("Incorrect password",true);log("❌ Wrong password for "+emp.name,"error");return;}
   state.user={name:emp.name,role:"employee"};
   state.f.empCode=""; state.f.empPass="";
   log("\u2705 "+emp.name+" logged in","action");
@@ -797,7 +822,7 @@ function requestLocationPermission(){
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       pos=>{ state.lastLat=pos.coords.latitude; state.lastLng=pos.coords.longitude; startLocationWatch(); },
-      ()=>toast("Please enable location for attendance tracking",true),
+      ()=>{},
       {enableHighAccuracy:true}
     );
   }
@@ -810,7 +835,7 @@ function buildEmployee(){
   const pend=myTasks.filter(t=>t.status==="pending");
   const done=myTasks.filter(t=>t.status==="completed");
   return `<div class="pg">
-    <div style="padding:6px 12px 0;"><div onclick="requestLocationPermission()" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:6px;padding:6px 10px;font-size:10px;color:var(--green);cursor:pointer;text-align:center;">📍 ${state.lastLat?"Location Active ✅":"Tap to enable location for attendance"}</div></div>
+
     <div class="emp-head"><div class="eh-greet">Hello, ${state.user?.name||""} \ud83d\udc4b</div><div class="eh-sub">Employee Dashboard</div></div>
     <div class="emp-stats">
       <div class="es"><div class="es-n pend">${pend.length}</div><div class="es-l">Pending</div></div>
@@ -829,7 +854,7 @@ function buildEmployee(){
     <div class="emp-tasks">
     ${myTasks.length===0?`<div style="text-align:center;padding:24px;color:var(--muted);font-size:11px;">No tasks assigned</div>`:""}
     ${myTasks.map(t=>`
-      <div class="emp-task-c">
+      <div class="emp-task-c ${getTaskColorClass(t)}">
         <div class="tc-row1">
           <div class="pbadge ${t.priority==="high"?"ph":t.priority==="medium"?"pm":"pl"}">${t.priority.toUpperCase()}</div>
           <div class="sbadge ${t.status==="pending"?"sp":"sd"}">${t.status==="pending"?"Pending":"Done"}</div>
@@ -837,7 +862,7 @@ function buildEmployee(){
         <div class="tc-client">${t.client}</div>
         <div class="tc-desc">${t.desc}</div>
         <div class="tc-meta"><span>\ud83d\udcc5 ${t.due}</span><span>\ud83d\udcc1 ${t.category}</span></div>
-        ${t.status==="pending"?`<button class="complete-btn" onclick="completeTask(\'${t.id}\')">\u2705 Mark Complete</button>`:""}
+        <div style="margin-bottom:4px;">${getTaskSourceBadge(t)}</div>    ${t.status==="pending"?`<div style="display:flex;gap:6px;margin-top:7px;"><button class="complete-btn" style="flex:2;" onclick="completeTask('${t.id}')">&#9989; Mark Complete</button>${canReassign()?'<button style="flex:1;padding:7px;border:1px solid rgba(245,158,11,0.4);border-radius:8px;background:rgba(245,158,11,0.1);color:var(--yellow);font-size:10px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;" onclick="openReassign(\'${t.id}\')")>&#8618; Reassign</button>':""}</div>`:""}
       </div>`).join("")}
     </div>
     <div style="padding:10px 12px;border-top:1px solid var(--border);">
@@ -1060,6 +1085,7 @@ function getLastAttStatus(){
 function quickAttendance(type){
   if(!state.attendance) state.attendance=[];
   const today=new Date().toISOString().split("T")[0];
+  const empName=state.user?.name;
   const todayRecs=state.attendance.filter(a=>a.empName===empName&&a.date===today);
   const alreadyMarked=todayRecs.find(a=>a.type===type);
   if(alreadyMarked){
@@ -1450,6 +1476,90 @@ function toggleTheme(){
   document.documentElement.classList.toggle("light",t==="light");
 })();
 
+
+// ═══════════════════════ TASK SOURCE HELPERS ═══════════════════════
+const SENIOR_EMP = ["Bhavana Shinde","Heer Patel"]; // Can reassign tasks
+
+function canReassign(){
+  return SENIOR_EMP.includes(state.user?.name);
+}
+
+function getTaskColorClass(t){
+  const by = t.assignedBy||"Partner";
+  if(by==="Partner"||by==="Chintan") return "task-from-partner";
+  if(SENIOR_EMP.includes(by)) return "task-from-senior";
+  return "task-from-self";
+}
+
+function getTaskSourceBadge(t){
+  const by = t.assignedBy||"Partner";
+  if(by==="Partner"||by==="Chintan")
+    return '<span class="task-source-badge tsb-partner">🔵 Assigned by Partner</span>';
+  if(SENIOR_EMP.includes(by))
+    return '<span class="task-source-badge tsb-senior">🟡 Assigned by '+by+'</span>';
+  return '<span class="task-source-badge tsb-self">🟢 Self Assigned</span>';
+}
+
+// ═══════════════════════ REASSIGN SCREEN ═══════════════════════
+function openReassign(taskId){
+  state.reassignTaskId=taskId;
+  state.reassignTo="";
+  navigate("reassign");
+}
+
+function buildReassign(){
+  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
+  if(!t) return '<div class="pg"><div style="padding:20px;text-align:center;color:var(--muted);">Task not found</div></div>';
+  const empOpts=state.employees
+    .filter(e=>e.name!==state.user?.name) // don't show self
+    .map(e=>`<option value="${e.name}">${e.name}</option>`).join("");
+  return `<div class="pg-form">
+    <div class="ct-head">
+      <div class="back-btn" onclick="navigate('employee','back')">←</div>
+      <div class="ct-ttl">Reassign Task</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">TASK</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">${t.client}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${t.desc.substring(0,80)}</div>
+    </div>
+    <div class="fg">
+      <div class="fg-lbl">Reassign To</div>
+      <select class="f-inp" onchange="state.reassignTo=this.value" style="cursor:pointer;">
+        <option value="">— Select employee —</option>
+        ${empOpts}
+      </select>
+    </div>
+    <button class="submit-btn" onclick="confirmReassign()">↪️ Confirm Reassign</button>
+    <button onclick="navigate('employee','back')" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;">Cancel</button>
+  </div>`;
+}
+
+function confirmReassign(){
+  if(!state.reassignTo){toast("Select an employee",true);return;}
+  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
+  if(!t) return;
+  const newAssignee=state.reassignTo;
+  const oldAssignee=t.assignedTo;
+  showConfirm({
+    icon:"↪️",
+    title:"Reassign Task?",
+    msg:"Transfer this task to "+newAssignee,
+    detail:'<div class="cd-lbl">From</div>'+oldAssignee+'<div class="cd-lbl" style="margin-top:6px;">To</div>'+newAssignee+'<div class="cd-lbl" style="margin-top:6px;">Task</div>'+t.client,
+    yesLabel:"↪️ Yes, Reassign",
+    yesType:"success",
+    onYes:()=>{
+      t.assignedTo=newAssignee;
+      t.assignedBy=state.user?.name; // Track who reassigned
+      if(window.fbUpdateTask) window.fbUpdateTask(t.id,{assignedTo:newAssignee,assignedBy:state.user?.name});
+      notifyEmployee(newAssignee, t.client, t.desc);
+      log("↪️ Task reassigned from "+oldAssignee+" to "+newAssignee,"action");
+      toast("Task reassigned to "+newAssignee+" ✅");
+      navigate("employee","back");
+    }
+  });
+}
+
 // ═══════════════════════ RESET ═══════════════════════
 function resetApp(){
   state.screen="login"; state.user=null; state.statusFilter="pending"; state.editTaskId=null;
@@ -1561,7 +1671,7 @@ html,body{height:100%;overflow:hidden;font-family:\"DM Sans\",sans-serif;backgro
 .phone-notch{width:88px;height:24px;background:#090c12;border-radius:0 0 16px 16px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:7px;}\
 .n-cam{width:7px;height:7px;border-radius:50%;background:#1a2035;}\
 .n-spk{width:36px;height:3px;border-radius:2px;background:#1a2035;}\
-.phone-body{height:540px;overflow-y:auto;position:relative;scrollbar-width:none;}\
+.phone-body{height:560px;overflow-y:auto;position:relative;scrollbar-width:none;}\
 .phone-body::-webkit-scrollbar{display:none;}\
 .phone-bar{padding:8px 0 4px;display:flex;justify-content:center;background:#090c12;}\
 .home-pill{width:72px;height:4px;border-radius:2px;background:#1e2540;}\
@@ -1609,13 +1719,20 @@ html,body{height:100%;overflow:hidden;font-family:\"DM Sans\",sans-serif;backgro
 .es-n.pend{color:var(--yellow);}.es-n.done{color:var(--green);}\
 .es-l{font-size:9px;color:var(--muted);margin-top:1px;}\
 .emp-tasks{padding:0 12px 12px;}\
-.emp-task-c{background:var(--card);border-radius:10px;padding:11px;margin-bottom:8px;border:1px solid var(--border);}\
+.emp-task-c{background:var(--card);border-radius:10px;padding:11px;margin-bottom:8px;border:1px solid var(--border);}
+.task-from-partner{border-left:3px solid var(--accent);background:rgba(99,102,241,0.06);}
+.task-from-senior{border-left:3px solid var(--yellow);background:rgba(245,158,11,0.06);}
+.task-from-self{border-left:3px solid var(--green);background:rgba(16,185,129,0.06);}
+.task-source-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-bottom:6px;}
+.tsb-partner{background:rgba(99,102,241,0.2);color:var(--accent);}
+.tsb-senior{background:rgba(245,158,11,0.2);color:var(--yellow);}
+.tsb-self{background:rgba(16,185,129,0.2);color:var(--green);}\
 .complete-btn{width:100%;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:var(--green);border-radius:8px;padding:7px;font-size:10px;font-weight:700;cursor:pointer;margin-top:8px;font-family:\"DM Sans\",sans-serif;}\
-.pg-form{background:var(--bg);padding:14px 14px 20px;}\
+.pg-form{background:var(--bg);padding:14px 14px 80px;min-height:100%;}\
 .ct-head{display:flex;align-items:center;gap:9px;margin-bottom:14px;}\
 .back-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;}\
 .ct-ttl{font-family:\"Syne\",sans-serif;font-size:16px;font-weight:800;color:#fff;}\
-.fg{margin-bottom:10px;}\
+.fg{margin-bottom:10px;position:relative;}\
 .fg-lbl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}\
 .fg-inp{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);font-family:\"DM Sans\",sans-serif;}\
 .fg-ta{min-height:46px;}\
@@ -1625,7 +1742,7 @@ html,body{height:100%;overflow:hidden;font-family:\"DM Sans\",sans-serif;backgro
 .po-m.sel{background:rgba(245,158,11,0.2);color:var(--yellow);border-color:var(--yellow);}\
 .po-l.sel{background:rgba(16,185,129,0.2);color:var(--green);border-color:var(--green);}\
 .drop-trigger{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}\
-.drop-menu{background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:4px;overflow:hidden;max-height:160px;overflow-y:auto;}\
+.drop-menu{z-index:200;position:absolute;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:180px;overflow-y:auto;overflow-x:hidden;max-height:160px;overflow-y:auto;}\
 .drop-opt{padding:8px 12px;font-size:11px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);}\
 .drop-opt:last-child{border-bottom:none;}\
 .drop-opt:hover,.drop-opt.sel{background:rgba(99,102,241,0.12);color:var(--accent);}\
@@ -1653,7 +1770,18 @@ html,body{height:100%;overflow:hidden;font-family:\"DM Sans\",sans-serif;backgro
 .sec-label{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}\
 .f-label{font-size:10px;color:var(--soft);font-weight:600;margin-bottom:4px;}\
 .f-inp{width:100%;background:#141923;border:1px solid #1e2846;border-radius:8px;padding:8px 11px;font-size:12px;color:var(--text);margin-bottom:10px;font-family:\"DM Sans\",sans-serif;}\
-.f-inp:focus{outline:none;border-color:var(--accent);}\
+.f-inp:focus{outline:none;border-color:var(--accent);}
+.f-inp::placeholder{color:#4a5680;}
+.f-inp:-webkit-autofill,.f-inp:-webkit-autofill:focus{
+  -webkit-text-fill-color:#dde4f0 !important;
+  -webkit-box-shadow:0 0 0 1000px #141923 inset !important;
+  background-color:#141923 !important;
+}
+:root.light .f-inp{background:#ffffff;border-color:#d0d7e8;color:#1a2035;-webkit-text-fill-color:#1a2035;}
+:root.light .f-inp:-webkit-autofill,.f-inp:-webkit-autofill:focus{
+  -webkit-text-fill-color:#1a2035 !important;
+  -webkit-box-shadow:0 0 0 1000px #ffffff inset !important;
+}\
 .app-btn{width:100%;border:none;border-radius:10px;padding:11px;font-family:\"DM Sans\",sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}\
 .btn-emp{background:var(--green);color:#fff;box-shadow:0 4px 18px rgba(16,185,129,0.4);margin-bottom:12px;}\
 .btn-boss{background:var(--accent);color:#fff;box-shadow:0 4px 18px rgba(99,102,241,0.4);}\
@@ -1855,6 +1983,7 @@ const state = window._st = {\
   theme: "dark",
   reportFrom: "", reportTo: "",
   pinInput: "", pinMode: "set", pinTarget: null,
+  reassignTaskId: null, reassignTo: "",
   lastLat: null, lastLng: null,\
   empCodeReset: \"\",\
   f: { // form fields\
@@ -2264,7 +2393,7 @@ function requestLocationPermission(){
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       pos=>{ state.lastLat=pos.coords.latitude; state.lastLng=pos.coords.longitude; startLocationWatch(); },
-      ()=>toast("Please enable location for attendance tracking",true),
+      ()=>{},
       {enableHighAccuracy:true}
     );
   }
@@ -2515,6 +2644,7 @@ function getLastAttStatus(){
 function quickAttendance(type){
   if(!state.attendance) state.attendance=[];
   const today=new Date().toISOString().split("T")[0];
+  const empName=state.user?.name;
   const todayRecs=state.attendance.filter(a=>a.empName===empName&&a.date===today);
   const alreadyMarked=todayRecs.find(a=>a.type===type);
   if(alreadyMarked){
@@ -2904,6 +3034,90 @@ function toggleTheme(){
   state.theme=t;
   document.documentElement.classList.toggle("light",t==="light");
 })();
+
+
+// ═══════════════════════ TASK SOURCE HELPERS ═══════════════════════
+const SENIOR_EMP = ["Bhavana Shinde","Heer Patel"]; // Can reassign tasks
+
+function canReassign(){
+  return SENIOR_EMP.includes(state.user?.name);
+}
+
+function getTaskColorClass(t){
+  const by = t.assignedBy||"Partner";
+  if(by==="Partner"||by==="Chintan") return "task-from-partner";
+  if(SENIOR_EMP.includes(by)) return "task-from-senior";
+  return "task-from-self";
+}
+
+function getTaskSourceBadge(t){
+  const by = t.assignedBy||"Partner";
+  if(by==="Partner"||by==="Chintan")
+    return '<span class="task-source-badge tsb-partner">🔵 Assigned by Partner</span>';
+  if(SENIOR_EMP.includes(by))
+    return '<span class="task-source-badge tsb-senior">🟡 Assigned by '+by+'</span>';
+  return '<span class="task-source-badge tsb-self">🟢 Self Assigned</span>';
+}
+
+// ═══════════════════════ REASSIGN SCREEN ═══════════════════════
+function openReassign(taskId){
+  state.reassignTaskId=taskId;
+  state.reassignTo="";
+  navigate("reassign");
+}
+
+function buildReassign(){
+  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
+  if(!t) return '<div class="pg"><div style="padding:20px;text-align:center;color:var(--muted);">Task not found</div></div>';
+  const empOpts=state.employees
+    .filter(e=>e.name!==state.user?.name) // don't show self
+    .map(e=>`<option value="${e.name}">${e.name}</option>`).join("");
+  return `<div class="pg-form">
+    <div class="ct-head">
+      <div class="back-btn" onclick="navigate('employee','back')">←</div>
+      <div class="ct-ttl">Reassign Task</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;">TASK</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text);">${t.client}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${t.desc.substring(0,80)}</div>
+    </div>
+    <div class="fg">
+      <div class="fg-lbl">Reassign To</div>
+      <select class="f-inp" onchange="state.reassignTo=this.value" style="cursor:pointer;">
+        <option value="">— Select employee —</option>
+        ${empOpts}
+      </select>
+    </div>
+    <button class="submit-btn" onclick="confirmReassign()">↪️ Confirm Reassign</button>
+    <button onclick="navigate('employee','back')" style="width:100%;padding:8px;margin-top:8px;border-radius:8px;background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;">Cancel</button>
+  </div>`;
+}
+
+function confirmReassign(){
+  if(!state.reassignTo){toast("Select an employee",true);return;}
+  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
+  if(!t) return;
+  const newAssignee=state.reassignTo;
+  const oldAssignee=t.assignedTo;
+  showConfirm({
+    icon:"↪️",
+    title:"Reassign Task?",
+    msg:"Transfer this task to "+newAssignee,
+    detail:'<div class="cd-lbl">From</div>'+oldAssignee+'<div class="cd-lbl" style="margin-top:6px;">To</div>'+newAssignee+'<div class="cd-lbl" style="margin-top:6px;">Task</div>'+t.client,
+    yesLabel:"↪️ Yes, Reassign",
+    yesType:"success",
+    onYes:()=>{
+      t.assignedTo=newAssignee;
+      t.assignedBy=state.user?.name; // Track who reassigned
+      if(window.fbUpdateTask) window.fbUpdateTask(t.id,{assignedTo:newAssignee,assignedBy:state.user?.name});
+      notifyEmployee(newAssignee, t.client, t.desc);
+      log("↪️ Task reassigned from "+oldAssignee+" to "+newAssignee,"action");
+      toast("Task reassigned to "+newAssignee+" ✅");
+      navigate("employee","back");
+    }
+  });
+}
 
 // ═══════════════════════ RESET ═══════════════════════\
 function resetApp(){\
