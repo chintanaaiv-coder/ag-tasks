@@ -16,7 +16,7 @@
         body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
         .phone-frame { width: 100%; max-width: 400px; margin: 0 auto; padding: 20px; }
 
-        /* LOGO & BRANDING */
+        /* BRANDING */
         .logo-box { width: 100px; height: 100px; background: #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
         .brand-name { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 5px; text-transform: uppercase; text-align: center; }
         .app-title { font-size: 16px; color: var(--text-dim); margin-bottom: 40px; text-align: center; }
@@ -26,19 +26,30 @@
         .active-screen { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* FORMS & BUTTONS */
+        /* BUTTONS & INPUTS */
         .f-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: white; margin-bottom: 15px; outline: none; }
         .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
         .btn-emp { background: var(--accent-green); color: #000; }
         .btn-partner { background: var(--accent-blue); color: white; }
 
-        /* DASHBOARD LAYOUT */
+        /* DASHBOARD ELEMENTS */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .action-btn { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; border-bottom: 2px solid var(--accent-blue); }
         .action-btn label { font-size: 11px; font-weight: 700; color: #cbd5e1; cursor: pointer; }
 
-        /* ATTENDANCE CARD */
         .attendance-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 20px; }
         .att-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .
+        .export-link { font-size: 11px; color: var(--accent-blue); font-weight: bold; cursor: pointer; text-decoration: underline; }
+
+        .task-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 10px; }
+        .badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block; margin-bottom: 8px; }
+        .badge-high { background: var(--high); color: white; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding: 20px; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); margin-top: 50px; }
+        
+        /* TEAM LIST STYLING */
+        .user-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
+        .user-info { font-size: 13px; font-
