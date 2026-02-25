@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AGA Tasks - Final Stable</title>
+    <title>AGA Tasks - Final</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -12,109 +12,32 @@
             --high: #ff4d4d; --text-main: #ffffff; --text-dim: #717b91;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
         .phone-frame { width: 100%; max-width: 400px; margin: 0 auto; padding: 20px; }
 
-        /* SCREENS */
+        /* NAVIGATION CONTROL */
         .screen { display: none; }
-        .active-screen { display: block; }
+        .active-screen { display: block !important; }
 
-        /* COMPONENTS */
+        /* BRANDING */
         .logo-box { width: 80px; height: 80px; background: #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
         .brand-name { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; text-align: center; text-transform: uppercase; margin-bottom: 5px; }
         .app-title { font-size: 14px; color: var(--text-dim); text-align: center; margin-bottom: 30px; }
         
-        .f-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: white; margin-bottom: 15px; outline: none; }
-        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 12px; }
+        /* UI ELEMENTS */
+        .f-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: white; margin-bottom: 15px; outline: none; font-size: 16px; }
+        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; margin-bottom: 12px; display: block; text-align: center; }
         
         /* DASHBOARD */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .action-btn { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 12px; cursor: pointer; border-bottom: 2px solid var(--accent-blue); text-align: center; }
-        
         .attendance-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 20px; }
         .export-link { color: var(--accent-blue); font-size: 11px; font-weight: bold; cursor: pointer; text-decoration: underline; }
 
         /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; padding: 20px; }
         .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); margin-top: 40px; }
-        
-        /* LISTS */
         .user-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid var(--border); }
     </style>
 </head>
-<body>
-
-    <div class="phone-frame">
-        
-        <div id="page-landing" class="screen active-screen">
-            <div class="logo-box">
-                <svg viewBox="0 0 100 100" width="50"><path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/></svg>
-            </div>
-            <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
-            <p class="app-title">Task Assigner</p>
-            <input type="text" class="f-input" placeholder="Employee Name">
-            <input type="password" class="f-input" placeholder="Password">
-            <button class="btn" style="background:var(--accent-green); color:#000;">👤 Employee Login</button>
-            <div style="text-align:center; color:var(--text-dim); margin: 10px 0; font-size:12px;">OR</div>
-            <button class="btn" style="background:var(--accent-blue); color:white;" onclick="showScreen('page-partner-login')">G Partner Login</button>
-        </div>
-
-        <div id="page-partner-login" class="screen">
-            <h1 class="brand-name">Partner Access</h1>
-            <p class="app-title">chintan@acharyagehlot.com</p>
-            <input type="password" id="pass-input" class="f-input" placeholder="Enter Password">
-            <button class="btn" style="background:var(--accent-blue); color:white;" onclick="checkPass()">Sign In</button>
-            <p style="text-align:center; color:var(--accent-blue); font-size:12px; cursor:pointer;" onclick="alert('Link sent to mail')">Change Password?</p>
-            <button class="btn" style="background:transparent; color:var(--text-dim); margin-top:10px;" onclick="showScreen('page-landing')">← Back</button>
-        </div>
-
-        <div id="page-dash" class="screen">
-            <div class="header">
-                <h2 style="font-family:'Syne'; font-size:20px;">Hello, Chintan</h2>
-                <button onclick="location.reload()" style="background:var(--high); border:none; color:white; padding:6px 12px; border-radius:8px; font-size:11px;">Logout</button>
-            </div>
-
-            <div class="action-grid">
-                <div class="action-btn" onclick="openModal('modal-team')">👥<br><small>Manage Team</small></div>
-                <div class="action-btn" onclick="openModal('modal-anal')">📈<br><small>Task Analysis</small></div>
-            </div>
-
-            <div class="attendance-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:var(--accent-green); font-weight:bold; font-size:13px;">Employee Attendance</span>
-                    <span class="export-link" onclick="openModal('modal-exp')">Export Excel</span>
-                </div>
-                <p style="font-size:11px; color:var(--text-dim); margin-top:8px;">Live view is currently empty.</p>
-            </div>
-
-            <h3 style="font-size:12px; color:var(--text-dim); text-transform:uppercase; margin-bottom:10px;">Ongoing Tasks</h3>
-            <div style="background:var(--card); border:1px solid var(--border); padding:15px; border-radius:15px;">
-                <span style="background:var(--high); font-size:9px; padding:2px 8px; border-radius:10px;">HIGH</span>
-                <p style="font-weight:bold; margin-top:5px;">Hotel Sunrise GST</p>
-                <p style="font-size:12px; color:var(--accent-blue);">👤 Heer Patel</p>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-exp" class="modal"><div class="modal-content">
-        <h3>Export Data</h3>
-        <input type="date" id="s1"> <input type="date" id="e1">
-        <button class="btn" style="background:var(--accent-green);" onclick="alert('Exporting...'); closeModal();">Download CSV</button>
-        <button class="btn" onclick="closeModal()">Cancel</button>
-    </div></div>
-
-    <div id="modal-anal" class="modal"><div class="modal-content">
-        <h3>Task Analysis</h3>
-        <input type="date"> <input type="date">
-        <button class="btn" style="background:var(--accent-blue); color:white;" onclick="alert('Mailed to Chintan'); closeModal();">Email Report</button>
-        <button class="btn" onclick="closeModal()">Cancel</button>
-    </div></div>
-
-    <div id="modal-team" class="modal"><div class="modal-content">
-        <h3>Manage Team</h3>
-        <div id="p-list">
-            <p style="font-size:11px; color:var(--text-dim); margin-bottom:5px;">PENDING:</p>
-            <div class="user-row" id="row-req">
-                <span style="font-size:12px;">new.user@aga.com</span>
-                <button onclick="handleApprove()" style="background:none; border:none; color:var(--accent-green); font-weight:bold;">APPROVE</button>
