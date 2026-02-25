@@ -2,199 +2,224 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AGA Tasks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AGA Tasks - App Foundation</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b0e14;
-            --input-bg: #e8f0fe;
+            --bg-dark: #0b0e14;
+            --input-fill: #e8f0fe; /* Light blue from your screenshot */
             --accent-green: #10b981;
             --accent-blue: #6366f1;
             --text-dim: #717b91;
+            --white: #ffffff;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
+        /* Essential App Resets */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: var(--bg); 
-            color: white; 
-            display: flex; 
-            justify-content: center;
-            align-items: center;
+            background-color: var(--bg-dark); 
+            color: var(--white);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* App Container */
+        .app-shell {
+            max-width: 450px;
+            margin: 0 auto;
             min-height: 100vh;
+            padding: 40px 25px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .phone-frame {
-            width: 100%;
-            max-width: 380px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        /* LOGO AREA */
-        .logo-container {
+        /* Brand Styling */
+        .brand-header { text-align: center; margin-bottom: 40px; }
+        
+        .logo-box {
             width: 100px;
             height: 100px;
+            background: #000;
             margin: 0 auto 20px;
-            background: black;
             display: flex;
             align-items: center;
             justify-content: center;
+            border: 1px solid #333;
         }
-        
-        /* AG Logo using SVG for perfect replication */
-        .ag-logo { width: 80px; height: 80px; }
 
-        .brand-name {
+        .title-main {
             font-family: 'Syne', sans-serif;
-            font-size: 30px;
+            font-size: 32px;
             font-weight: 800;
             line-height: 1;
             text-transform: uppercase;
-            margin-bottom: 5px;
             letter-spacing: -1px;
         }
 
-        .sub-title {
-            font-size: 15px;
+        .title-sub {
+            font-size: 16px;
             color: var(--text-dim);
-            margin-bottom: 30px;
-            font-weight: 500;
+            margin-top: 8px;
         }
 
-        /* LOGIN FORM */
-        .login-section { text-align: left; margin-top: 20px; }
-        
-        .login-header {
+        /* Form Controls */
+        .section-label {
             font-size: 11px;
             font-weight: 700;
-            color: #3b4252;
+            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 15px;
-        }
-
-        .label {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+            margin: 20px 0 15px;
             display: block;
         }
 
-        .input-field {
+        .input-group { margin-bottom: 20px; }
+        .input-label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; display: block; }
+        
+        .f-input {
             width: 100%;
-            background: var(--input-bg);
+            background: var(--input-fill);
             border: none;
-            border-radius: 10px;
-            padding: 14px 16px;
+            border-radius: 12px;
+            padding: 16px;
             color: #1e293b;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 500;
-            margin-bottom: 15px;
             outline: none;
         }
 
-        .forgot-link {
-            text-align: right;
-            font-size: 12px;
-            color: #3b82f6;
-            margin-top: -5px;
-            margin-bottom: 25px;
-            cursor: pointer;
-        }
-
-        /* BUTTONS */
+        /* Buttons */
         .btn {
             width: 100%;
-            padding: 14px;
-            border-radius: 12px;
+            padding: 16px;
+            border-radius: 14px;
             border: none;
             font-weight: 700;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: 0.2s;
+            gap: 10px;
+            margin-bottom: 12px;
+            transition: transform 0.1s ease;
         }
+        .btn:active { transform: scale(0.98); }
 
-        .btn-emp {
+        .btn-green {
             background: var(--accent-green);
-            color: #fff;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+            color: white;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
         }
 
-        .btn-partner {
+        .btn-blue {
             background: var(--accent-blue);
             color: white;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
         }
 
-        .reg-text {
-            font-size: 12px;
-            color: var(--text-dim);
-            margin: 15px 0 25px;
-        }
-        .reg-link { color: #3b82f6; cursor: pointer; }
-
-        /* DIVIDER */
-        .divider-container {
+        /* UI Utilities */
+        .divider {
             display: flex;
             align-items: center;
-            margin: 20px 0;
+            margin: 30px 0;
+            color: var(--text-dim);
+            font-size: 12px;
+            font-weight: 600;
         }
-        .line { flex: 1; height: 1px; background: #1e2533; }
-        .or-text { padding: 0 10px; color: var(--text-dim); font-size: 12px; font-weight: 600; }
+        .divider::before, .divider::after {
+            content: ""; flex: 1; height: 1px; background: #1e2533;
+        }
+        .divider span { padding: 0 15px; }
 
-        /* NAVIGATION CONTROL */
-        .screen { display: none; }
-        .active { display: block; }
+        .link-text { color: var(--accent-blue); cursor: pointer; text-decoration: none; font-size: 14px; }
+
+        /* Screen Management */
+        .screen { display: none; animation: fadeIn 0.3s ease; }
+        .active-screen { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="phone-frame">
-        <div id="cover" class="screen active">
-            <div class="logo-container">
-                <svg class="ag-logo" viewBox="0 0 100 100">
-                    <path d="M50 15 L20 85 L35 85 L42.5 65 L65 65 L70 85 L85 85 Z M46 55 L50 40 L54 55 Z" fill="white"/>
-                    <path d="M60 70 L90 70 L90 85 L60 85 Z" fill="white"/>
-                </svg>
-            </div>
-            
-            <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
-            <p class="sub-title">Task Assigner</p>
-
-            <div class="login-section">
-                <span class="login-header">Employee Login</span>
-                
-                <label class="label">Your Name</label>
-                <input type="text" class="input-field" value="Heer patel">
-
-                <label class="label">Password</label>
-                <input type="password" class="input-field" value="123456">
-
-                <div class="forgot-link">Forgot Password?</div>
-
-                <button class="btn btn-emp">
-                    <span style="font-size:18px;">👤</span> Login as Employee
-                </button>
-
-                <p class="reg-text">New employee? <span class="reg-link">Register here →</span></p>
-
-                <div class="divider-container">
-                    <div class="line"></div>
-                    <span class="or-text">OR</span>
-                    <div class="line"></div>
+    <div class="app-shell">
+        
+        <div id="screen-landing" class="screen active-screen">
+            <div class="brand-header">
+                <div class="logo-box">
+                    <svg viewBox="0 0 100 100" width="70">
+                        <path d="M50 15 L20 85 L35 85 L42.5 65 L65 65 L70 85 L85 85 Z M46 55 L50 40 L54 55 Z" fill="white"/>
+                        <path d="M60 70 L90 70 L90 85 L60 85 Z" fill="white"/>
+                    </svg>
                 </div>
-
-                <button class="btn btn-partner" onclick="showScreen('partner-login')">
-                    <span style="background:white; color:black; border-radius:50%; width:16px; height:16px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:900;">G</span> Login as Partner
-                </button>
+                <h1 class="title-main">Acharya<br>Gehlot &<br>Associates</h1>
+                <p class="title-sub">Task Assigner</p>
             </div>
+
+            <span class="section-label">Employee Login</span>
+
+            <div class="input-group">
+                <label class="input-label">Your Name</label>
+                <input type="text" class="f-input" placeholder="Enter full name">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Password</label>
+                <input type="password" class="f-input" placeholder="••••••••">
+                <div style="text-align: right; margin-top: 8px;">
+                    <span class="link-text">Forgot Password?</span>
+                </div>
+            </div>
+
+            <button class="btn btn-green">👤 Login as Employee</button>
+            
+            <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-top: 10px;">
+                New employee? <span class="link-text">Register here →</span>
+            </p>
+
+            <div class="divider"><span>OR</span></div>
+
+            <button class="btn btn-blue" onclick="showScreen('screen-partner-login')">
+                <span style="background:white; color:black; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900;">G</span> 
+                Login as Partner
+            </button>
         </div>
 
-        <div id="partner-login" class="screen">
+        <div id="screen-partner-login" class="screen">
+            <div class="brand-header">
+                <h1 class="title-main">Partner Access</h1>
+                <p class="title-sub">chintan@acharyagehlot.com</p>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Access Password</label>
+                <input type="password" id="p-pass" class="f-input" placeholder="Enter secure password">
+            </div>
+
+            <button class="btn btn-blue" onclick="validatePartner()">Sign In</button>
+            <button class="btn" style="background:transparent; color:var(--text-dim);" onclick="showScreen('screen-landing')">← Back</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Simple, scalable navigation
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(id).classList.add('active-screen');
+            window.scrollTo(0,0);
+        }
+
+        function validatePartner() {
+            const pass = document.getElementById('p-pass').value;
+            if(pass === "Partner@AG2026") {
+                alert("Login Success! Moving to Dashboard...");
+                // We will build the dashboard next
+            } else {
+                alert("Incorrect Password");
+            }
+        }
+    </script>
+</body>
+</html>
