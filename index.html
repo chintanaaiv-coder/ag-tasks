@@ -3,210 +3,110 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<meta name="theme-color" content="#6366f1"/>
-<title>AGA Tasks - Partner Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<title>AGA Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#080a0f;--surface:#0f1219;--card:#141923;--border:#1a2035;
-  --accent:#6366f1;--cyan:#22d3ee;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;
-  --text:#dde4f0;--muted:#4a5680;--soft:#8892aa;
+  --bg:#080a12;--surface:#111420;--card:#1a1f2e;--border:#262c40;
+  --accent:#6366f1;--green:#10b981;--text:#ffffff;--muted:#8892aa;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);padding-top:60px;}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;min-height:100vh;}
 
-/* TOPBAR */
-.topbar{height:52px;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);
-  position:fixed;top:0;left:0;right:0;z-index:100;}
-.brand{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;color:var(--accent);}
+.mobile-container { width: 100%; max-width: 400px; padding: 40px 24px; text-align: center; }
 
-/* PARTNER DASHBOARD STYLES */
-.admin-section {
-    margin: 15px;
-    padding: 15px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-.admin-title {
-    font-family: "Syne", sans-serif;
-    font-size: 14px;
-    color: var(--cyan);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-}
-.notif-card {
-    font-size: 11px;
-    padding: 8px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-}
-.pending-user {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-}
-.btn-approve {
-    background: var(--green);
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 10px;
-    cursor: pointer;
-}
-.partner-badge {
-    background: var(--accent);
-    color: white;
-    font-size: 9px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-left: 5px;
-}
-#app { padding-bottom: 80px; }
-.login-box { max-width: 350px; margin: 50px auto; padding: 20px; text-align: center; }
-.f-inp { width: 100%; padding: 12px; margin: 8px 0; background: var(--card); border: 1px solid var(--border); color: white; border-radius: 8px; }
-.btn-main { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+/* BRANDING */
+.logo-box { width: 100px; height: 100px; background: #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+.logo-box img { width: 80%; }
+.company-name { font-family: "Syne", sans-serif; font-size: 28px; font-weight: 800; line-height: 1.1; margin-bottom: 10px; text-transform: uppercase; letter-spacing: -1px; }
+.sub-title { color: var(--muted); font-size: 16px; margin-bottom: 40px; }
+
+/* FORMS */
+.login-section { text-align: left; margin-top: 20px; }
+.sec-label { font-size: 10px; font-weight: 700; color: #4a5680; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 15px; display: block; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+.f-lbl { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block; }
+.f-inp { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: white; margin-bottom: 15px; font-size: 15px; }
+.forgot { text-align: right; font-size: 11px; color: var(--accent); margin-top: -5px; margin-bottom: 20px; cursor: pointer; }
+
+/* BUTTONS */
+.btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; transition: 0.2s; }
+.btn-emp { background: var(--green); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+.btn-partner { background: #6366f1; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); }
+.btn:active { transform: scale(0.98); }
+
+.reg-text { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px; }
+.reg-text span { color: var(--accent); cursor: pointer; }
+.or-divider { margin: 25px 0; display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.or-line { flex: 1; height: 1px; background: var(--border); }
+
+/* DASHBOARD HIDDEN BY DEFAULT */
+#mainDash { display: none; padding: 20px; width: 100%; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">AGA <span>Tasks</span> <small id="roleTag"></small></div>
-  <button id="logoutBtn" style="display:none; background:none; border:none; color:var(--red); font-size:12px;">Logout</button>
+<div class="mobile-container" id="loginPage">
+    <div class="logo-box">
+        <h1 style="color:white; font-family:serif;">AG</h1>
+    </div>
+    
+    <div class="company-name">Acharya<br>Gehlot &<br>Associates</div>
+    <div class="sub-title">Task Assigner</div>
+
+    <div class="login-section">
+        <span class="sec-label">Employee Login</span>
+        <label class="f-lbl">Your Name</label>
+        <input type="text" id="empName" class="f-inp" placeholder="Enter name">
+        <label class="f-lbl">Password</label>
+        <input type="password" id="empPass" class="f-inp" placeholder="••••••••">
+        <div class="forgot">Forgot Password?</div>
+        
+        <button class="btn btn-emp" onclick="login('employee')">
+            <span>👤</span> Login as Employee
+        </button>
+        
+        <div class="reg-text">New employee? <span>Register here →</span></div>
+
+        <div class="or-divider">
+            <div class="or-line"></div> OR <div class="or-line"></div>
+        </div>
+
+        <button class="btn btn-partner" onclick="login('partner')">
+            <span>G</span> Login as Partner
+        </button>
+    </div>
 </div>
 
-<div id="app">
-    <div id="loginScreen" class="login-box">
-        <h2 style="font-family: 'Syne'; margin-bottom: 20px;">Partner Login</h2>
-        <input type="email" id="emailInp" class="f-inp" placeholder="Email Address">
-        <input type="password" id="passInp" class="f-inp" placeholder="Password">
-        <button class="btn-main" onclick="handleLogin()">Sign In</button>
-        <p style="font-size: 11px; color: var(--muted); margin-top: 15px;">New employees will be locked until Partner approves.</p>
-    </div>
-
-    <div id="partnerDashboard" style="display:none;">
-        <div class="admin-section">
-            <div class="admin-title">Pending Approvals</div>
-            <div id="approvalList">Checking for new staff...</div>
-        </div>
-        <div class="admin-section">
-            <div class="admin-title">Live Activity Feed</div>
-            <div id="notifList">No recent activity.</div>
-        </div>
-        <div class="admin-section">
-            <div class="admin-title">Manage Team</div>
-            <div id="staffList"></div>
-        </div>
-    </div>
-
-    <div id="employeeView" style="display:none; text-align:center; padding: 40px;">
-        <h2 id="welcomeMsg"></h2>
-        <div id="lockMessage" style="color:var(--yellow); margin-top: 20px;">
-            Your account is pending approval from Chintan.
-        </div>
-    </div>
+<div id="mainDash">
+    <h2 id="dashTitle"></h2>
+    <p id="dashSub"></p>
+    <button onclick="location.reload()" style="margin-top:20px; color:red; background:none; border:none; cursor:pointer;">Logout</button>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, orderBy, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// Your Partner ID is now hardcoded here
+const PARTNER_EMAIL = "chintan@acharyagehlot.com";
 
-const cfg = {
-    apiKey: "AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",
-    authDomain: "ag-task-assigner.firebaseapp.com",
-    projectId: "ag-task-assigner",
-    storageBucket: "ag-task-assigner.appspot.com",
-    messagingSenderId: "694340088537",
-    appId: "1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"
-};
+window.login = (role) => {
+    const loginPage = document.getElementById('loginPage');
+    const mainDash = document.getElementById('mainDash');
+    const dashTitle = document.getElementById('dashTitle');
+    const dashSub = document.getElementById('dashSub');
 
-const app = initializeApp(cfg);
-const db = getFirestore(app);
+    loginPage.style.display = 'none';
+    mainDash.style.display = 'block';
 
-// LOGIN LOGIC
-window.handleLogin = async () => {
-    const email = document.getElementById('emailInp').value;
-    const pass = document.getElementById('passInp').value;
-
-    if(email === "chintan@acharyagehlot.com") {
-        showDashboard('partner');
-    } else {
-        // Simple mock login for demo - in your real app, this connects to Auth
-        checkEmployee(email);
-    }
-};
-
-function showDashboard(role) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'block';
-    
     if(role === 'partner') {
-        document.getElementById('partnerDashboard').style.display = 'block';
-        document.getElementById('roleTag').innerHTML = '<span class="partner-badge">PARTNER</span>';
-        loadPartnerData();
+        dashTitle.innerText = "Partner Dashboard";
+        dashSub.innerText = "Welcome back, Chintan. Logging in as " + PARTNER_EMAIL;
+        // Here you would add the logic to show your notifications and approvals
     } else {
-        document.getElementById('employeeView').style.display = 'block';
+        const name = document.getElementById('empName').value || "Employee";
+        dashTitle.innerText = "Hello, " + name;
+        dashSub.innerText = "Checking your assigned tasks...";
     }
 }
-
-// PARTNER DATA LOADING
-function loadPartnerData() {
-    // 1. Listen for Approval Requests
-    onSnapshot(collection(db, "users"), (snap) => {
-        const list = [];
-        const staff = [];
-        snap.forEach(d => {
-            const data = d.data();
-            if(!data.isApproved) list.push({id: d.id, ...data});
-            else staff.push({id: d.id, ...data});
-        });
-
-        // Update Approval UI
-        const appDiv = document.getElementById('approvalList');
-        appDiv.innerHTML = list.length === 0 ? "No pending approvals" : list.map(u => `
-            <div class="pending-user">
-                <span>${u.email}</span>
-                <button class="btn-approve" onclick="approveUser('${u.id}')">Approve</button>
-            </div>
-        `).join('');
-
-        // Update Staff List
-        const staffDiv = document.getElementById('staffList');
-        staffDiv.innerHTML = staff.map(s => `
-            <div class="pending-user">
-                <span style="font-size:12px;">${s.email}</span>
-                <span style="color:var(--green); font-size:10px;">ACTIVE</span>
-            </div>
-        `).join('');
-    });
-
-    // 2. Listen for Notifications (Attendance/Tasks)
-    onSnapshot(query(collection(db, "notifications"), orderBy("timestamp", "desc")), (snap) => {
-        const notifDiv = document.getElementById('notifList');
-        notifDiv.innerHTML = snap.docs.slice(0, 10).map(d => {
-            const n = d.data();
-            return `<div class="notif-card">
-                <span>${n.message}</span>
-                <span style="color:var(--muted)">${new Date(n.timestamp?.seconds*1000).toLocaleTimeString()}</span>
-            </div>`;
-        }).join('');
-    });
-}
-
-// APPROVAL FUNCTION
-window.approveUser = async (id) => {
-    await updateDoc(doc(db, "users", id), { isApproved: true });
-    alert("Employee Approved!");
-};
-
-// LOGOUT
-document.getElementById('logoutBtn').onclick = () => location.reload();
-
 </script>
+
 </body>
 </html>
