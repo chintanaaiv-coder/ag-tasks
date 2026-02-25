@@ -8,27 +8,33 @@
     <style>
         :root {
             --bg-dark: #0b0e14;
-            --input-fill: #e8f0fe; /* The specific blue-white tint from your SS */
+            --input-bg: #e8f0fe;
             --accent-green: #10b981;
             --accent-blue: #6366f1;
             --text-dim: #717b91;
-            --white: #ffffff;
+            /* Filter to turn your black PNG white for the dark theme */
+            --logo-invert: brightness(0) invert(1);
         }
 
-        /* App Reset */
+        /* Light Theme Logic for later */
+        .light-theme {
+            --bg-dark: #ffffff;
+            --input-bg: #f1f5f9;
+            --logo-invert: none;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
-            color: var(--white);
+            color: #ffffff;
             display: flex;
             justify-content: center;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        .app-shell {
+        .app-container {
             width: 100%;
             max-width: 400px;
             padding: 40px 25px;
@@ -37,8 +43,8 @@
             align-items: center;
         }
 
-        /* BRANDING: Using your PNG Logo */
-        .logo-box {
+        /* LOGO BOX: Replicating the square black header style */
+        .logo-header {
             width: 110px;
             height: 110px;
             background: #000000;
@@ -47,18 +53,15 @@
             justify-content: center;
             margin-bottom: 20px;
             border-radius: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .logo-box img {
-            width: 85%; /* Perfect padding around your AG symbol */
+        .logo-header img {
+            width: 80%;
             height: auto;
-            /* Turns your black PNG into white for the dark theme */
-            filter: brightness(0) invert(1);
-            image-rendering: -webkit-optimize-contrast;
+            filter: var(--logo-invert);
         }
 
-        .brand-title {
+        .brand-name {
             font-family: 'Syne', sans-serif;
             font-size: 32px;
             font-weight: 800;
@@ -66,39 +69,32 @@
             text-align: center;
             text-transform: uppercase;
             letter-spacing: -1.5px;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
-        .brand-subtitle {
+        .brand-tagline {
             font-size: 16px;
             color: var(--text-dim);
-            margin-bottom: 40px;
-            font-weight: 500;
+            margin-bottom: 35px;
         }
 
-        /* LOGIN FORM */
-        .section-header {
+        /* FORM STYLING */
+        .section-title {
             align-self: flex-start;
             font-size: 11px;
             font-weight: 700;
             color: #3b4252;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 20px;
+            letter-spacing: 1.2px;
+            margin-bottom: 15px;
         }
 
-        .input-wrap { width: 100%; margin-bottom: 18px; }
+        .input-group { width: 100%; margin-bottom: 18px; }
+        .label { font-size: 14px; color: #94a3b8; margin-bottom: 6px; display: block; }
         
-        .label {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-            display: block;
-        }
-
         .f-input {
             width: 100%;
-            background: var(--input-fill);
+            background: var(--input-bg);
             border: none;
             border-radius: 12px;
             padding: 16px;
@@ -112,12 +108,11 @@
             text-align: right;
             font-size: 12px;
             color: #3b82f6;
-            margin-top: 10px;
+            margin-top: 8px;
             cursor: pointer;
-            font-weight: 500;
         }
 
-        /* BUTTONS */
+        /* BUTTONS WITH GLOW */
         .btn {
             width: 100%;
             padding: 16px;
@@ -131,78 +126,76 @@
             justify-content: center;
             gap: 12px;
             margin-top: 25px;
-            transition: transform 0.1s ease;
+            transition: 0.2s;
         }
-        .btn:active { transform: scale(0.98); }
 
-        .btn-emp {
+        .btn-green {
             background: var(--accent-green);
             color: white;
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
         }
 
-        .btn-partner {
+        .btn-blue {
             background: var(--accent-blue);
             color: white;
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.25);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
             margin-top: 10px;
         }
 
-        .google-svg { width: 20px; height: 20px; }
-
-        /* DIVIDER */
         .divider {
             width: 100%;
             display: flex;
             align-items: center;
-            margin: 30px 0;
+            margin: 25px 0;
             color: var(--text-dim);
             font-size: 12px;
             font-weight: 700;
         }
-        .divider::before, .divider::after {
-            content: ""; flex: 1; height: 1px; background: #1e2533;
-        }
+        .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #1e2533; }
         .divider span { padding: 0 15px; }
 
-        .footer-text { font-size: 13px; color: var(--text-dim); margin-top: 15px; }
-        .blue-link { color: #3b82f6; font-weight: 600; cursor: pointer; }
+        .reg-text { font-size: 13px; color: var(--text-dim); margin-top: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="app-shell">
-        <div class="logo-box">
+    <div class="app-container">
+        <div class="logo-header">
             <img src="AGA Logo.png" alt="AGA Logo">
         </div>
         
-        <h1 class="brand-title">Acharya<br>Gehlot &<br>Associates</h1>
-        <p class="brand-subtitle">Task Assigner</p>
+        <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
+        <p class="brand-tagline">Task Assigner</p>
 
-        <span class="section-header">Employee Login</span>
+        <h2 class="section-title">Employee Login</h2>
 
-        <div class="input-wrap">
+        <div class="input-group">
             <label class="label">Your Name</label>
             <input type="text" class="f-input" value="Heer patel">
         </div>
 
-        <div class="input-wrap">
+        <div class="input-group">
             <label class="label">Password</label>
             <input type="password" class="f-input" value="12345678">
             <p class="forgot-pass">Forgot Password?</p>
         </div>
 
-        <button class="btn btn-emp">
-            <span style="font-size:18px;">👤</span> Login as Employee
-        </button>
+        <button class="btn btn-green">👤 Login as Employee</button>
         
-        <p class="footer-text">New employee? <span class="blue-link">Register here →</span></p>
+        <p class="reg-text">New employee? <span style="color:#3b82f6; cursor:pointer;">Register here →</span></p>
 
         <div class="divider"><span>OR</span></div>
 
-        <button class="btn btn-partner">
-            <svg class="google-svg" viewBox="0 0 48 48">
+        <button class="btn btn-blue">
+            <svg style="width:20px; height:20px;" viewBox="0 0 48 48">
                 <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                 <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
                 <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
-                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+            </svg>
+            Login as Partner
+        </button>
+    </div>
+
+</body>
+</html>
