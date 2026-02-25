@@ -23,159 +23,21 @@
 
         /* QUICK ACTIONS */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-bottom: 2px solid transparent; }
         .action-btn label { font-size: 11px; font-weight: 700; color: #cbd5e1; cursor: pointer; }
+        .btn-team { border-color: #3b82f6; }
+        .btn-anal { border-color: #8b5cf6; }
 
-        /* ATTENDANCE & EXPORT */
-        .attendance-section { margin-bottom: 15px; }
-        .attendance-bar { width: 100%; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-green); font-size: 12px; font-weight: bold; cursor: pointer; }
-        .export-btn { width: 100%; margin-top: 5px; background: transparent; border: 1px dashed var(--border); color: var(--text-dim); padding: 8px; font-size: 10px; border-radius: 8px; cursor: pointer; }
+        /* EMPLOYEE ATTENDANCE CARD */
+        .attendance-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 20px; }
+        .att-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .att-title { font-size: 13px; font-weight: 700; color: var(--accent-green); display: flex; align-items: center; gap: 6px; }
+        .export-link { font-size: 11px; color: var(--accent-blue); font-weight: bold; cursor: pointer; text-decoration: underline; }
+        .att-status-box { background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 10px; font-size: 12px; text-align: center; color: var(--text-dim); border: 1px dashed rgba(16,185,129,0.2); }
 
-        /* MODALS (Forms) */
+        /* MODALS */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding: 30px; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
-        .modal h3 { font-family: 'Syne'; margin-bottom: 15px; }
-        input[type="date"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 10px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 10px; }
-        .modal-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
-
-        /* TASK CARDS */
-        .task-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 10px; }
-        .badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; }
-        .badge-high { background: var(--high); color: white; }
-        .client-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-        .assignee { font-size: 12px; color: var(--accent-blue); font-weight: 600; }
-
-        /* MANAGE TEAM LIST */
-        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); margin-bottom: 5px; border-radius: 8px; }
-        .del-btn { color: var(--high); font-size: 18px; border: none; background: none; cursor: pointer; }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        <div id="dashboard">
-            <div class="header">
-                <div class="greeting">
-                    <h2>Hello, Chintan</h2>
-                    <p style="color:var(--accent-blue); font-size:12px;">Partner Dashboard</p>
-                </div>
-                <button class="logout-btn" onclick="location.reload()">Logout</button>
-            </div>
-
-            <div class="action-grid">
-                <div class="action-btn" onclick="openModal('teamModal')">
-                    <span>👥</span><label>Manage Team</label>
-                </div>
-                <div class="action-btn" onclick="openModal('analysisModal')">
-                    <span>📈</span><label>Task Analysis</label>
-                </div>
-            </div>
-
-            <div class="attendance-section">
-                <div class="attendance-bar">📊 Live Attendance View</div>
-                <button class="export-btn" onclick="openModal('exportModal')">📥 Export Excel Attendance Logs</button>
-            </div>
-
-            <button class="export-btn" style="border-color:var(--accent-blue); color:var(--accent-blue); margin-bottom:15px;" onclick="openModal('passModal')">🔑 Change Partner Password</button>
-
-            <h3 style="font-family:'Syne'; font-size:13px; margin-bottom:10px; color:var(--text-dim); text-transform:uppercase;">Ongoing Tasks</h3>
-            
-            <div id="taskContainer">
-                <div class="task-card">
-                    <div class="badge badge-high">High</div>
-                    <div class="client-name">Hotel Sunrise Pvt Ltd</div>
-                    <div class="assignee">👤 Heer Patel</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="exportModal" class="modal">
-        <div class="modal-content">
-            <h3>Export Attendance</h3>
-            <label style="font-size:12px; color:var(--text-dim);">From Date</label>
-            <input type="date" id="attStart">
-            <label style="font-size:12px; color:var(--text-dim);">To Date</label>
-            <input type="date" id="attEnd">
-            <button class="modal-btn" style="background:var(--accent-green); color:black;" onclick="exportAttendance()">Generate & Download CSV</button>
-            <button class="modal-btn" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="analysisModal" class="modal">
-        <div class="modal-content">
-            <h3>Task Analysis</h3>
-            <input type="date" id="analStart">
-            <input type="date" id="analEnd">
-            <button class="modal-btn" style="background:var(--accent-blue); color:white;" onclick="runAnalysis()">Generate Report</button>
-            <button class="modal-btn" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="teamModal" class="modal">
-        <div class="modal-content">
-            <h3>Manage Team</h3>
-            <div id="pendingList" style="margin-bottom:15px;">
-                <p style="font-size:11px; color:var(--text-dim);">New Approval Requests:</p>
-                <div class="user-row"><span>example@mail.com</span><button style="color:var(--accent-green); border:none; background:none;">Approve</button></div>
-            </div>
-            <p style="font-size:11px; color:var(--text-dim);">Existing Staff (Delete if left):</p>
-            <div id="staffList">
-                <div class="user-row"><span>Heer Patel</span><button class="del-btn">×</button></div>
-            </div>
-            <button class="modal-btn" onclick="closeModal()">Close</button>
-        </div>
-    </div>
-
-    <div id="passModal" class="modal">
-        <div class="modal-content">
-            <h3>Change Password</h3>
-            <input type="password" id="newPass" placeholder="Enter New Password">
-            <button class="modal-btn" style="background:var(--accent-blue); color:white;" onclick="updatePass()">Update Password</button>
-            <button class="modal-btn" onclick="closeModal()">Cancel</button>
-        </div>
-    </div>
-
-    <script type="module">
-        // Placeholder Logic for functionalities
-        window.openModal = (id) => document.getElementById(id).style.display = 'block';
-        window.closeModal = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-
-        window.exportAttendance = () => {
-            const start = document.getElementById('attStart').value;
-            const end = document.getElementById('attEnd').value;
-            if(!start || !end) return alert("Select dates");
-            
-            // This triggers a CSV download
-            let csvContent = "data:text/csv;charset=utf-8,Name,Date,InTime,OutTime,InLocation,OutLocation\n";
-            csvContent += "Heer Patel,2026-02-24,09:00,18:00,https://maps.google.com/?q=23.02,https://maps.google.com/?q=23.02\n";
-            
-            var encodedUri = encodeURI(csvContent);
-            var link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Attendance_${start}_to_${end}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            alert("Exporting Data to Excel...");
-        };
-
-        window.runAnalysis = () => {
-            const start = document.getElementById('analStart').value;
-            const end = document.getElementById('analEnd').value;
-            alert(`Analysis complete for ${start} to ${end}. Report sent to chintan@acharyagehlot.com`);
-            closeModal();
-        };
-
-        window.updatePass = () => {
-            const p = document.getElementById('newPass').value;
-            if(p.length < 6) return alert("Password too short");
-            alert("Password successfully updated!");
-            closeModal();
-        };
-
-        // NOTIFICATION MOCK (You will see these as Alerts in this demo)
-        // In the real app, these listen to Firebase collections
-        console.log("Listening for employee activity...");
-    </script>
-</body>
-</html>
+        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .modal h3 { font-family: 'Syne'; margin-bottom: 15px; font-size: 18px; color: var(--accent-blue); }
+        label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; margin-top: 10px; margin-bottom: 5px; }
+        input[type="date"], input[type="password"] { width: 100%; padding: 12px; background: var(--bg); border:
