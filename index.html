@@ -3,81 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AGA Tasks - App Foundation</title>
+    <title>AGA Tasks - Landing</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #0b0e14;
-            --input-fill: #e8f0fe; /* Light blue from your screenshot */
+            --input-fill: #e8f0fe;
             --accent-green: #10b981;
             --accent-blue: #6366f1;
             --text-dim: #717b91;
             --white: #ffffff;
         }
 
-        /* Essential App Resets */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
             color: var(--white);
-            line-height: 1.5;
-            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
         }
 
-        /* App Container */
         .app-shell {
-            max-width: 450px;
-            margin: 0 auto;
-            min-height: 100vh;
+            width: 100%;
+            max-width: 400px;
             padding: 40px 25px;
             display: flex;
             flex-direction: column;
+            align-items: center;
         }
 
-        /* Brand Styling */
-        .brand-header { text-align: center; margin-bottom: 40px; }
-        
+        /* Branding Section */
         .logo-box {
             width: 100px;
             height: 100px;
             background: #000;
-            margin: 0 auto 20px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 1px solid #333;
         }
 
-        .title-main {
+        .brand-title {
             font-family: 'Syne', sans-serif;
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 800;
-            line-height: 1;
+            line-height: 1.1;
+            text-align: center;
             text-transform: uppercase;
             letter-spacing: -1px;
+            margin-bottom: 8px;
         }
 
-        .title-sub {
-            font-size: 16px;
+        .brand-subtitle {
+            font-size: 15px;
             color: var(--text-dim);
-            margin-top: 8px;
+            margin-bottom: 40px;
         }
 
-        /* Form Controls */
+        /* Login Form Section */
         .section-label {
+            align-self: flex-start;
             font-size: 11px;
             font-weight: 700;
-            color: #475569;
+            color: #3b4252;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin: 20px 0 15px;
+            letter-spacing: 1.2px;
+            margin-bottom: 20px;
+        }
+
+        .input-group { width: 100%; margin-bottom: 18px; text-align: left; }
+        
+        .field-label {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 8px;
             display: block;
         }
 
-        .input-group { margin-bottom: 20px; }
-        .input-label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; display: block; }
-        
         .f-input {
             width: 100%;
             background: var(--input-fill);
@@ -90,11 +96,19 @@
             outline: none;
         }
 
-        /* Buttons */
+        .forgot-pass {
+            text-align: right;
+            font-size: 12px;
+            color: #3b82f6;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        /* Primary Action Buttons */
         .btn {
             width: 100%;
             padding: 16px;
-            border-radius: 14px;
+            border-radius: 15px;
             border: none;
             font-weight: 700;
             font-size: 16px;
@@ -103,123 +117,86 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 12px;
+            margin-top: 25px;
             transition: transform 0.1s ease;
         }
-        .btn:active { transform: scale(0.98); }
 
-        .btn-green {
+        .btn-employee {
             background: var(--accent-green);
             color: white;
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
         }
 
-        .btn-blue {
+        .btn-partner {
             background: var(--accent-blue);
             color: white;
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+            margin-top: 10px;
         }
 
-        /* UI Utilities */
+        .reg-text {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin: 15px 0 30px;
+        }
+
+        /* Divider Component */
         .divider {
+            width: 100%;
             display: flex;
             align-items: center;
-            margin: 30px 0;
+            margin: 20px 0;
             color: var(--text-dim);
             font-size: 12px;
-            font-weight: 600;
+            font-weight: 700;
         }
         .divider::before, .divider::after {
-            content: ""; flex: 1; height: 1px; background: #1e2533;
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: #1e2533;
         }
         .divider span { padding: 0 15px; }
 
-        .link-text { color: var(--accent-blue); cursor: pointer; text-decoration: none; font-size: 14px; }
-
-        /* Screen Management */
-        .screen { display: none; animation: fadeIn 0.3s ease; }
-        .active-screen { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="app-shell">
+        <div class="logo-box">
+            <svg viewBox="0 0 100 100" width="70">
+                <path d="M50 15 L20 85 L35 85 L42.5 65 L65 65 L70 85 L85 85 Z M46 55 L50 40 L54 55 Z" fill="white"/>
+                <path d="M60 70 L90 70 L90 85 L60 85 Z" fill="white"/>
+            </svg>
+        </div>
         
-        <div id="screen-landing" class="screen active-screen">
-            <div class="brand-header">
-                <div class="logo-box">
-                    <svg viewBox="0 0 100 100" width="70">
-                        <path d="M50 15 L20 85 L35 85 L42.5 65 L65 65 L70 85 L85 85 Z M46 55 L50 40 L54 55 Z" fill="white"/>
-                        <path d="M60 70 L90 70 L90 85 L60 85 Z" fill="white"/>
-                    </svg>
-                </div>
-                <h1 class="title-main">Acharya<br>Gehlot &<br>Associates</h1>
-                <p class="title-sub">Task Assigner</p>
-            </div>
+        <h1 class="brand-title">Acharya<br>Gehlot &<br>Associates</h1>
+        <p class="brand-subtitle">Task Assigner</p>
 
-            <span class="section-label">Employee Login</span>
+        <span class="section-label">Employee Login</span>
 
-            <div class="input-group">
-                <label class="input-label">Your Name</label>
-                <input type="text" class="f-input" placeholder="Enter full name">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Password</label>
-                <input type="password" class="f-input" placeholder="••••••••">
-                <div style="text-align: right; margin-top: 8px;">
-                    <span class="link-text">Forgot Password?</span>
-                </div>
-            </div>
-
-            <button class="btn btn-green">👤 Login as Employee</button>
-            
-            <p style="text-align: center; font-size: 13px; color: var(--text-dim); margin-top: 10px;">
-                New employee? <span class="link-text">Register here →</span>
-            </p>
-
-            <div class="divider"><span>OR</span></div>
-
-            <button class="btn btn-blue" onclick="showScreen('screen-partner-login')">
-                <span style="background:white; color:black; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900;">G</span> 
-                Login as Partner
-            </button>
+        <div class="input-group">
+            <label class="field-label">Your Name</label>
+            <input type="text" class="f-input" value="Heer patel">
         </div>
 
-        <div id="screen-partner-login" class="screen">
-            <div class="brand-header">
-                <h1 class="title-main">Partner Access</h1>
-                <p class="title-sub">chintan@acharyagehlot.com</p>
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Access Password</label>
-                <input type="password" id="p-pass" class="f-input" placeholder="Enter secure password">
-            </div>
-
-            <button class="btn btn-blue" onclick="validatePartner()">Sign In</button>
-            <button class="btn" style="background:transparent; color:var(--text-dim);" onclick="showScreen('screen-landing')">← Back</button>
+        <div class="input-group">
+            <label class="field-label">Password</label>
+            <input type="password" class="f-input" value="••••••••">
+            <p class="forgot-pass">Forgot Password?</p>
         </div>
 
+        <button class="btn btn-employee">👤 Login as Employee</button>
+        
+        <p class="reg-text">New employee? <span style="color:#3b82f6; cursor:pointer;">Register here →</span></p>
+
+        <div class="divider"><span>OR</span></div>
+
+        <button class="btn btn-partner">
+            <span style="background:white; color:black; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:900;">G</span> 
+            Login as Partner
+        </button>
     </div>
 
-    <script>
-        // Simple, scalable navigation
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-            document.getElementById(id).classList.add('active-screen');
-            window.scrollTo(0,0);
-        }
-
-        function validatePartner() {
-            const pass = document.getElementById('p-pass').value;
-            if(pass === "Partner@AG2026") {
-                alert("Login Success! Moving to Dashboard...");
-                // We will build the dashboard next
-            } else {
-                alert("Incorrect Password");
-            }
-        }
-    </script>
 </body>
 </html>
