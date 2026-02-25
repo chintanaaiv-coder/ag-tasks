@@ -3,647 +3,155 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="theme-color" content="#0a0d16"/>
-<title>AGA Tasks</title>
+<title>AGA Tasks - Task Assigner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ═══════════════════════════════════════
-   THEME VARIABLES
+   THEME & STYLES (Simplified for Stability)
 ═══════════════════════════════════════ */
 :root {
-  --bg: #0a0d16;
-  --surface: #111827;
-  --card: #1a2235;
-  --card2: #1e2a3a;
-  --border: #2a3550;
-  --accent: #6366f1;
-  --accent2: #818cf8;
-  --green: #10b981;
-  --red: #ef4444;
-  --yellow: #f59e0b;
-  --cyan: #06b6d4;
-  --text: #f1f5f9;
-  --text2: #94a3b8;
-  --text3: #64748b;
-  --badge-high-bg: rgba(239,68,68,0.15);
-  --badge-high: #ef4444;
-  --badge-med-bg: rgba(245,158,11,0.15);
-  --badge-med: #f59e0b;
-  --badge-low-bg: rgba(16,185,129,0.15);
-  --badge-low: #10b981;
-}
-:root.light {
-  --bg: #f1f5f9;
-  --surface: #ffffff;
-  --card: #e8edf5;
-  --card2: #dde3ef;
-  --border: #cbd5e1;
-  --text: #0f172a;
-  --text2: #475569;
-  --text3: #94a3b8;
+  --bg: #0a0d16; --surface: #111827; --card: #1a2235; --border: #2a3550;
+  --accent: #6366f1; --green: #10b981; --red: #ef4444; --text: #f1f5f9; --text2: #94a3b8;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%; font-family: "Inter", sans-serif;
-  background: var(--bg); color: var(--text);
-  -webkit-font-smoothing: antialiased;
-}
+body { font-family: "Inter", sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+#app { max-width: 430px; margin: 0 auto; min-height: 100vh; padding: 20px; }
 
-/* ═══ LAYOUT ═══ */
-#app {
-  min-height: 100vh;
-  max-width: 430px;
-  margin: 0 auto;
-  position: relative;
-  background: var(--bg);
-}
-
-/* ═══ TOPBAR ═══ */
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 20px 12px;
-  background: var(--bg);
-  position: sticky; top: 0; z-index: 50;
-}
-.topbar-title { font-size: 22px; font-weight: 800; color: var(--text); }
-.topbar-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.topbar-right { display: flex; gap: 8px; align-items: center; }
-.icon-btn {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: var(--card); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 16px;
-}
-.logout-btn {
-  background: var(--red); color: #fff; border: none;
-  border-radius: 10px; padding: 7px 14px; font-size: 12px;
-  font-weight: 700; cursor: pointer; font-family: "Inter", sans-serif;
-}
-
-/* ═══ LOGIN PAGE ═══ */
-.login-page {
-  min-height: 100vh; padding: 40px 24px 40px;
-  display: flex; flex-direction: column; align-items: center;
-}
-.login-logo {
-  width: 72px; height: 72px; margin-bottom: 16px;
-  background: #fff; border-radius: 16px; padding: 8px;
-  display: flex; align-items: center; justify-content: center;
-}
-.login-logo img { width: 100%; height: 100%; object-fit: contain; }
-.login-title { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 4px; }
-.login-sub { font-size: 13px; color: var(--text2); text-align: center; margin-bottom: 32px; }
-.login-form { width: 100%; }
-.theme-toggle-row {
-  display: flex; justify-content: flex-end; width: 100%; margin-bottom: 20px;
-}
-.theme-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 20px; padding: 5px 12px; cursor: pointer;
-  font-size: 12px; color: var(--text2); font-weight: 500;
-}
-
-/* ═══ FORM ELEMENTS ═══ */
-.f-group { margin-bottom: 14px; }
-.f-label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
-.f-input {
-  width: 100%; background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 13px 14px; font-size: 14px;
-  color: var(--text); font-family: "Inter", sans-serif;
-  -webkit-text-fill-color: var(--text); outline: none;
-  transition: border-color 0.2s;
-}
-.f-input:focus { border-color: var(--accent); }
-.f-input::placeholder { color: var(--text3); }
-.f-input:-webkit-autofill { -webkit-text-fill-color: var(--text) !important; -webkit-box-shadow: 0 0 0 1000px var(--card) inset !important; }
-:root.light .f-input:-webkit-autofill { -webkit-text-fill-color: #0f172a !important; -webkit-box-shadow: 0 0 0 1000px #e8edf5 inset !important; }
-select.f-input { cursor: pointer; }
-select.f-input option { background: var(--card); color: var(--text); }
-input[type=date].f-input { cursor: pointer; }
-textarea.f-input { min-height: 80px; resize: vertical; }
-
-/* ═══ BUTTONS ═══ */
-.btn {
-  width: 100%; padding: 14px; border: none; border-radius: 12px;
-  font-size: 14px; font-weight: 700; cursor: pointer;
-  font-family: "Inter", sans-serif; display: flex;
-  align-items: center; justify-content: center; gap: 8px;
-  transition: opacity 0.2s, transform 0.1s;
-}
-.btn:active { transform: scale(0.98); }
-.btn:disabled { opacity: 0.4; cursor: default; }
-.btn-accent { background: var(--accent); color: #fff; }
+/* LOGIN UI */
+.login-page { display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
+.login-logo { width: 80px; height: 80px; background: #fff; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.login-logo img { width: 90%; height: 90%; object-fit: contain; }
+.f-group { width: 100%; margin-bottom: 15px; }
+.f-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; margin-bottom: 5px; }
+.f-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: #fff; font-size: 14px; outline: none; }
+.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; }
 .btn-green { background: var(--green); color: #fff; }
-.btn-red { background: var(--red); color: #fff; }
-.btn-yellow { background: var(--yellow); color: #fff; }
-.btn-cyan { background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.4); color: var(--cyan); }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
-.btn-ghost { background: var(--card); border: 1px solid var(--border); color: var(--text2); }
-.btn-sm { padding: 8px 14px; font-size: 12px; width: auto; border-radius: 8px; }
-.btn-mb { margin-bottom: 10px; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); margin-top: 20px; }
 
-/* ═══ CARDS ═══ */
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
-}
-.card-dark { background: var(--card2); }
-
-/* ═══ BADGES ═══ */
-.badge {
-  display: inline-flex; align-items: center; padding: 3px 9px;
-  border-radius: 6px; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.5px;
-}
-.badge-high { background: var(--badge-high-bg); color: var(--badge-high); }
-.badge-medium { background: var(--badge-med-bg); color: var(--badge-med); }
-.badge-low { background: var(--badge-low-bg); color: var(--badge-low); }
-.badge-pending { background: rgba(245,158,11,0.15); color: var(--yellow); }
-.badge-done { background: rgba(16,185,129,0.15); color: var(--green); }
-.badge-partner { background: rgba(99,102,241,0.15); color: var(--accent2); }
-.badge-senior { background: rgba(245,158,11,0.15); color: var(--yellow); }
-.badge-leave { background: rgba(6,182,212,0.15); color: var(--cyan); }
-
-/* ═══ FILTER PILLS ═══ */
-.filter-row { display: flex; gap: 8px; padding: 0 20px 14px; overflow-x: auto; scrollbar-width: none; }
-.filter-row::-webkit-scrollbar { display: none; }
-.pill {
-  padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600;
-  border: 1px solid var(--border); background: transparent; color: var(--text2);
-  cursor: pointer; white-space: nowrap; font-family: "Inter", sans-serif;
-}
-.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-
-/* ═══ TASK CARD ═══ */
-.task-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 14px 16px; margin: 0 20px 10px;
-}
-.task-card.from-partner { border-left: 3px solid var(--accent); }
-.task-card.from-senior { border-left: 3px solid var(--yellow); }
-.task-top { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-.task-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.task-desc { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
-.task-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text3); align-items: center; flex-wrap: wrap; }
-.task-meta span { display: flex; align-items: center; gap: 4px; }
-.task-assign { font-size: 11px; color: var(--text2); margin-top: 6px; }
-.task-actions { display: flex; gap: 6px; margin-top: 10px; }
-.act-btn {
-  width: 32px; height: 32px; border-radius: 8px; display: flex;
-  align-items: center; justify-content: center; cursor: pointer;
-  border: 1px solid var(--border); background: var(--card2); font-size: 14px;
-}
-
-/* ═══ STATS ROW ═══ */
-.stats-row { display: flex; gap: 10px; padding: 0 20px 14px; }
-.stat-card {
-  flex: 1; background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 14px; text-align: center;
-}
-.stat-num { font-size: 28px; font-weight: 800; color: var(--accent); }
-.stat-num.yellow { color: var(--yellow); }
-.stat-num.green { color: var(--green); }
-.stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
-
-/* ═══ SECTION ═══ */
-.section { padding: 0 20px 14px; }
-.section-title { font-size: 11px; font-weight: 700; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
-
-/* ═══ ATTENDANCE ═══ */
-.att-date-select {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 16px; margin-bottom: 12px;
-}
-.att-section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
-.att-btn-row { display: flex; gap: 10px; }
-.att-in {
-  flex: 1; padding: 16px; border-radius: 12px;
-  background: rgba(16,185,129,0.15); border: 2px solid rgba(16,185,129,0.4);
-  color: var(--green); font-size: 16px; font-weight: 700;
-  cursor: pointer; font-family: "Inter", sans-serif;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.att-out {
-  flex: 1; padding: 16px; border-radius: 12px;
-  background: rgba(239,68,68,0.15); border: 2px solid rgba(239,68,68,0.4);
-  color: var(--red); font-size: 16px; font-weight: 700;
-  cursor: pointer; font-family: "Inter", sans-serif;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.att-in:disabled, .att-out:disabled { opacity: 0.4; cursor: not-allowed; }
-.att-hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 10px; line-height: 1.5; }
-
-/* ═══ OVERLAY ═══ */
-.overlay {
-  position: fixed; inset: 0; z-index: 200;
-  background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.overlay.open { opacity: 1; pointer-events: all; }
-.overlay-box {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 20px; padding: 24px 22px; width: 320px;
-  max-width: 90vw; text-align: center;
-}
-.ov-icon { font-size: 36px; margin-bottom: 10px; }
-.ov-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-.ov-msg { font-size: 13px; color: var(--text2); margin-bottom: 14px; }
-.ov-detail {
-  font-size: 12px; color: var(--text2); background: var(--card);
-  border-radius: 10px; padding: 12px; margin-bottom: 16px;
-  text-align: left; line-height: 1.8;
-}
-.ov-detail .lbl { font-size: 9px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
-.ov-btns { display: flex; gap: 8px; }
-.ov-no {
-  flex: 1; padding: 11px; border-radius: 10px; background: var(--card);
-  border: 1px solid var(--border); color: var(--text2); cursor: pointer;
-  font-size: 13px; font-weight: 600; font-family: "Inter", sans-serif;
-}
-.ov-yes {
-  flex: 2; padding: 11px; border-radius: 10px; border: none;
-  color: #fff; cursor: pointer; font-size: 13px; font-weight: 700;
-  font-family: "Inter", sans-serif;
-}
-.ov-yes.success { background: var(--green); }
-.ov-yes.danger { background: var(--red); }
-.ov-yes.primary { background: var(--accent); }
-
-/* ═══ PIN OVERLAY ═══ */
-.pin-overlay {
-  position: fixed; inset: 0; z-index: 300;
-  background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.pin-overlay.open { opacity: 1; pointer-events: all; }
-.pin-box {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 24px; padding: 28px 24px; width: 300px;
-  max-width: 90vw; text-align: center;
-}
-.pin-title { font-size: 17px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
-.pin-sub { font-size: 12px; color: var(--text2); margin-bottom: 16px; }
-.pin-dots { display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
-.pin-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border); transition: background 0.15s; }
-.pin-dot.filled { background: var(--accent); }
-.pin-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; width: 230px; margin: 0 auto 16px; }
-.pin-key {
-  padding: 16px; border-radius: 12px; background: var(--card);
-  border: 1px solid var(--border); color: var(--text); font-size: 20px;
-  font-weight: 700; cursor: pointer; font-family: "Inter", sans-serif;
-  transition: background 0.1s;
-}
-.pin-key:active { background: var(--border); }
-.pin-key.del { font-size: 16px; }
-.pin-err { color: var(--red); font-size: 12px; min-height: 18px; margin-bottom: 8px; }
-.pin-cancel { font-size: 12px; color: var(--text3); cursor: pointer; text-decoration: underline; }
-
-/* ═══ TOAST ═══ */
-.toast {
-  position: fixed; bottom: 28px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 11px 20px; font-size: 13px;
-  color: var(--text); z-index: 500; opacity: 0;
-  transition: all 0.3s; pointer-events: none;
-  white-space: nowrap; max-width: 88vw;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.err { border-color: var(--red); color: var(--red); }
-.toast.ok { border-color: var(--green); color: var(--green); }
-
-/* ═══ LEAVE CARD ═══ */
-.leave-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
-}
-.leave-status-pending { color: var(--yellow); font-size: 11px; font-weight: 700; }
-.leave-status-approved { color: var(--green); font-size: 11px; font-weight: 700; }
-.leave-status-rejected { color: var(--red); font-size: 11px; font-weight: 700; }
-
-/* ═══ MANAGE USERS ═══ */
-.user-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 14px; padding: 14px 16px; margin-bottom: 10px;
-  display: flex; align-items: center; gap: 12px;
-}
-.user-card.pending { border-left: 3px solid var(--yellow); }
-.user-avatar {
-  width: 40px; height: 40px; border-radius: 50%;
-  background: var(--accent); display: flex; align-items: center;
-  justify-content: center; font-size: 16px; font-weight: 700;
-  color: #fff; flex-shrink: 0;
-}
-.user-info { flex: 1; }
-.user-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.user-meta { font-size: 11px; color: var(--text2); margin-top: 3px; line-height: 1.6; }
-.user-actions { display: flex; flex-direction: column; gap: 6px; }
-
-/* ═══ BACK BUTTON ═══ */
-.back-row { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; }
-.back-btn {
-  width: 36px; height: 36px; border-radius: 10px;
-  background: var(--card); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 18px; color: var(--text2); flex-shrink: 0;
-}
-.page-title { font-size: 22px; font-weight: 800; color: var(--text); }
-.page-sub { font-size: 12px; color: var(--text2); }
-
-/* ═══ NOTIFICATION DOT ═══ */
-.notif-dot {
-  position: absolute; top: -3px; right: -3px;
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--red); border: 2px solid var(--bg);
-}
-.rel { position: relative; }
-
-/* ═══ REPORT TABLE ═══ */
-.table-head {
-  display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 0.6fr 1.5fr;
-  gap: 4px; padding: 8px 12px; font-size: 9px; font-weight: 700;
-  color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border);
-}
-.table-row {
-  display: grid; grid-template-columns: 1.5fr 1fr 0.8fr 0.6fr 1.5fr;
-  gap: 4px; padding: 9px 12px; font-size: 11px; color: var(--text2);
-  border-bottom: 1px solid var(--border);
-}
-.table-row:last-child { border-bottom: none; }
-
-/* ═══ OR DIVIDER ═══ */
-.or-row { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
-.or-line { flex: 1; height: 1px; background: var(--border); }
-.or-text { font-size: 11px; color: var(--text3); font-weight: 600; }
-
-/* ═══ INFO BOX ═══ */
-.info-box {
-  background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25);
-  border-radius: 10px; padding: 10px 14px; font-size: 12px;
-  color: var(--yellow); margin-bottom: 14px; line-height: 1.6;
-}
-.success-box {
-  background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25);
-  border-radius: 10px; padding: 10px 14px; font-size: 12px;
-  color: var(--green); margin-bottom: 14px; line-height: 1.6;
-}
-
-/* ═══ PENDING BANNER ═══ */
-.pending-banner {
-  margin: 0 20px 14px; background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.25); border-radius: 14px;
-  padding: 12px 16px; cursor: pointer; display: flex; align-items: center; gap: 12px;
-}
-.pending-banner-icon { font-size: 24px; }
-.pending-banner-text { flex: 1; }
-.pending-banner-title { font-size: 13px; font-weight: 700; color: var(--yellow); }
-.pending-banner-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
-
-/* ═══ CALENDAR ═══ */
-.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-top: 10px; }
-.cal-day-name { text-align: center; font-size: 10px; font-weight: 700; color: var(--text3); padding: 4px 0; }
-.cal-day {
-  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-  border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500;
-}
-.cal-day:hover { background: var(--card2); }
-.cal-day.today { border: 1px solid var(--accent); color: var(--accent); font-weight: 700; }
-.cal-day.selected { background: var(--accent); color: #fff; font-weight: 700; }
-.cal-day.marked-in { background: rgba(16,185,129,0.2); color: var(--green); }
-.cal-day.marked-out { background: rgba(239,68,68,0.2); color: var(--red); }
-.cal-day.marked-both { background: rgba(16,185,129,0.3); color: var(--green); border: 1px solid var(--green); }
-.cal-day.empty { cursor: default; }
-.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.cal-nav-btn { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; cursor: pointer; color: var(--text2); font-size: 14px; }
-.cal-month { font-size: 14px; font-weight: 700; color: var(--text); }
+/* DASHBOARD UI */
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 10px; font-size: 13px; z-index: 1000; display: none; }
+.toast.ok { background: var(--green); color: #fff; display: block; }
+.toast.err { background: var(--red); color: #fff; display: block; }
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
-<div class="overlay" id="confirmOverlay">
-  <div class="overlay-box">
-    <div class="ov-icon" id="ovIcon"></div>
-    <div class="ov-title" id="ovTitle"></div>
-    <div class="ov-msg" id="ovMsg"></div>
-    <div class="ov-detail" id="ovDetail" style="display:none"></div>
-    <div class="ov-btns">
-      <button class="ov-no" onclick="closeConfirm()">✕ No, Cancel</button>
-      <button class="ov-yes primary" id="ovYes">✓ Yes</button>
-    </div>
-  </div>
-</div>
-
-<div class="pin-overlay" id="pinOverlay">
-  <div class="pin-box">
-    <div class="pin-title" id="pinTitle">Enter PIN</div>
-    <div class="pin-sub" id="pinSub">Your 4-digit attendance PIN</div>
-    <div class="pin-dots" id="pinDots">
-      <div class="pin-dot"></div><div class="pin-dot"></div>
-      <div class="pin-dot"></div><div class="pin-dot"></div>
-    </div>
-    <div class="pin-grid">
-      <button class="pin-key" onclick="pk('1')">1</button>
-      <button class="pin-key" onclick="pk('2')">2</button>
-      <button class="pin-key" onclick="pk('3')">3</button>
-      <button class="pin-key" onclick="pk('4')">4</button>
-      <button class="pin-key" onclick="pk('5')">5</button>
-      <button class="pin-key" onclick="pk('6')">6</button>
-      <button class="pin-key" onclick="pk('7')">7</button>
-      <button class="pin-key" onclick="pk('8')">8</button>
-      <button class="pin-key" onclick="pk('9')">9</button>
-      <div></div>
-      <button class="pin-key" onclick="pk('0')">0</button>
-      <button class="pin-key del" onclick="pk('del')">⌫</button>
-    </div>
-    <div class="pin-err" id="pinErr"></div>
-    <span class="pin-cancel" onclick="closePinOverlay()">Cancel</span>
-  </div>
-</div>
-
+<div id="toast" class="toast"></div>
 <div id="app"></div>
 
 <script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-assigner.firebaseapp.com",projectId:"ag-task-assigner",storageBucket:"ag-task-assigner.appspot.com",messagingSenderId:"694340088537",appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"};
-const app=initializeApp(cfg);
-const db=getFirestore(app);
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Seed default employees
-async function seed(){
-  const defaults=[
-    {code:"001",name:"Heer Patel",      email:"heer@aga.com",    mobile:"",password:"heerpatel",      approved:true,pendingApproval:false,registered:true},
-    {code:"002",name:"Bhavana Shinde",  email:"bhavana@aga.com", mobile:"",password:"bhavanashinde",  approved:true,pendingApproval:false,registered:true},
-    {code:"003",name:"Moksha Jain",     email:"moksha@aga.com",  mobile:"",password:"mokshajain",     approved:true,pendingApproval:false,registered:true},
-    {code:"004",name:"Dhanisha Solanki",email:"dhanisha@aga.com",mobile:"",password:"dhanishasolanki",approved:true,pendingApproval:false,registered:true},
-    {code:"005",name:"Prapti Padhya",   email:"prapti@aga.com",  mobile:"",password:"praptipadhya",   approved:true,pendingApproval:false,registered:true},
-    {code:"006",name:"Test",            email:"test@aga.com",    mobile:"",password:"test006",            approved:true,pendingApproval:false,registered:true},
+const cfg = { 
+    apiKey: "AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g", 
+    authDomain: "ag-task-assigner.firebaseapp.com", 
+    projectId: "ag-task-assigner" 
+};
+const app = initializeApp(cfg);
+const db = getFirestore(app);
+
+// 1. DATA SEEDING (The 6 Users)
+async function seedDatabase() {
+  const users = [
+    {code:"001", name:"Heer Patel",      password:"heerpatel"},
+    {code:"002", name:"Bhavana Shinde",  password:"bhavanashinde"},
+    {code:"003", name:"Moksha Jain",     password:"mokshajain"},
+    {code:"004", name:"Dhanisha Solanki",password:"dhanishasolanki"},
+    {code:"005", name:"Prapti Padhya",   password:"praptipadhya"},
+    {code:"006", name:"Test",            password:"test006"}
   ];
-  for(const e of defaults) await setDoc(doc(db,"employees",e.code),e);
+  for(const u of users) {
+    await setDoc(doc(db, "employees", u.code), { ...u, approved: true, registered: true });
+  }
 }
 
-onSnapshot(collection(db,"employees"),snap=>{
-  if(snap.empty){seed();return;}
-  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  // If any default employee missing approved field, fix them
-  const needsFix=l.filter(e=>e.approved===undefined&&!e.pendingApproval);
-  needsFix.forEach(async e=>{
-    const fixed={...e,approved:true,pendingApproval:false};
-    await setDoc(doc(db,"employees",e.code||e.id),fixed);
-  });
-  if(window.S){window.S.employees=l;}
-  if(window.R) R();
+// 2. LIVE LISTENERS
+window.S = { user: null, page: 'pg-login', employees: [], tasks: [] };
+
+onSnapshot(collection(db, "employees"), (snap) => {
+  if (snap.empty) { seedDatabase(); }
+  window.S.employees = snap.docs.map(d => d.data());
+  // Automatically update dropdown if we are on the Admin page
+  if (window.S.page === 'pg-admin-dash') renderAdminPage();
 });
-onSnapshot(query(collection(db,"tasks"),orderBy("createdAt","desc")),snap=>{
-  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S) S.tasks=l;
-  if(window.R) R();
-});
-onSnapshot(query(collection(db,"attendance"),orderBy("createdAt","desc")),snap=>{
-  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S) S.attendance=l;
-  if(window.R) R();
-});
-onSnapshot(query(collection(db,"leaves"),orderBy("createdAt","desc")),snap=>{
-  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S){
-    const prev=S.leaves||[];
-    // Notify employee if their leave just got approved
-    if(S.user?.role==="employee"){
-      l.forEach(lv=>{
-        if(lv.empName===S.user.name&&lv.status==="approved"){
-          const was=prev.find(p=>p.id===lv.id);
-          if(was&&was.status!=="approved") toast("🎉 Your leave has been approved!","ok");
-        }
-      });
+
+// Initial Render
+render();
+
+// 3. GLOBAL FUNCTIONS FOR UI
+window.showPage = (p) => { window.S.page = p; render(); };
+
+window.handleLogin = () => {
+    const name = document.getElementById('uName').value.trim();
+    const pass = document.getElementById('uPass').value.trim();
+    
+    // Check Employees
+    const emp = window.S.employees.find(e => 
+        e.name.toLowerCase() === name.toLowerCase() && e.password === pass
+    );
+
+    if (emp) {
+        window.S.user = { ...emp, role: 'employee' };
+        showPage('pg-emp-dash');
+        showToast("Welcome back, " + emp.name, "ok");
+    } else if (name.toLowerCase() === 'boss' && pass === 'aga777') {
+        window.S.user = { name: 'Boss', role: 'admin' };
+        showPage('pg-admin-dash');
+        showToast("Admin access granted", "ok");
+    } else {
+        showToast("Invalid Credentials", "err");
     }
-    S.leaves=l;
-  }
-  if(window.R) R();
-});
-onSnapshot(query(collection(db,"notifications"),orderBy("createdAt","desc")),snap=>{
-  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S) S.notifications=l;
-  if(window.R) R();
-});
-window.FB={
-  saveTask:   async t =>setDoc(doc(db,"tasks",t.id),t),
-  updateTask: async(id,d)=>updateDoc(doc(db,"tasks",id),d),
-  deleteTask: async id =>deleteDoc(doc(db,"tasks",id)),
-  saveEmp:    async e =>setDoc(doc(db,"employees",e.code),e),
-  updateEmp:  async(c,d)=>updateDoc(doc(db,"employees",c),d),
-  deleteEmp:  async c =>deleteDoc(doc(db,"employees",c)),
-  saveAtt:    async a =>setDoc(doc(db,"attendance",a.id),a),
-  saveLeave:  async l =>setDoc(doc(db,"leaves",l.id),l),
-  updateLeave:async(id,d)=>updateDoc(doc(db,"leaves",id),d),
-  saveNotif:  async n =>setDoc(doc(db,"notifications",n.id),n),
-};
-</script>
-
-<script>
-// --- STATE & DATA ---
-const S = {
-  user: null,
-  page: 'pg-login',
-  employees: [],
-  tasks: [],
-  attendance: [],
-  leaves: [],
-  notifications: [],
-  filter: 'all'
 };
 
-// --- LOGIC FUNCTIONS ---
-async function handleEmployeeLogin() {
-  const nameInput = document.getElementById('loginName').value.trim();
-  const passInput = document.getElementById('loginPass').value.trim();
-  
-  if(!nameInput || !passInput) {
-    toast("Please enter both Name and Password", "err");
-    return;
-  }
-
-  const emp = S.employees.find(e => 
-    e.name.toLowerCase() === nameInput.toLowerCase() && 
-    e.password === passInput
-  );
-
-  if (emp) {
-    S.user = { ...emp, role: 'employee' };
-    localStorage.setItem('aga_user', JSON.stringify(S.user));
-    showPage('pg-emp-dash'); 
-    toast("Welcome back, " + emp.name, "ok");
-  } else {
-    toast("Invalid Name or Password", "err");
-  }
+function showToast(m, t) {
+    const el = document.getElementById('toast');
+    el.textContent = m;
+    el.className = "toast " + t;
+    setTimeout(() => { el.className = "toast"; }, 3000);
 }
 
-function showPage(p){ S.page=p; R(); window.scrollTo(0,0); }
-function toast(m,t){
-  const el=document.getElementById("toast");
-  el.textContent=m; el.className="toast show "+(t||"");
-  setTimeout(()=>el.className="toast",3000);
+// 4. RENDER ENGINE
+function render() {
+    const root = document.getElementById('app');
+    if (window.S.page === 'pg-login') {
+        root.innerHTML = `
+            <div class="login-page">
+                <div class="login-logo"><img src="AGA Logo.png" alt="AGA"></div>
+                <h2 style="margin-bottom:5px">AGA TASKS</h2>
+                <p style="color:var(--text2); font-size:13px; margin-bottom:30px">Task Assigner System</p>
+                <div class="f-group">
+                    <label class="f-label">Full Name</label>
+                    <input type="text" id="uName" class="f-input" placeholder="e.g. Heer Patel">
+                </div>
+                <div class="f-group">
+                    <label class="f-label">Password</label>
+                    <input type="password" id="uPass" class="f-input" placeholder="••••••••">
+                </div>
+                <button class="btn btn-green" onclick="handleLogin()">Login</button>
+                <p style="margin-top:20px; font-size:12px; color:var(--text2)">Admin: Use "Boss" / "aga777"</p>
+            </div>
+        `;
+    } else if (window.S.page === 'pg-admin-dash') {
+        renderAdminPage();
+    } else if (window.S.page === 'pg-emp-dash') {
+        root.innerHTML = `
+            <div class="topbar">
+                <h3>Hello, ${window.S.user.name.split(' ')[0]}</h3>
+                <button class="btn btn-accent" style="width:auto; padding:5px 15px" onclick="showPage('pg-login')">Logout</button>
+            </div>
+            <div class="card">
+                <h4>Your Tasks</h4>
+                <p style="color:var(--text2); font-size:13px; margin-top:10px">No tasks assigned yet.</p>
+            </div>
+        `;
+    }
 }
 
-// --- RENDER ENGINE ---
-function R() {
-  const root = document.getElementById('app');
-  if (S.page === 'pg-login') {
-    root.innerHTML = `
-      <div class="login-page">
-        <div class="login-logo"><img src="AGA Logo.png" alt="AGA"></div>
-        <div class="login-title">ACHARYA<br>GEHLOT &amp;<br>ASSOCIATES</div>
-        <div class="login-sub">Task Assigner</div>
-        <div class="login-form">
-          <div class="f-group">
-            <label class="f-label">Full Name</label>
-            <input type="text" id="loginName" class="f-input" placeholder="e.g. Heer Patel">
-          </div>
-          <div class="f-group">
-            <label class="f-label">Password</label>
-            <input type="password" id="loginPass" class="f-input" placeholder="••••••••">
-          </div>
-          <button class="btn btn-green btn-mb" onclick="handleEmployeeLogin()">
-            <span>👤 Login as Employee</span>
-          </button>
-          <div class="or-row"><div class="or-line"></div><div class="or-text">OR</div><div class="or-line"></div></div>
-          <button class="btn btn-accent" onclick="toast('Boss login coming next!','ok')">
-            <span>🔑 Login as Boss</span>
-          </button>
-        </div>
-      </div>
-    `;
-  } else if (S.page === 'pg-emp-dash') {
-    root.innerHTML = `
-      <div class="topbar">
-        <div>
-          <div class="topbar-title">Hello, ${S.user.name.split(' ')[0]}</div>
-          <div class="topbar-sub">Your Workspace</div>
-        </div>
-        <button class="logout-btn" onclick="S.user=null;showPage('pg-login')">Logout</button>
-      </div>
-      <div class="section">
-        <div class="section-title">Your Tasks</div>
-        <div class="card">Tasks list will appear here...</div>
-      </div>
-    `;
-  }
-}
-
-// Initial Run
-window.R = R;
-R();
-</script>
-</body>
-</html>
+function renderAdminPage() {
+    const root = document.getElementById('app');
+    // Generate the
