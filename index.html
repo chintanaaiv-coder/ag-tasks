@@ -115,4 +115,19 @@
     <script>
         function nav(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-            document.getElementById(id).classList.add
+            document.getElementById(id).classList.add('active-screen');
+        }
+        function checkPartner() {
+            const p = document.getElementById('p-pass').value;
+            if(p === "Partner@AG2026") { nav('screen-dash'); }
+            else { alert("Wrong Password"); }
+        }
+        function openM(id) { document.getElementById(id).style.display = 'block'; }
+        function closeM() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        function doExport() {
+            alert("Generating Attendance Excel for selected dates...");
+            closeM();
+        }
+    </script>
+</body>
+</html>
