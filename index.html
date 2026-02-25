@@ -3,41 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AGA Tasks - Partner Pro</title>
+    <title>AGA Tasks</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0b0e14; --card: #151923; --border: #1e2533;
             --accent-blue: #5c7cfa; --accent-green: #10b981;
-            --high: #ff4d4d; --medium: #f39c12; --pending: #e67e22;
-            --text-main: #ffffff; --text-dim: #717b91;
+            --high: #ff4d4d; --text-main: #ffffff; --text-dim: #717b91;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
-        .app-container { width: 100%; max-width: 420px; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
+        .container { width: 100%; max-width: 400px; margin: 0 auto; padding: 40px 25px; text-align: center; }
+        
+        /* COMMON STYLES */
+        .logo-box { width: 100px; height: 100px; background: #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; border: 1px solid #333; }
+        .brand-name { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 5px; text-transform: uppercase; }
+        .app-title { font-size: 16px; color: var(--text-dim); margin-bottom: 40px; }
+        .f-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; color: white; margin-bottom: 15px; outline: none; }
+        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
 
-        /* HEADER */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: 10px; }
-        .greeting h2 { font-family: 'Syne', sans-serif; font-size: 22px; }
-        .logout-btn { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; }
+        /* SCREEN CONTROL */
+        .screen { display: none; }
+        .active-screen { display: block; }
 
-        /* QUICK ACTIONS */
+        /* DASHBOARD SPECIFIC */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-bottom: 2px solid transparent; }
-        .action-btn label { font-size: 11px; font-weight: 700; color: #cbd5e1; cursor: pointer; }
-        .btn-team { border-color: #3b82f6; }
-        .btn-anal { border-color: #8b5cf6; }
+        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; cursor: pointer; border-bottom: 2px solid var(--accent-blue); text-align: left; }
+        .attendance-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: left; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:100; padding:20px; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; margin-top: 50px; }
+    </style>
+</head>
+<body>
 
-        /* EMPLOYEE ATTENDANCE CARD */
-        .attendance-card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 20px; }
-        .att-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .att-title { font-size: 13px; font-weight: 700; color: var(--accent-green); display: flex; align-items: center; gap: 6px; }
-        .export-link { font-size: 11px; color: var(--accent-blue); font-weight: bold; cursor: pointer; text-decoration: underline; }
-        .att-status-box { background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 10px; font-size: 12px; text-align: center; color: var(--text-dim); border: 1px dashed rgba(16,185,129,0.2); }
+    <div class="container">
+        
+        <div id="screen-main" class="screen active-screen">
+            <div class="logo-box">
+                <svg viewBox="0 0 100 100" width="60"><path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/></svg>
+            </div>
+            <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
+            <p class="app-title">Task Assigner</p>
+            <input type="text" class="f-input" placeholder="Employee Name">
+            <input type="password" class="f-input" placeholder="Password">
+            <button class="btn" style="background:var(--accent-green); color:#000;">👤 Login as Employee</button>
+            <div style="margin: 20px 0; color: var(--text-dim); font-size: 12px;">OR</div>
+            <button class="btn" style="background:var(--accent-blue); color:white;" onclick="nav('screen-partner-login')">G Login as Partner</button>
+        </div>
 
-        /* MODALS */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding: 30px; }
-        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        .modal h3 { font-family: 'Syne'; margin-bottom: 15px; font-size: 18px; color: var(--accent-blue); }
-        label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; margin-top: 10px; margin-bottom: 5px; }
-        input[type="date"], input[type="password"] { width: 100%; padding: 12px; background: var(--bg); border:
+        <div id="screen-partner-login" class="screen">
+            <h1 class="brand-name">Partner Login</h1>
+            <p class="app-title">Secure Access</p>
+            <input type="text" class="f-input" value="chintan@acharyagehlot.com" readonly style="color:var(--accent-blue); font-weight:bold;">
+            <input type="password" id="p-pass" class="f-input" placeholder="Enter Partner Password">
+            <button class="btn" style="background:var(--accent-blue); color:white;" onclick="checkPartner()">Sign In</button>
+            <p style="color:var(--accent-blue); font-size:12px; cursor:pointer;" onclick="alert('Password reset link sent to chintan@acharyagehlot.com')">Change Password?</p>
+            <button class="btn" style="background:transparent; color:var(--text-dim); margin-top:10px;" onclick="nav('screen-main')">← Back</button>
+        </div>
+
+        <div id="screen-dash" class="screen" style="text-align: left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="font-family:'Syne';">Hello, Chintan</h2>
+                <button onclick="location.reload()" style="background:#ff4d4d; border:none; color:white; padding:5px 10px; border-radius:5px;">Logout</button>
+            </div>
+
+            <div class="action-grid">
+                <div class="action-btn" onclick="openM('teamM')"><span>👥</span> <label>Manage Team</label></div>
+                <div class="action-btn" onclick="openM('analM')"><span>📈</span> <label>Task Analysis</label></div>
+            </div>
+
+            <div class="attendance-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="color:var(--accent-green); font-weight:bold;">Employee Attendance</span>
+                    <span style="color:var(--accent-blue); font-size:11px; cursor:pointer;" onclick="openM('expM')">Export Excel</span>
+                </div>
+                <p style="font-size:12px; color:var(--text-dim);">All employees are currently active.</p>
+            </div>
+
+            <h3 style="font-size:12px; color:var(--text-dim); text-transform:uppercase; margin-bottom:10px;">Ongoing Tasks</h3>
+            <div style="background:var(--card); padding:15px; border-radius:15px; border:1px solid var(--border);">
+                <div style="background:var(--high); font-size:9px; padding:2px 8px; border-radius:10px; display:inline-block; margin-bottom:5px;">HIGH</div>
+                <div style="font-weight:bold;">Hotel Sunrise Pvt Ltd</div>
+                <div style="font-size:12px; color:var(--accent-blue);">👤 Heer Patel</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="expM" class="modal"><div class="modal-content">
+        <h3>Export Attendance</h3>
+        <input type="date" id="s1"> <input type="date" id="e1">
+        <button class="btn" style="background:var(--accent-green);" onclick="doExport()">Download Excel</button>
+        <button class="btn" onclick="closeM()">Cancel</button>
+    </div></div>
+
+    <div id="analM" class="modal"><div class="modal-content">
+        <h3>Task Analysis</h3>
+        <input type="date"> <input type="date">
+        <button class="btn" style="background:var(--accent-blue); color:white;" onclick="alert('Report mailed to chintan@acharyagehlot.com')">Email Analysis</button>
+        <button class="btn" onclick="closeM()">Cancel</button>
+    </div></div>
+
+    <div id="teamM" class="modal"><div class="modal-content">
+        <h3>Manage Team</h3>
+        <p style="font-size:12px; margin-bottom:10px;">New Requests: None</p>
+        <div style="display:flex; justify-content:space-between; background:var(--bg); padding:10px; border-radius:10px;">
+            <span>Heer Patel</span> <span style="color:red; cursor:pointer;">Delete</span>
+        </div>
+        <button class="btn" style="margin-top:20px;" onclick="closeM()">Close</button>
+    </div></div>
+
+    <script>
+        function nav(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            document.getElementById(id).classList.add
