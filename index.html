@@ -513,10 +513,9 @@ function buildLogin(){
     <div style="height:1px;background:var(--border);margin:14px 0;"></div>
     <div class="sec-label">Employee Login</div>
     <div class="f-label">Your Name</div>
-    <input class="f-inp" type="text" placeholder="Enter your full name" value="${state.f.empName||''}" oninput="state.f.empName=this.value"/>
+    <input class="f-inp" type="text" id="empNameInput" placeholder="Enter your full name"/>
     <div class="f-label">Password</div>
-    <input class="f-inp" type="password" placeholder="Enter password" value="${state.f.empPass}"
-      oninput="state.f.empPass=this.value"
+    <input class="f-inp" type="password" id="empPassInput" placeholder="Enter password"
       onkeydown="if(event.key==='Enter')doEmpLogin()"/>
     <div class="forgot-link"><a onclick="goForgot(\'employee\')">Forgot Password?</a></div>
     <button class="app-btn btn-emp" onclick="doEmpLogin()">\ud83d\udc64 Login as Employee</button>
@@ -530,8 +529,10 @@ function buildLogin(){
 }
 
 function doEmpLogin(){
-  const name=(state.f.empName||"").trim();
-  const pass=(state.f.empPass||"").trim();
+  const nameInp=document.getElementById("empNameInput");
+  const passInp=document.getElementById("empPassInput");
+  const name=nameInp?(nameInp.value||"").trim():(state.f.empName||"").trim();
+  const pass=passInp?(passInp.value||"").trim():(state.f.empPass||"").trim();
   if(!name){toast("Enter your name",true);return;}
   if(!pass){toast("Enter password",true);return;}
   const emp=state.employees.find(e=>e.name.trim().toLowerCase()===name.toLowerCase());
@@ -559,8 +560,7 @@ function buildPartnerLogin(){
     <div class="f-label">Email</div>
     <div class="f-inp" style="color:var(--accent);font-weight:600;cursor:default;">chintan@acharyagehlot.com</div>
     <div class="f-label">Password</div>
-    <input class="f-inp" type="password" placeholder="Enter partner password" value="${state.f.partnerPass||''}"
-      oninput="state.f.partnerPass=this.value"
+    <input class="f-inp" type="password" id="partnerPassInput" placeholder="Enter partner password"
       onkeydown="if(event.key==='Enter')doPartnerLogin()"/>
     <div class="forgot-link"><a onclick="navigate('login','back')">← Back to Employee Login</a></div>
     <button class="app-btn btn-boss" onclick="doPartnerLogin()">🔐 Sign In as Partner</button>
@@ -571,7 +571,8 @@ function buildPartnerLogin(){
 }
 
 function doPartnerLogin(){
-  const pass=(state.f.partnerPass||"").trim();
+  const inp=document.getElementById("partnerPassInput");
+  const pass=inp?(inp.value||"").trim():(state.f.partnerPass||"").trim();
   if(!pass){toast("Enter password",true);return;}
   if(pass!=="Partner@AG2026"){toast("Incorrect password",true);log("❌ Wrong partner password","error");return;}
   state.user={name:"Chintan",role:"boss"};
