@@ -3,39 +3,51 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<title>AGA Tasks - Task Assigner</title>
+<title>AGA Tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ═══════════════════════════════════════
-   THEME & STYLES (Simplified for Stability)
+   YOUR ORIGINAL PREMIUM DESIGN
 ═══════════════════════════════════════ */
 :root {
-  --bg: #0a0d16; --surface: #111827; --card: #1a2235; --border: #2a3550;
-  --accent: #6366f1; --green: #10b981; --red: #ef4444; --text: #f1f5f9; --text2: #94a3b8;
+  --bg: #0a0d16; --surface: #111827; --card: #1a2235; --card2: #1e2a3a;
+  --border: #2a3550; --accent: #6366f1; --accent2: #818cf8; --green: #10b981;
+  --red: #ef4444; --yellow: #f59e0b; --cyan: #06b6d4; --text: #f1f5f9;
+  --text2: #94a3b8; --text3: #64748b;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: "Inter", sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
-#app { max-width: 430px; margin: 0 auto; min-height: 100vh; padding: 20px; }
+html, body { height: 100%; font-family: "Inter", sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+#app { min-height: 100vh; max-width: 430px; margin: 0 auto; position: relative; background: var(--bg); }
 
-/* LOGIN UI */
-.login-page { display: flex; flex-direction: column; align-items: center; padding-top: 40px; }
-.login-logo { width: 80px; height: 80px; background: #fff; border-radius: 15px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.login-logo img { width: 90%; height: 90%; object-fit: contain; }
-.f-group { width: 100%; margin-bottom: 15px; }
-.f-label { display: block; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; margin-bottom: 5px; }
-.f-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); color: #fff; font-size: 14px; outline: none; }
-.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-.btn-green { background: var(--green); color: #fff; }
+/* TOPBAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 12px; background: var(--bg); position: sticky; top: 0; z-index: 50; }
+.topbar-title { font-size: 22px; font-weight: 800; color: var(--text); }
+.topbar-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* LOGIN PAGE */
+.login-page { min-height: 100vh; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; }
+.login-logo { width: 72px; height: 72px; margin-bottom: 16px; background: #fff; border-radius: 16px; padding: 8px; display: flex; align-items: center; justify-content: center; }
+.login-logo img { width: 100%; height: 100%; object-fit: contain; }
+.login-title { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: var(--text2); text-align: center; margin-bottom: 32px; }
+
+/* FORM ELEMENTS */
+.f-group { margin-bottom: 14px; width: 100%; }
+.f-label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+.f-input { width: 100%; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; font-size: 14px; color: var(--text); font-family: "Inter", sans-serif; outline: none; }
+
+/* BUTTONS */
+.btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; }
 .btn-accent { background: var(--accent); color: #fff; }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); margin-top: 20px; }
+.btn-green { background: var(--green); color: #fff; }
 
-/* DASHBOARD UI */
-.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.card { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 15px; margin-bottom: 15px; }
-.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 10px; font-size: 13px; z-index: 1000; display: none; }
-.toast.ok { background: var(--green); color: #fff; display: block; }
-.toast.err { background: var(--red); color: #fff; display: block; }
+/* CARDS */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; }
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 11px 20px; font-size: 13px; z-index: 500; display: none; }
+.toast.show { display: block; }
+.toast.ok { border-color: var(--green); color: var(--green); }
+.toast.err { border-color: var(--red); color: var(--red); }
 </style>
 </head>
 <body>
@@ -45,113 +57,15 @@ body { font-family: "Inter", sans-serif; background: var(--bg); color: var(--tex
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const cfg = { 
-    apiKey: "AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g", 
-    authDomain: "ag-task-assigner.firebaseapp.com", 
-    projectId: "ag-task-assigner" 
-};
+const cfg = { apiKey: "AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g", authDomain: "ag-task-assigner.firebaseapp.com", projectId: "ag-task-assigner" };
 const app = initializeApp(cfg);
 const db = getFirestore(app);
 
-// 1. DATA SEEDING (The 6 Users)
-async function seedDatabase() {
-  const users = [
-    {code:"001", name:"Heer Patel",      password:"heerpatel"},
-    {code:"002", name:"Bhavana Shinde",  password:"bhavanashinde"},
-    {code:"003", name:"Moksha Jain",     password:"mokshajain"},
-    {code:"004", name:"Dhanisha Solanki",password:"dhanishasolanki"},
-    {code:"005", name:"Prapti Padhya",   password:"praptipadhya"},
-    {code:"006", name:"Test",            password:"test006"}
-  ];
-  for(const u of users) {
-    await setDoc(doc(db, "employees", u.code), { ...u, approved: true, registered: true });
-  }
-}
-
-// 2. LIVE LISTENERS
-window.S = { user: null, page: 'pg-login', employees: [], tasks: [] };
-
-onSnapshot(collection(db, "employees"), (snap) => {
-  if (snap.empty) { seedDatabase(); }
-  window.S.employees = snap.docs.map(d => d.data());
-  // Automatically update dropdown if we are on the Admin page
-  if (window.S.page === 'pg-admin-dash') renderAdminPage();
-});
-
-// Initial Render
-render();
-
-// 3. GLOBAL FUNCTIONS FOR UI
-window.showPage = (p) => { window.S.page = p; render(); };
-
-window.handleLogin = () => {
-    const name = document.getElementById('uName').value.trim();
-    const pass = document.getElementById('uPass').value.trim();
-    
-    // Check Employees
-    const emp = window.S.employees.find(e => 
-        e.name.toLowerCase() === name.toLowerCase() && e.password === pass
-    );
-
-    if (emp) {
-        window.S.user = { ...emp, role: 'employee' };
-        showPage('pg-emp-dash');
-        showToast("Welcome back, " + emp.name, "ok");
-    } else if (name.toLowerCase() === 'boss' && pass === 'aga777') {
-        window.S.user = { name: 'Boss', role: 'admin' };
-        showPage('pg-admin-dash');
-        showToast("Admin access granted", "ok");
-    } else {
-        showToast("Invalid Credentials", "err");
-    }
-};
-
-function showToast(m, t) {
-    const el = document.getElementById('toast');
-    el.textContent = m;
-    el.className = "toast " + t;
-    setTimeout(() => { el.className = "toast"; }, 3000);
-}
-
-// 4. RENDER ENGINE
-function render() {
-    const root = document.getElementById('app');
-    if (window.S.page === 'pg-login') {
-        root.innerHTML = `
-            <div class="login-page">
-                <div class="login-logo"><img src="AGA Logo.png" alt="AGA"></div>
-                <h2 style="margin-bottom:5px">AGA TASKS</h2>
-                <p style="color:var(--text2); font-size:13px; margin-bottom:30px">Task Assigner System</p>
-                <div class="f-group">
-                    <label class="f-label">Full Name</label>
-                    <input type="text" id="uName" class="f-input" placeholder="e.g. Heer Patel">
-                </div>
-                <div class="f-group">
-                    <label class="f-label">Password</label>
-                    <input type="password" id="uPass" class="f-input" placeholder="••••••••">
-                </div>
-                <button class="btn btn-green" onclick="handleLogin()">Login</button>
-                <p style="margin-top:20px; font-size:12px; color:var(--text2)">Admin: Use "Boss" / "aga777"</p>
-            </div>
-        `;
-    } else if (window.S.page === 'pg-admin-dash') {
-        renderAdminPage();
-    } else if (window.S.page === 'pg-emp-dash') {
-        root.innerHTML = `
-            <div class="topbar">
-                <h3>Hello, ${window.S.user.name.split(' ')[0]}</h3>
-                <button class="btn btn-accent" style="width:auto; padding:5px 15px" onclick="showPage('pg-login')">Logout</button>
-            </div>
-            <div class="card">
-                <h4>Your Tasks</h4>
-                <p style="color:var(--text2); font-size:13px; margin-top:10px">No tasks assigned yet.</p>
-            </div>
-        `;
-    }
-}
-
-function renderAdminPage() {
-    const root = document.getElementById('app');
-    // Generate the
+// SEED DATA - Names as Passwords
+async function seed(){
+  const defaults=[
+    {code:"001", name:"Heer Patel", password:"heerpatel"},
+    {code:"002", name:"Bhavana Shinde", password:"bhavanashinde"},
+    {code:"003", name
