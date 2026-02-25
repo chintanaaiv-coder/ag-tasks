@@ -1,99 +1,281 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AGA Master</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AGA Tasks - Master Design</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
-        body { background: #0b0e14; color: white; font-family: sans-serif; padding: 20px; }
-        .page { display: none; max-width: 400px; margin: 0 auto; }
-        .active { display: block; }
-        .box { background: #151923; border: 1px solid #1e2533; padding: 20px; border-radius: 15px; margin-bottom: 10px; }
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #1e2533; background: #000; color: white; }
-        button { width: 100%; padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        .blue { background: #5c7cfa; color: white; }
-        .green { background: #10b981; color: black; }
-        .red { background: #ff4d4d; color: white; }
+        :root {
+            --bg-dark: #0b0e14;
+            --input-bg: #151923;
+            --input-border: #1e2533;
+            --accent-green: #10b981;
+            --accent-blue: #5c7cfa;
+            --text-dim: #717b91;
+            --error-red: #ff4d4d;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 414px;
+            padding: 40px 25px;
+            position: relative;
+        }
+
+        /* LOGO & BRANDING */
+        .logo-wrapper {
+            width: 100px;
+            height: 100px;
+            background: #000;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #333;
+        }
+
+        .brand-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.1;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .task-assigner {
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+        }
+
+        /* SCREENS */
+        .screen { display: none; }
+        .active-screen { display: block !important; }
+
+        /* FORM ELEMENTS */
+        .login-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .field-group { margin-bottom: 15px; text-align: left; }
+        .field-label { font-size: 14px; color: #cbd5e1; margin-bottom: 8px; display: block; }
+        
+        .f-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .forgot-pass {
+            text-align: right;
+            font-size: 12px;
+            color: var(--accent-blue);
+            margin-top: 10px;
+            cursor: pointer;
+        }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 25px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-emp { background: var(--accent-green); color: #000; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2); }
+        .btn-partner { background: var(--accent-blue); color: white; margin-top: 10px; }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-dim);
+            margin: 30px 0;
+            font-size: 12px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--input-border);
+        }
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+
+        .register-text {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-top: 15px;
+        }
+        .register-link { color: var(--accent-blue); cursor: pointer; text-decoration: none; }
+
+        /* DASHBOARD - MATCHING IMAGE 331F02 */
+        .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .logout-btn { background: var(--error-red); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; }
+        
+        .attendance-banner {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            color: var(--accent-green);
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <div id="p1" class="page active">
-        <h1 style="text-align:center;">AGA TASKS</h1>
-        <div class="box">
-            <input type="text" placeholder="Employee Name">
-            <input type="password" placeholder="Password">
-            <button class="green">Employee Login</button>
-            <hr style="margin: 20px 0; opacity: 0.2;">
-            <button class="blue" onclick="go(2)">Login as Partner</button>
-        </div>
-    </div>
-
-    <div id="p2" class="page">
-        <h1>Partner Login</h1>
-        <div class="box">
-            <p>chintan@acharyagehlot.com</p>
-            <input type="password" id="pass" placeholder="Enter Password">
-            <button class="blue" onclick="check()">Sign In</button>
-            <button style="background:none; color:gray;" onclick="go(1)">← Back</button>
-        </div>
-    </div>
-
-    <div id="p3" class="page">
-        <div style="display:flex; justify-content:space-between;">
-            <h2>Hello, Chintan</h2>
-            <button class="red" style="width:auto; padding:5px 10px;" onclick="location.reload()">Logout</button>
-        </div>
+    <div class="phone-container">
         
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="box" onclick="openM('mTeam')">Manage Team</button>
-            <button class="box" onclick="openM('mAnal')">Task Analysis</button>
-        </div>
-
-        <div class="box">
-            <div style="display:flex; justify-content:space-between;">
-                <b style="color:#10b981;">Attendance</b>
-                <span style="color:#5c7cfa; text-decoration:underline; cursor:pointer;" onclick="openM('mExp')">Export Excel</span>
+        <div id="screen-landing" class="screen active-screen">
+            <div class="logo-wrapper">
+                <svg viewBox="0 0 100 100" width="60">
+                    <path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/>
+                </svg>
             </div>
-            <p style="color:gray; font-size:12px; margin-top:10px;">No employees active.</p>
-        </div>
-    </div>
+            <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
+            <p class="task-assigner">Task Assigner</p>
 
-    <div id="mExp" class="page" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); padding:20px;">
-        <div class="box" style="margin-top:50px;">
-            <h3>Export Data</h3>
-            <input type="date"> <input type="date">
-            <button class="green" onclick="alert('Exporting...'); closeM()">Download CSV</button>
-            <button class="red" onclick="closeM()">Cancel</button>
-        </div>
-    </div>
-
-    <div id="mTeam" class="page" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); padding:20px;">
-        <div class="box" style="margin-top:50px;">
-            <h3>Manage Team</h3>
-            <div id="req1" style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span>new.staff@aga.com</span>
-                <button style="width:auto; padding:2px 10px;" class="green" onclick="if(confirm('Approve?')){document.getElementById('req1').innerHTML='Approved';}">Approve</button>
+            <span class="login-label">Employee Login</span>
+            
+            <div class="field-group">
+                <label class="field-label">Your Name</label>
+                <input type="text" class="f-input" placeholder="Enter your full name">
             </div>
-            <button class="blue" onclick="closeM()">Close</button>
+
+            <div class="field-group">
+                <label class="field-label">Password</label>
+                <input type="password" class="f-input" placeholder="Enter password">
+                <div class="forgot-pass">Forgot Password?</div>
+            </div>
+
+            <button class="btn btn-emp">👤 Login as Employee</button>
+            
+            <p class="register-text">New employee? <span class="register-link">Register here →</span></p>
+
+            <div class="divider">OR</div>
+
+            <button class="btn btn-partner" onclick="nav('screen-partner-login')">
+                <span style="background:white; color:black; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">G</span> Login as Partner
+            </button>
         </div>
+
+        <div id="screen-partner-login" class="screen">
+            <div class="logo-wrapper">
+                <svg viewBox="0 0 100 100" width="60">
+                    <path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/>
+                </svg>
+            </div>
+            <h1 class="brand-name">Partner Login</h1>
+            <p class="task-assigner" style="margin-bottom:20px;">Acharya Gehlot & Associates</p>
+
+            <div class="field-group">
+                <label class="field-label">Email</label>
+                <input type="text" class="f-input" value="chintan@acharyagehlot.com" readonly style="color:var(--accent-blue); font-weight:600;">
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Password</label>
+                <input type="password" id="p-pass" class="f-input" placeholder="••••••••••••">
+                <div class="forgot-pass">Forgot Password?</div>
+            </div>
+
+            <button class="btn btn-partner" onclick="checkPartner()">
+                <span style="background:white; color:black; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">G</span> Sign In as Partner
+            </button>
+            
+            <button class="btn" style="background:transparent; color:var(--text-dim); border: 1px solid var(--input-border);" onclick="nav('screen-landing')">← Back</button>
+        </div>
+
+        <div id="screen-dash" class="screen">
+            <div class="dash-header">
+                <div>
+                    <h2 style="font-family:'Syne';">Hello, Chintan</h2>
+                    <p style="color:var(--text-dim); font-size:12px;">Partner Dashboard</p>
+                </div>
+                <button class="logout-btn" onclick="location.reload()">Logout</button>
+            </div>
+
+            <div class="attendance-banner" onclick="alert('Manage Team logic here')">
+                📊 Attendance Report / Manage Team
+            </div>
+
+            <div style="background:var(--input-bg); padding:20px; border-radius:15px; margin-bottom:20px; position:relative;">
+                <h1 style="font-family:'Syne'; font-size:40px; color:var(--accent-blue);">3</h1>
+                <p style="color:var(--text-dim);">Pending Tasks</p>
+                <span style="position:absolute; right:20px; top:20px; opacity:0.3; font-size:30px;">📌</span>
+            </div>
+
+            <div style="background:var(--input-bg); border:1px solid var(--input-border); border-radius:20px; padding:20px; margin-bottom:15px;">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <span style="background:var(--error-red); font-size:10px; font-weight:bold; padding:4px 10px; border-radius:10px;">HIGH</span>
+                    <span style="background:#e67e22; font-size:10px; font-weight:bold; padding:4px 10px; border-radius:10px;">Pending</span>
+                </div>
+                <h3 style="margin-bottom:5px;">Hotel Sunrise Pvt Ltd</h3>
+                <p style="font-size:12px; color:var(--text-dim);">GST Annual Return — FY 2024-25</p>
+                <div style="margin-top:10px; font-size:12px; color:var(--accent-blue);">👤 Heer Patel</div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        function go(num) {
-            document.getElementById('p1').style.display = 'none';
-            document.getElementById('p2').style.display = 'none';
-            document.getElementById('p3').style.display = 'none';
-            document.getElementById('p' + num).style.display = 'block';
+        // Use direct ID navigation for absolute stability
+        function nav(screenId) {
+            // Hide everything first
+            document.getElementById('screen-landing').style.display = 'none';
+            document.getElementById('screen-partner-login').style.display = 'none';
+            document.getElementById('screen-dash').style.display = 'none';
+            
+            // Show the one we want
+            document.getElementById(screenId).style.display = 'block';
         }
-        function check() {
-            var p = document.getElementById('pass').value;
-            if(p === "Partner@AG2026") { go(3); } 
-            else { alert("Wrong Password"); }
-        }
-        function openM(id) { document.getElementById(id).style.display = 'block'; }
-        function closeM() { 
-            document.getElementById('mExp').style.display = 'none';
-            document.getElementById('mTeam').style.display = 'none';
+
+        function checkPartner() {
+            const p = document.getElementById('p-pass').value;
+            // Using the password we set previously
+            if(p === "Partner@AG2026") {
+                nav('screen-dash');
+            } else {
+                alert("Incorrect Password");
+            }
         }
     </script>
 </body>
