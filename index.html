@@ -3,22 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AGA Tasks - Partner</title>
+    <title>AGA Tasks - Partner Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0b0e14;
-            --card: #151923;
-            --border: #1e2533;
-            --accent-blue: #5c7cfa;
-            --accent-green: #10b981;
-            --high: #ff4d4d;
-            --medium: #f39c12;
-            --pending: #e67e22;
-            --text-main: #ffffff;
-            --text-dim: #717b91;
+            --bg: #0b0e14; --card: #151923; --border: #1e2533;
+            --accent-blue: #5c7cfa; --accent-green: #10b981;
+            --high: #ff4d4d; --medium: #f39c12; --pending: #e67e22;
+            --text-main: #ffffff; --text-dim: #717b91;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
         .app-container { width: 100%; max-width: 420px; margin: 0 auto; padding: 15px; padding-bottom: 100px; }
@@ -26,150 +19,163 @@
         /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-top: 10px; }
         .greeting h2 { font-family: 'Syne', sans-serif; font-size: 22px; }
-        .greeting p { color: var(--accent-blue); font-size: 12px; font-weight: 500; }
         .logout-btn { background: #ff4d4d; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; }
 
-        /* MINI QUICK ACTIONS - FIXED HEIGHT */
+        /* QUICK ACTIONS */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .action-btn { 
-            background: var(--card); 
-            border: 1px solid var(--border); 
-            padding: 10px 12px; 
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            gap: 8px;
-            cursor: pointer;
-        }
-        .action-btn span { font-size: 14px; }
-        .action-btn label { font-size: 11px; font-weight: 700; color: #cbd5e1; cursor: pointer; white-space: nowrap; }
+        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .action-btn label { font-size: 11px; font-weight: 700; color: #cbd5e1; cursor: pointer; }
 
-        /* COMPACT ATTENDANCE BAR */
-        .attendance-bar { width: 100%; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 10px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-green); font-size: 12px; font-weight: bold; margin-bottom: 15px; cursor: pointer; }
+        /* ATTENDANCE & EXPORT */
+        .attendance-section { margin-bottom: 15px; }
+        .attendance-bar { width: 100%; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 12px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--accent-green); font-size: 12px; font-weight: bold; cursor: pointer; }
+        .export-btn { width: 100%; margin-top: 5px; background: transparent; border: 1px dashed var(--border); color: var(--text-dim); padding: 8px; font-size: 10px; border-radius: 8px; cursor: pointer; }
 
-        /* RESIZED PENDING STATS (SLIM STRIP) */
-        .compact-stats { 
-            background: var(--card); 
-            border-radius: 12px; 
-            padding: 10px 15px; 
-            margin-bottom: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--accent-blue);
-        }
-        .stat-info { display: flex; align-items: baseline; gap: 6px; }
-        .stat-num { font-family: 'Syne', sans-serif; font-size: 20px; color: var(--accent-blue); }
-        .stat-label { color: var(--text-dim); font-size: 12px; font-weight: 500; }
+        /* MODALS (Forms) */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; padding: 30px; }
+        .modal-content { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border); }
+        .modal h3 { font-family: 'Syne'; margin-bottom: 15px; }
+        input[type="date"], input[type="password"] { width: 100%; padding: 12px; margin-bottom: 10px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 10px; }
+        .modal-btn { width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
         /* TASK CARDS */
         .task-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 10px; }
-        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .badges { display: flex; gap: 6px; }
         .badge { font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; }
         .badge-high { background: var(--high); color: white; }
-        .badge-medium { background: var(--medium); color: white; }
-        .badge-status { background: rgba(230, 126, 34, 0.15); color: var(--pending); }
-        
         .client-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-        .task-desc { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
-        .task-meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-dim); padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 8px; }
         .assignee { font-size: 12px; color: var(--accent-blue); font-weight: 600; }
 
-        /* FAB */
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--accent-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; box-shadow: 0 5px 15px rgba(92, 124, 250, 0.3); border: none; cursor: pointer; }
+        /* MANAGE TEAM LIST */
+        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: var(--bg); margin-bottom: 5px; border-radius: 8px; }
+        .del-btn { color: var(--high); font-size: 18px; border: none; background: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <div class="header">
-            <div class="greeting">
-                <h2>Hello, Chintan</h2>
-                <p>Partner Dashboard</p>
-            </div>
-            <button class="logout-btn" onclick="location.reload()">Logout</button>
-        </div>
-
-        <div class="action-grid">
-            <div class="action-btn" style="border-bottom: 2px solid #3b82f6;">
-                <span>👥</span>
-                <label>Manage Team</label>
-            </div>
-            <div class="action-btn" style="border-bottom: 2px solid #8b5cf6;">
-                <span>📈</span>
-                <label>Task Analysis</label>
-            </div>
-        </div>
-
-        <div class="attendance-bar">
-            📊 Attendance Report
-        </div>
-
-        <div class="compact-stats">
-            <div class="stat-info">
-                <span class="stat-num">3</span>
-                <span class="stat-label">Pending Tasks</span>
-            </div>
-            <span style="opacity:0.3">📌</span>
-        </div>
-
-        <h3 style="font-family:'Syne'; font-size:13px; margin-bottom:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px;">Ongoing Tasks</h3>
-
-        <div class="task-card">
-            <div class="task-header">
-                <div class="badges">
-                    <span class="badge badge-high">High</span>
-                    <span class="badge badge-status">Pending</span>
+        <div id="dashboard">
+            <div class="header">
+                <div class="greeting">
+                    <h2>Hello, Chintan</h2>
+                    <p style="color:var(--accent-blue); font-size:12px;">Partner Dashboard</p>
                 </div>
-                <div style="opacity: 0.5; font-size:12px;">✏️ 🗑️</div>
+                <button class="logout-btn" onclick="location.reload()">Logout</button>
             </div>
-            <div class="client-name">Hotel Sunrise Pvt Ltd</div>
-            <div class="task-desc">GST Annual Return — FY 2024-25</div>
-            <div class="task-meta">
-                <span>📂 GST</span>
-                <span>📅 Feb 28</span>
-            </div>
-            <div class="assignee">👤 Heer Patel</div>
-        </div>
 
-        <div class="task-card">
-            <div class="task-header">
-                <div class="badges">
-                    <span class="badge badge-medium">Medium</span>
-                    <span class="badge badge-status">Pending</span>
+            <div class="action-grid">
+                <div class="action-btn" onclick="openModal('teamModal')">
+                    <span>👥</span><label>Manage Team</label>
                 </div>
-                <div style="opacity: 0.5; font-size:12px;">✏️ 🗑️</div>
-            </div>
-            <div class="client-name">ABC Manufacturing Co</div>
-            <div class="task-desc">TDS Return Q3 — Form 26Q</div>
-            <div class="task-meta">
-                <span>📂 Income Tax</span>
-                <span>📅 Mar 15</span>
-            </div>
-            <div class="assignee">👤 Bhavana Shinde</div>
-        </div>
-
-        <div class="task-card">
-            <div class="task-header">
-                <div class="badges">
-                    <span class="badge badge-high">High</span>
-                    <span class="badge badge-status">Pending</span>
+                <div class="action-btn" onclick="openModal('analysisModal')">
+                    <span>📈</span><label>Task Analysis</label>
                 </div>
-                <div style="opacity: 0.5; font-size:12px;">✏️ 🗑️</div>
             </div>
-            <div class="client-name">Reliance Industries</div>
-            <div class="task-desc">Tax Audit Submission</div>
-            <div class="task-meta">
-                <span>📂 Audit</span>
-                <span>📅 Mar 10</span>
-            </div>
-            <div class="assignee">👤 Chintan</div>
-        </div>
 
-        <button class="fab">+</button>
+            <div class="attendance-section">
+                <div class="attendance-bar">📊 Live Attendance View</div>
+                <button class="export-btn" onclick="openModal('exportModal')">📥 Export Excel Attendance Logs</button>
+            </div>
+
+            <button class="export-btn" style="border-color:var(--accent-blue); color:var(--accent-blue); margin-bottom:15px;" onclick="openModal('passModal')">🔑 Change Partner Password</button>
+
+            <h3 style="font-family:'Syne'; font-size:13px; margin-bottom:10px; color:var(--text-dim); text-transform:uppercase;">Ongoing Tasks</h3>
+            
+            <div id="taskContainer">
+                <div class="task-card">
+                    <div class="badge badge-high">High</div>
+                    <div class="client-name">Hotel Sunrise Pvt Ltd</div>
+                    <div class="assignee">👤 Heer Patel</div>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <h3>Export Attendance</h3>
+            <label style="font-size:12px; color:var(--text-dim);">From Date</label>
+            <input type="date" id="attStart">
+            <label style="font-size:12px; color:var(--text-dim);">To Date</label>
+            <input type="date" id="attEnd">
+            <button class="modal-btn" style="background:var(--accent-green); color:black;" onclick="exportAttendance()">Generate & Download CSV</button>
+            <button class="modal-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="analysisModal" class="modal">
+        <div class="modal-content">
+            <h3>Task Analysis</h3>
+            <input type="date" id="analStart">
+            <input type="date" id="analEnd">
+            <button class="modal-btn" style="background:var(--accent-blue); color:white;" onclick="runAnalysis()">Generate Report</button>
+            <button class="modal-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <h3>Manage Team</h3>
+            <div id="pendingList" style="margin-bottom:15px;">
+                <p style="font-size:11px; color:var(--text-dim);">New Approval Requests:</p>
+                <div class="user-row"><span>example@mail.com</span><button style="color:var(--accent-green); border:none; background:none;">Approve</button></div>
+            </div>
+            <p style="font-size:11px; color:var(--text-dim);">Existing Staff (Delete if left):</p>
+            <div id="staffList">
+                <div class="user-row"><span>Heer Patel</span><button class="del-btn">×</button></div>
+            </div>
+            <button class="modal-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <div id="passModal" class="modal">
+        <div class="modal-content">
+            <h3>Change Password</h3>
+            <input type="password" id="newPass" placeholder="Enter New Password">
+            <button class="modal-btn" style="background:var(--accent-blue); color:white;" onclick="updatePass()">Update Password</button>
+            <button class="modal-btn" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Placeholder Logic for functionalities
+        window.openModal = (id) => document.getElementById(id).style.display = 'block';
+        window.closeModal = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+
+        window.exportAttendance = () => {
+            const start = document.getElementById('attStart').value;
+            const end = document.getElementById('attEnd').value;
+            if(!start || !end) return alert("Select dates");
+            
+            // This triggers a CSV download
+            let csvContent = "data:text/csv;charset=utf-8,Name,Date,InTime,OutTime,InLocation,OutLocation\n";
+            csvContent += "Heer Patel,2026-02-24,09:00,18:00,https://maps.google.com/?q=23.02,https://maps.google.com/?q=23.02\n";
+            
+            var encodedUri = encodeURI(csvContent);
+            var link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Attendance_${start}_to_${end}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            alert("Exporting Data to Excel...");
+        };
+
+        window.runAnalysis = () => {
+            const start = document.getElementById('analStart').value;
+            const end = document.getElementById('analEnd').value;
+            alert(`Analysis complete for ${start} to ${end}. Report sent to chintan@acharyagehlot.com`);
+            closeModal();
+        };
+
+        window.updatePass = () => {
+            const p = document.getElementById('newPass').value;
+            if(p.length < 6) return alert("Password too short");
+            alert("Password successfully updated!");
+            closeModal();
+        };
+
+        // NOTIFICATION MOCK (You will see these as Alerts in this demo)
+        // In the real app, these listen to Firebase collections
+        console.log("Listening for employee activity...");
+    </script>
 </body>
 </html>
