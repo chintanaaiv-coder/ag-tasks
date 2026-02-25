@@ -10,6 +10,7 @@
 <title>AGA Tasks</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    THEME VARIABLES
@@ -492,7 +493,6 @@ async function seed(){
     {code:"003",name:"Moksha Jain",     email:"moksha@aga.com",  mobile:"",password:"mokshajain",     approved:true,pendingApproval:false,registered:true},
     {code:"004",name:"Dhanisha Solanki",email:"dhanisha@aga.com",mobile:"",password:"dhanishasolanki",approved:true,pendingApproval:false,registered:true},
     {code:"005",name:"Prapti Padhya",   email:"prapti@aga.com",  mobile:"",password:"praptipadhya",   approved:true,pendingApproval:false,registered:true},
-    {code:"006",name:"Test",            email:"test@aga.com",    mobile:"",password:"test",            approved:true,pendingApproval:false,registered:true},
   ];
   for(const e of defaults) await setDoc(doc(db,"employees",e.code),e);
 }
@@ -505,22 +505,36 @@ onSnapshot(collection(db,"employees"),snap=>{
     const fixed={...e,approved:true,pendingApproval:false};
     await setDoc(doc(db,"employees",e.code||e.id),fixed);
   });
-  if(window.S){S.employees=l;}
+  if(window.S){
+    const fbIds=new Set(l.map(e=>e.code||e.id));
+    const localOnly=S.employees.filter(e=>!fbIds.has(e.code)&&!fbIds.has(e.id));
+    S.employees=[...l,...localOnly];
+  }
   if(window.R) R();
 });
 onSnapshot(query(collection(db,"tasks"),orderBy("createdAt","desc")),snap=>{
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S) S.tasks=l;
+  if(window.S) {
+    const fbIds=new Set(l.map(t=>t.id));
+    const localOnly=S.tasks.filter(t=>!fbIds.has(t.id));
+    S.tasks=[...l,...localOnly];
+  }
   if(window.R) R();
 });
 onSnapshot(query(collection(db,"attendance"),orderBy("createdAt","desc")),snap=>{
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  if(window.S) S.attendance=l;
+  if(window.S) {
+    const fbIds=new Set(l.map(a=>a.id));
+    const localOnly=S.attendance.filter(a=>!fbIds.has(a.id));
+    S.attendance=[...l,...localOnly];
+  }
   if(window.R) R();
 });
 onSnapshot(query(collection(db,"leaves"),orderBy("createdAt","desc")),snap=>{
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
   if(window.S){
+    const fbIds=new Set(l.map(lv=>lv.id));
+    const localOnly=S.leaves.filter(lv=>!fbIds.has(lv.id));
     const prev=S.leaves||[];
     // Notify employee if their leave just got approved
     if(S.user?.role==="employee"){
@@ -531,7 +545,7 @@ onSnapshot(query(collection(db,"leaves"),orderBy("createdAt","desc")),snap=>{
         }
       });
     }
-    S.leaves=l;
+    S.leaves=[...l,...localOnly];
   }
   if(window.R) R();
 });
@@ -566,7 +580,13 @@ const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 // === STATE ===
 const S = window.S = {
   screen:"login", user:null,
-  employees:[], tasks:[], attendance:[], leaves:[], notifications:[],
+  employees:[
+    {code:"001",name:"Heer Patel",email:"heer@aga.com",mobile:"",password:"heerpatel",approved:true,pendingApproval:false,registered:true},
+    {code:"002",name:"Bhavana Shinde",email:"bhavana@aga.com",mobile:"",password:"bhavanashinde",approved:true,pendingApproval:false,registered:true},
+    {code:"003",name:"Moksha Jain",email:"moksha@aga.com",mobile:"",password:"mokshajain",approved:true,pendingApproval:false,registered:true},
+    {code:"004",name:"Dhanisha Solanki",email:"dhanisha@aga.com",mobile:"",password:"dhanishasolanki",approved:true,pendingApproval:false,registered:true},
+    {code:"005",name:"Prapti Padhya",email:"prapti@aga.com",mobile:"",password:"praptipadhya",approved:true,pendingApproval:false,registered:true},
+  ], tasks:[], attendance:[], leaves:[], notifications:[],
   filter:"incomplete",
   partnerPass:"Partner@AG2026",
   theme: localStorage.getItem("aga-theme")||"dark",
@@ -593,6 +613,7 @@ window.R = function(){
   const el = document.getElementById("app");
   if(!el) return;
   el.innerHTML = buildScreen();
+  el.querySelectorAll("input,textarea,select").forEach(i=>i.setAttribute("autocomplete","off"));
 };
 R();
 
@@ -651,7 +672,7 @@ function confirm2({icon,title,msg,detail,yesLabel,yesType,onYes}){
   document.getElementById("confirmOverlay").classList.add("open");
 }
 function closeConfirm(){ document.getElementById("confirmOverlay").classList.remove("open"); _cb=null; }
-document.getElementById("ovYes").onclick=()=>{ closeConfirm(); if(_cb) _cb(); };
+document.getElementById("ovYes").onclick=()=>{ const cb=_cb; closeConfirm(); if(cb) cb(); };
 
 // === PIN / BIOMETRIC ===
 async function requireBiometric(onSuccess){
@@ -722,9 +743,14 @@ let _gpsOn=false;
 function startGPS(){
   if(_gpsOn||!navigator.geolocation) return;
   _gpsOn=true;
+  navigator.geolocation.getCurrentPosition(
+    p=>{S.lastLat=p.coords.latitude;S.lastLng=p.coords.longitude;},
+    e=>{console.log("GPS permission denied or error:",e.message);_gpsOn=false;},
+    {enableHighAccuracy:true,timeout:20000}
+  );
   navigator.geolocation.watchPosition(
     p=>{S.lastLat=p.coords.latitude;S.lastLng=p.coords.longitude;},
-    ()=>{_gpsOn=false;},
+    ()=>{},
     {enableHighAccuracy:true,timeout:20000,maximumAge:60000}
   );
 }
@@ -737,7 +763,32 @@ function getAttForDay(empName,date){
   return S.attendance.filter(a=>a.empName===empName&&a.date===date);
 }
 function pendingLeaves(){
-  return S.leaves.filter(l=>l.status==="pending");
+  const all=S.leaves.filter(l=>l.status==="pending");
+  if(S.user?.role==="boss"){
+    // Partner only sees leave requests from senior employees (Heer & Bhavana)
+    return all.filter(l=>SENIOR_EMP.includes(l.empName));
+  }
+  if(SENIOR_EMP.includes(S.user?.name)){
+    // Seniors see leave requests from regular employees only (not other seniors)
+    return all.filter(l=>!SENIOR_EMP.includes(l.empName));
+  }
+  return [];
+}
+function allLeavesForAdmin(){
+  if(S.user?.role==="boss"){
+    // Partner sees all leaves but can only action senior employee leaves
+    return S.leaves;
+  }
+  if(SENIOR_EMP.includes(S.user?.name)){
+    // Seniors see only non-senior leaves
+    return S.leaves.filter(l=>!SENIOR_EMP.includes(l.empName));
+  }
+  return [];
+}
+function canApproveThisLeave(leave){
+  if(S.user?.role==="boss") return SENIOR_EMP.includes(leave.empName);
+  if(SENIOR_EMP.includes(S.user?.name)) return !SENIOR_EMP.includes(leave.empName);
+  return false;
 }
 function myLeaves(name){
   return S.leaves.filter(l=>l.empName===name);
@@ -877,11 +928,25 @@ function pgBoss(){
   const pendingLeave=pendingLeaves();
   const tasks=S.filter==="incomplete"
     ?S.tasks.filter(t=>t.status==="pending")
+    :S.filter==="completed"
+    ?S.tasks.filter(t=>t.status==="completed")
     :S.tasks;
   const unread=S.notifications.filter(n=>n.to==="partner"&&!n.read);
+  const recentNotifs=S.notifications.filter(n=>n.to==="partner").slice(0,10);
 
-  const taskCards=tasks.length?tasks.map(t=>`
-    <div class="task-card">
+  const taskCards=tasks.length?tasks.map(t=>{
+    if(S.filter==="completed"||S.filter==="incomplete"){
+      return `<div class="task-card" style="padding:10px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="badge badge-${t.priority}" style="font-size:9px;">${t.priority.toUpperCase()}</span>
+          <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${t.client} <span style="color:var(--text3);">–</span> <span style="font-weight:400;color:var(--text2);">${(t.desc||"").substring(0,50)}${(t.desc||"").length>50?"…":""}</span></div>
+        </div>
+        <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-top:4px;">
+          <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span><span>👤 ${t.assignedTo||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}</span>`:""}
+        </div>
+      </div>`;
+    }
+    return `<div class="task-card">
       <div class="task-top">
         <span class="badge badge-${t.priority}">${t.priority.toUpperCase()}</span>
         <span class="badge badge-${t.status==="pending"?"pending":"done"}">${t.status==="pending"?"Pending":"Done"}</span>
@@ -896,8 +961,9 @@ function pgBoss(){
         <span>📁 ${t.category||"—"}</span>
         <span>📅 ${t.due||"—"}</span>
       </div>
-      <div class="task-assign">👤 ${t.assignedTo||"—"}</div>
-    </div>`).join("")
+      <div class="task-assign">👤 ${t.assignedTo||"—"}${t.reassignedTo?" ↪️ "+t.reassignedTo:""}</div>
+    </div>`;
+  }).join("")
     :`<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px;">No tasks found</div>`;
 
   return `<div>
@@ -908,13 +974,14 @@ function pgBoss(){
       </div>
       <div class="topbar-right">
         <div class="rel icon-btn" onclick="go('manageUsers')">
-          🔔${unread.length||pending.length||pendingLeave.length?'<div class="notif-dot"></div>':""}
+          👥${unread.length||pending.length||pendingLeave.length?'<div class="notif-dot"></div>':""}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
     <div class="filter-row">
       <button class="pill ${S.filter==="incomplete"?"active":""}" onclick="S.filter='incomplete';R()">Incomplete</button>
+      <button class="pill ${S.filter==="completed"?"active":""}" onclick="S.filter='completed';R()">Completed</button>
       <button class="pill ${S.filter==="all"?"active":""}" onclick="S.filter='all';R()">All Tasks</button>
     </div>
     ${pending.length||pendingLeave.length?`
@@ -927,25 +994,34 @@ function pgBoss(){
     </div>`:""}
     <div class="section">
       <button class="btn btn-cyan btn-mb" onclick="go('attReport')">🗒️ Attendance Report</button>
+      <button class="btn btn-green btn-mb" onclick="S.f.rptFrom='';S.f.rptTo='';go('taskReport')">📋 Task Completed Report</button>
     </div>
     <div style="display:flex;gap:10px;padding:0 20px 12px;">
-      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+      <div onclick="S.filter='incomplete';R()" style="flex:1;background:var(--card);border:1px solid ${S.filter==='incomplete'?'var(--yellow)':'var(--border)'};border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">
         <div style="font-size:22px;font-weight:800;color:var(--yellow);">${S.tasks.filter(t=>t.status==="pending").length}</div>
         <div style="font-size:12px;color:var(--text2);">Pending</div>
       </div>
-      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+      <div onclick="S.filter='completed';R()" style="flex:1;background:var(--card);border:1px solid ${S.filter==='completed'?'var(--green)':'var(--border)'};border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">
         <div style="font-size:22px;font-weight:800;color:var(--green);">${S.tasks.filter(t=>t.status==="completed").length}</div>
         <div style="font-size:12px;color:var(--text2);">Completed</div>
       </div>
     </div>
     <div style="padding:0 20px 10px;display:flex;gap:8px;">
       <button class="btn btn-accent" style="flex:1;" onclick="openCreateTask()">+ Assign Task</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="go('leaveAdmin')">🌴 Leave Requests</button>
+      <button class="btn btn-ghost" style="flex:1;" onclick="go('leaveAdmin')">✈️ Leave Requests</button>
     </div>
     <div style="padding:0 20px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
-      ${S.filter==="incomplete"?"PENDING":"ALL"} TASKS
+      ${S.filter==="incomplete"?"PENDING":S.filter==="completed"?"COMPLETED":"ALL"} TASKS
     </div>
     ${taskCards}
+    ${unread.length?`
+    <div style="padding:0 20px;font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 8px;">🔔 NOTIFICATIONS (${unread.length} new)</div>
+    ${recentNotifs.map(n=>`<div style="margin:0 20px 6px;padding:8px 12px;background:${n.read?"var(--card)":"rgba(99,102,241,0.08)"};border:1px solid ${n.read?"var(--border)":"rgba(99,102,241,0.25)"};border-radius:10px;font-size:12px;color:var(--text2);">
+      ${n.type==="attendance"?"📍":n.type==="taskDone"?"✅":n.type==="leaveRequest"?"✈️":n.type==="registration"?"🆕":"🔔"} ${n.body}
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${new Date(n.createdAt).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
+    </div>`).join("")}
+    <div style="text-align:center;padding:8px;"><span style="font-size:11px;color:var(--accent);cursor:pointer;" onclick="S.notifications.filter(n=>n.to==='partner').forEach(n=>{n.read=true;if(window.FB)FB.saveNotif({...n,read:true});});R();">Mark all as read</span></div>
+    `:""}
     <div style="height:30px;"></div>
   </div>`;
 }
@@ -967,14 +1043,14 @@ function pgCreateTask(){
     </div>
     <div class="section">
       <div class="f-group"><div class="f-label">Client Name</div>
-        <input class="f-input" type="text" id="tClient" value="${S.f.client}" oninput="S.f.client=this.value" placeholder="e.g. Hotel Sunrise Pvt Ltd"/>
+        <input class="f-input" type="text" id="tClient" value="${S.f.client}" oninput="S.f.client=this.value" placeholder="e.g. Hotel Sunrise Pvt Ltd" autocomplete="off"/>
       </div>
       <div class="f-group"><div class="f-label">Task Description</div>
-        <textarea class="f-input" id="tDesc" oninput="S.f.desc=this.value" placeholder="Describe the task in detail...">${S.f.desc}</textarea>
+        <textarea class="f-input" id="tDesc" oninput="S.f.desc=this.value" placeholder="Describe the task in detail..." autocomplete="off">${S.f.desc}</textarea>
       </div>
       <div class="f-group"><div class="f-label">Priority</div>
         <div style="display:flex;gap:8px;">
-          ${["high","medium","low"].map(p=>`<div onclick="S.f.priority='${p}';R()" style="flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid var(--border);${S.f.priority===p?`background:var(--badge-${p}-bg);color:var(--badge-${p});border-color:var(--badge-${p});`:""}">${p.toUpperCase()}</div>`).join("")}
+          ${["high","medium","low"].map(p=>{const v=p==="medium"?"med":p;return`<div onclick="S.f.priority='${p}';R()" style="flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid var(--border);${S.f.priority===p?`background:var(--badge-${v}-bg);color:var(--badge-${v});border-color:var(--badge-${v});`:""}">${p.toUpperCase()}</div>`;}).join("")}
         </div>
       </div>
       <div class="f-group"><div class="f-label">Category</div>
@@ -1050,7 +1126,7 @@ function pgEditTask(){
       </div>
       <div class="f-group"><div class="f-label">Priority</div>
         <div style="display:flex;gap:8px;">
-          ${["high","medium","low"].map(p=>`<div onclick="S.f.priority='${p}';R()" style="flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid var(--border);${S.f.priority===p?`background:var(--badge-${p}-bg);color:var(--badge-${p});border-color:var(--badge-${p});`:""}">${p.toUpperCase()}</div>`).join("")}
+          ${["high","medium","low"].map(p=>{const v=p==="medium"?"med":p;return`<div onclick="S.f.priority='${p}';R()" style="flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;border:1px solid var(--border);${S.f.priority===p?`background:var(--badge-${v}-bg);color:var(--badge-${v});border-color:var(--badge-${v});`:""}">${p.toUpperCase()}</div>`;}).join("")}
         </div>
       </div>
       <div class="f-group"><div class="f-label">Category</div>
@@ -1077,7 +1153,11 @@ function confirmComplete(id){
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
   confirm2({icon:"\u{2705}",title:"Mark Complete?",msg:`Mark "${t.client}" as completed?`,
     yesLabel:"\u{2705} Yes",yesType:"success",
-    onYes:()=>{t.status="completed";if(window.FB)FB.updateTask(id,{status:"completed"});toast("Task completed \u{2705}","ok");go("boss");}});
+    onYes:()=>{
+      t.status="completed";
+      if(window.FB)FB.updateTask(id,{status:"completed"});
+      toast("Task completed \u{2705}","ok");go("boss");
+    }});
 }
 function confirmDelTask(id){
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
@@ -1099,7 +1179,7 @@ function pgManageUsers(){
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
-      <div><div class="page-title">Manage</div><div class="page-sub">Employees &amp; Leaves</div></div>
+      <div><div class="page-title">👥 Manage Team</div><div class="page-sub">Employees &amp; Leaves</div></div>
     </div>
     <div class="section">
       ${pending.length?`
@@ -1118,7 +1198,7 @@ function pgManageUsers(){
         </div>`).join("")}`:""}
 
       ${pLeaves.length?`
-      <div class="section-title" style="color:var(--cyan);margin-top:16px;">🌴 Pending Leave Requests (${pLeaves.length})</div>
+      <div class="section-title" style="color:var(--cyan);margin-top:16px;">✈️ Pending Leave Requests (${pLeaves.length})</div>
       ${pLeaves.map(l=>`
         <div class="leave-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -1176,7 +1256,7 @@ function confirmDelUser(code,name){
 }
 
 function confirmApproveLeave(id,empName){
-  confirm2({icon:"\u{1F334}",title:"Are You Sure?",msg:`Approve leave for ${empName}?`,
+  confirm2({icon:"✈️",title:"Are You Sure?",msg:`Approve leave for ${empName}?`,
     yesLabel:"\u{2705} Yes, Approve",yesType:"success",
     onYes:()=>{
       const l=S.leaves.find(x=>x.id===id); if(!l) return;
@@ -1202,63 +1282,113 @@ function confirmRejectLeave(id,empName){
 // ── ATTENDANCE REPORT (BOSS) ──
 function pgAttReport(){
   const from=S.f.rptFrom; const to=S.f.rptTo;
-  const recs=S.attendance.filter(a=>{
+  // Build combined in/out records per employee per day
+  const allRecs=S.attendance.filter(a=>{
     if(from&&a.date<from) return false;
     if(to&&a.date>to) return false;
     return true;
   });
+  // Group by empName+date
+  const grouped={};
+  allRecs.forEach(a=>{
+    const key=a.empName+"||"+a.date;
+    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:""};
+    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;}
+    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;}
+  });
+  const rows=Object.values(grouped).sort((a,b)=>b.date.localeCompare(a.date));
+
+  // Check leave status for each row
+  function getLeaveInfo(empName,date){
+    const lv=S.leaves.find(l=>l.empName===empName&&l.status==="approved"&&l.from<=date&&l.to>=date);
+    if(lv) return {onLeave:true,type:lv.leaveType,approvedBy:lv.approvedBy||"—"};
+    return {onLeave:false};
+  }
+
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">Attendance Report</div></div>
     </div>
     <div class="section">
-      <div class="f-group"><div class="f-label">From Date</div>
-        <input class="f-input" type="date" value="${from}" onchange="S.f.rptFrom=this.value;R()"/>
+      <div style="display:flex;gap:10px;">
+        <div class="f-group" style="flex:1;"><div class="f-label">From Date</div>
+          <input class="f-input" type="date" value="${from}" onchange="S.f.rptFrom=this.value;R()"/>
+        </div>
+        <div class="f-group" style="flex:1;"><div class="f-label">To Date</div>
+          <input class="f-input" type="date" value="${to}" onchange="S.f.rptTo=this.value;R()"/>
+        </div>
       </div>
-      <div class="f-group"><div class="f-label">To Date</div>
-        <input class="f-input" type="date" value="${to}" onchange="S.f.rptTo=this.value;R()"/>
-      </div>
-      <button class="btn btn-accent btn-mb" onclick="downloadAtt()" ${!recs.length?"disabled":""}>⬇️ Download Excel</button>
-      <div class="card">
-        <div class="table-head"><div>EMPLOYEE</div><div>DATE</div><div>TIME</div><div>TYPE</div><div>LOCATION</div></div>
-        ${recs.length?recs.map(a=>`
-          <div class="table-row">
-            <div>${(a.empName||"").split(" ")[0]}</div>
-            <div>${a.date}</div>
-            <div>${a.time||"\u{2014}"}</div>
-            <div style="color:${a.type==="IN"?"var(--green)":"var(--red)"};">${a.type}</div>
-            <div>${(a.location||"\u{2014}").substring(0,20)}</div>
-          </div>`).join("")
-          :`<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">No records found for selected range.</div>`}
-        <div style="text-align:center;padding:10px;color:var(--text3);font-size:11px;">${recs.length} record(s) found${from||to?" — select dates to filter":""}</div>
+      <button class="btn btn-accent btn-mb" onclick="downloadAtt()" ${!rows.length?"disabled":""}>⬇️ Download Excel</button>
+      <div class="card" style="overflow-x:auto;">
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 0.7fr 0.7fr 1.2fr;gap:4px;padding:8px 8px;font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--border);">
+          <div>EMPLOYEE</div><div>DATE</div><div>IN</div><div>OUT</div><div>STATUS</div>
+        </div>
+        ${rows.length?rows.map(r=>{
+          const li=getLeaveInfo(r.empName,r.date);
+          return `<div style="display:grid;grid-template-columns:1.2fr 1fr 0.7fr 0.7fr 1.2fr;gap:4px;padding:7px 8px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);">
+            <div>${(r.empName||"").split(" ")[0]}</div>
+            <div>${fmtDate(r.date)}</div>
+            <div style="color:var(--green);">${r.inTime||"—"}</div>
+            <div style="color:var(--red);">${r.outTime||"—"}</div>
+            <div>${li.onLeave?`<span style="color:var(--cyan);font-size:10px;">✈️ ${li.type}</span>`:""}</div>
+          </div>`;
+        }).join("")
+        :`<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">No records found.</div>`}
+        <div style="text-align:center;padding:8px;color:var(--text3);font-size:11px;">${rows.length} record(s)</div>
       </div>
     </div>
   </div>`;
 }
 function downloadAtt(){
   const from=S.f.rptFrom; const to=S.f.rptTo;
-  const recs=S.attendance.filter(a=>{
+  const allRecs=S.attendance.filter(a=>{
     if(from&&a.date<from) return false;
     if(to&&a.date>to) return false;
     return true;
   });
-  const rows=[["Employee","Date","Time","Type","Location","Lat","Lng"],...recs.map(a=>[a.empName,a.date,a.time,a.type,a.location,a.lat,a.lng])];
-  const csv=rows.map(r=>r.map(c=>`"${(c||"").toString().replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="AGA_Attendance_"+( from||"all")+"_to_"+(to||"all")+".csv";
-  a.click(); toast("Downloaded \u{2705}","ok");
+  const grouped={};
+  allRecs.forEach(a=>{
+    const key=a.empName+"||"+a.date;
+    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:""};
+    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;}
+    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;}
+  });
+  const rows=Object.values(grouped).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!window.XLSX){toast("Excel library not loaded","err");return;}
+  const xlRows=[["Employee","Date (DD/MM/YYYY)","IN Time","OUT Time","IN Location","OUT Location","IN Marked On","OUT Marked On","Leave Status","Leave Approved By"]];
+  rows.forEach(r=>{
+    const li=S.leaves.find(l=>l.empName===r.empName&&l.status==="approved"&&l.from<=r.date&&l.to>=r.date);
+    xlRows.push([
+      r.empName,
+      fmtDate(r.date),
+      r.inTime||"—",
+      r.outTime||"—",
+      r.inLoc||"—",
+      r.outLoc||"—",
+      r.inMarkedOn?fmtDate(r.inMarkedOn):"—",
+      r.outMarkedOn?fmtDate(r.outMarkedOn):"—",
+      li?li.leaveType:"—",
+      li?(li.approvedBy||"—"):"—"
+    ]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(xlRows);
+  ws["!cols"]=[{wch:20},{wch:14},{wch:10},{wch:10},{wch:22},{wch:22},{wch:14},{wch:14},{wch:14},{wch:16}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Attendance");
+  XLSX.writeFile(wb,"AGA_Attendance_"+(from||"all")+"_to_"+(to||"all")+".xlsx");
+  toast("Excel downloaded \u{2705}","ok");
 }
 
 // ── LEAVE ADMIN ──
 function pgLeaveAdmin(){
   const pLeaves=pendingLeaves();
-  const allLeaves=S.leaves;
+  const allLeaves=allLeavesForAdmin();
+  const backScreen=S.user?.role==="boss"?"boss":"employee";
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
-      <div class="back-btn" onclick="go('boss')">←</div>
-      <div><div class="page-title">Leave Requests</div></div>
+      <div class="back-btn" onclick="go('${backScreen}')">←</div>
+      <div><div class="page-title">Leave Requests</div><div class="page-sub">${S.user?.role==="boss"?"Senior employee leaves":"Employee leaves"}</div></div>
     </div>
     <div class="section">
       ${allLeaves.length?allLeaves.map(l=>`
@@ -1271,7 +1401,7 @@ function pgLeaveAdmin(){
           <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">${l.reason||"No reason"}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div class="leave-status-${l.status}">${l.status==="pending"?"\u{23F3} Pending":l.status==="approved"?"\u{2705} Approved by "+(l.approvedBy||""):"\u{2715} Rejected"}</div>
-            ${l.status==="pending"?`<div style="display:flex;gap:6px;">
+            ${l.status==="pending"&&canApproveThisLeave(l)?`<div style="display:flex;gap:6px;">
               <button class="btn btn-green btn-sm" onclick="confirmApproveLeave('${l.id}','${l.empName}')">✅ Approve</button>
               <button class="btn btn-red btn-sm" onclick="confirmRejectLeave('${l.id}','${l.empName}')">✕</button>
             </div>`:""}
@@ -1294,37 +1424,86 @@ function pgTaskReport(){
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
-      <div><div class="page-title">Task Report</div></div>
+      <div><div class="page-title">Completed Tasks</div><div class="page-sub">Report & Export</div></div>
     </div>
     <div class="section">
-      <div class="f-group"><div class="f-label">From Date</div>
-        <input class="f-input" type="date" value="${from}" onchange="S.f.rptFrom=this.value;R()"/>
+      <div style="display:flex;gap:10px;">
+        <div class="f-group" style="flex:1;"><div class="f-label">From Date</div>
+          <input class="f-input" type="date" value="${from}" onchange="S.f.rptFrom=this.value;R()"/>
+        </div>
+        <div class="f-group" style="flex:1;"><div class="f-label">To Date</div>
+          <input class="f-input" type="date" value="${to}" onchange="S.f.rptTo=this.value;R()"/>
+        </div>
       </div>
-      <div class="f-group"><div class="f-label">To Date</div>
-        <input class="f-input" type="date" value="${to}" onchange="S.f.rptTo=this.value;R()"/>
+      <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:12px;">${data.length} completed task(s)${from||to?" in selected range":""}</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="btn btn-green" style="flex:1;" onclick="downloadTaskExcel()" ${!data.length?"disabled":""}>⬇️ Download Excel</button>
+        <button class="btn btn-accent" style="flex:1;" onclick="emailTaskReport()" ${!data.length?"disabled":""}>📧 Email Report</button>
       </div>
-      <button class="btn btn-accent btn-mb" onclick="downloadTasks()" ${!data.length?"disabled":""}>⬇️ Download Excel</button>
-      <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:12px;">${data.length} completed task(s)</div>
-      ${data.map(t=>`
-        <div class="card">
-          <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${t.client}</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">${(t.desc||"").substring(0,60)}</div>
-          <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);">
-            <span>📁 ${t.category}</span><span>📅 ${t.due}</span><span>👤 ${t.assignedTo}</span>
+      ${data.length?data.map(t=>`
+        <div class="card" style="margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:14px;font-weight:700;">${t.client}</div>
+            <span class="badge badge-${t.priority}">${t.priority.toUpperCase()}</span>
           </div>
-        </div>`).join("")||`<div style="text-align:center;padding:20px;color:var(--text3);">No completed tasks in range</div>`}
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">${(t.desc||"").substring(0,80)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--text3);">
+            <span>📁 ${t.category||"—"}</span>
+            <span>📅 ${t.due||"—"}</span>
+          </div>
+          <div style="margin-top:8px;font-size:11px;display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="background:rgba(99,102,241,0.1);color:var(--accent2);padding:3px 8px;border-radius:6px;">👤 Assigned: ${t.assignedTo||"—"}</span>
+            ${t.reassignedTo?`<span style="background:rgba(245,158,11,0.1);color:var(--yellow);padding:3px 8px;border-radius:6px;">↪️ Reassigned: ${t.reassignedTo}</span>`:""}
+          </div>
+        </div>`).join("")
+        :`<div style="text-align:center;padding:30px;color:var(--text3);">No completed tasks${from||to?" in selected range":""}. Select a date range to filter.</div>`}
     </div>
   </div>`;
 }
-function downloadTasks(){
+function downloadTaskExcel(){
   const from=S.f.rptFrom; const to=S.f.rptTo;
   const data=S.tasks.filter(t=>{if(t.status!=="completed") return false;if(from&&t.due<from) return false;if(to&&t.due>to) return false;return true;});
-  const rows=[["Client","Description","Category","Priority","Assigned To","Due Date","Status"],...data.map(t=>[t.client,t.desc,t.category,t.priority,t.assignedTo,t.due,"Completed"])];
-  const csv=rows.map(r=>r.map(c=>`"${(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download="AGA_Tasks_"+(from||"all")+"_to_"+(to||"all")+".csv";
-  a.click(); toast("Downloaded \u{2705}","ok");
+  if(!window.XLSX){toast("Excel library not loaded. Check internet.","err");return;}
+  const rows=[
+    ["Sr No","Client Name","Task Description","Category","Priority","Due Date","Assigned To (Assigner)","Reassigned To","Status"],
+    ...data.map((t,i)=>[
+      i+1,
+      t.client||"",
+      t.desc||"",
+      t.category||"",
+      t.priority||"",
+      t.due||"",
+      t.assignedTo||"",
+      t.reassignedTo||"—",
+      "Completed"
+    ])
+  ];
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  // Set column widths
+  ws["!cols"]=[{wch:6},{wch:22},{wch:35},{wch:14},{wch:10},{wch:14},{wch:22},{wch:18},{wch:12}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Completed Tasks");
+  const fname="AGA_Completed_Tasks_"+(from||"all")+"_to_"+(to||"all")+".xlsx";
+  XLSX.writeFile(wb,fname);
+  toast("Excel downloaded \u{2705}","ok");
+}
+function emailTaskReport(){
+  const from=S.f.rptFrom; const to=S.f.rptTo;
+  const data=S.tasks.filter(t=>{if(t.status!=="completed") return false;if(from&&t.due<from) return false;if(to&&t.due>to) return false;return true;});
+  const period=(from?fmtDate(from):"Start")+" to "+(to?fmtDate(to):"Present");
+  let body="Completed Tasks Report\nPeriod: "+period+"\nTotal: "+data.length+" task(s)\n\n";
+  data.forEach((t,i)=>{
+    body+=(i+1)+". "+t.client+"\n";
+    body+="   Description: "+(t.desc||"—")+"\n";
+    body+="   Category: "+(t.category||"—")+" | Priority: "+(t.priority||"—")+" | Due: "+(t.due||"—")+"\n";
+    body+="   Assigned To: "+(t.assignedTo||"—")+"\n";
+    if(t.reassignedTo) body+="   Reassigned To: "+t.reassignedTo+"\n";
+    body+="\n";
+  });
+  const subject="AGA - Completed Tasks Report ("+period+")";
+  const mailto="mailto:chintan@acharyagehlot.com?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+  window.open(mailto,"_blank");
+  toast("Opening email client \u{1F4E7}","ok");
 }
 
 // ── CHANGE PASS ──
@@ -1373,35 +1552,84 @@ function doChangePass(){
 
 function pgEmployee(){
   const name=S.user?.name||"";
-  const myTasks=S.tasks.filter(t=>t.assignedTo===name);
-  const pend=myTasks.filter(t=>t.status==="pending");
-  const done=myTasks.filter(t=>t.status==="completed");
+  const isSenior=SENIOR_EMP.includes(name);
+  const today=todayStr();
+
+  // Tasks directly assigned to me (not reassigned away)
+  const directTasks=S.tasks.filter(t=>t.assignedTo===name&&!t.reassignedTo);
+  // Tasks I reassigned to someone
+  const reassignedByMe=S.tasks.filter(t=>t.assignedTo===name&&t.reassignedTo);
+  // Tasks reassigned TO me by a senior
+  const reassignedToMe=S.tasks.filter(t=>t.reassignedTo===name);
+
+  // PENDING buckets
+  const pendDirect=directTasks.filter(t=>t.status==="pending");
+  const pendReassignedToMe=reassignedToMe.filter(t=>!t.reassigneeCompleted);
+  const pendNeedsMyApproval=reassignedByMe.filter(t=>t.status==="pending"&&t.reassigneeCompleted);
+  const waitingOnAssignee=reassignedByMe.filter(t=>t.status==="pending"&&!t.reassigneeCompleted);
+
+  // DONE buckets
+  const doneDirect=directTasks.filter(t=>t.status==="completed");
+  const doneReassignedToMe=reassignedToMe.filter(t=>t.reassigneeCompleted);
+  const doneReassignedByMe=reassignedByMe.filter(t=>t.status==="completed");
+
+  const totalPend=pendDirect.length+pendReassignedToMe.length+pendNeedsMyApproval.length+waitingOnAssignee.length;
+  const totalDone=doneDirect.length+doneReassignedToMe.length+doneReassignedByMe.length;
+
+  // Tasks due today
+  const allMyPending=[...pendDirect,...pendReassignedToMe,...pendNeedsMyApproval,...waitingOnAssignee];
+  const dueToday=allMyPending.filter(t=>t.due===today);
+
+  // Check if on approved leave today
+  const onLeaveToday=S.leaves.find(l=>l.empName===name&&l.status==="approved"&&l.from<=today&&l.to>=today);
+
   const myPendLeaves=myLeaves(name).filter(l=>l.status==="pending").length;
   const canApprove=canApproveLeave();
   const pendLeaveCount=canApprove?pendingLeaves().length:0;
 
-  const taskCards=pend.map(t=>{
+  function buildTaskCard(t,type){
     const byPartner=!t.assignedBy||t.assignedBy==="Partner"||t.assignedBy==="Chintan";
     const bySenior=SENIOR_EMP.includes(t.assignedBy||"");
-    const cls=byPartner?"from-partner":bySenior?"from-senior":"";
-    const badge=byPartner?`<span class="badge badge-partner">🔵 From Partner</span>`:
-                bySenior?`<span class="badge badge-senior">🟡 From ${t.assignedBy}</span>`:"";
-    const canRe=SENIOR_EMP.includes(name);
+    const cls=type==="reassignedToMe"?"from-senior":byPartner?"from-partner":bySenior?"from-senior":"";
+
+    let badge="";
+    if(type==="reassignedToMe") badge=`<span class="badge badge-senior">↪️ From ${t.assignedTo}</span>`;
+    else if(byPartner) badge=`<span class="badge badge-partner">🔵 From Partner</span>`;
+    else if(bySenior) badge=`<span class="badge badge-senior">🟡 From ${t.assignedBy}</span>`;
+
+    let actionHtml="";
+    if(type==="direct"){
+      actionHtml=`<div class="task-actions">
+        <button class="btn btn-green" style="flex:2;padding:10px;" onclick="empComplete('${t.id}')">✅ Mark Complete</button>
+        ${isSenior?`<button class="btn btn-yellow" style="flex:1;padding:10px;" onclick="openReassign('${t.id}')">↪️</button>`:""}
+      </div>`;
+    } else if(type==="reassignedToMe"){
+      actionHtml=`<div class="task-actions">
+        <button class="btn btn-green" style="width:100%;padding:10px;" onclick="empCompleteAsReassignee('${t.id}')">✅ Mark Complete</button>
+      </div>`;
+    } else if(type==="needsMyApproval"){
+      actionHtml=`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:var(--green);">✅ Completed by ${t.reassignedTo}</div>
+      <div class="task-actions">
+        <button class="btn btn-green" style="width:100%;padding:10px;" onclick="empComplete('${t.id}')">✅ Mark Complete</button>
+      </div>`;
+    } else if(type==="waiting"){
+      actionHtml=`<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--yellow);">⏳ Reassigned to ${t.reassignedTo} · Waiting</div>`;
+    }
+
     return `<div class="task-card ${cls}">
-      ${badge?`<div style="margin-bottom:8px;">${badge}</div>`:""}
+      ${badge?`<div style="margin-bottom:6px;">${badge}</div>`:""}
       <div class="task-top">
         <span class="badge badge-${t.priority}">${t.priority.toUpperCase()}</span>
-        <span class="badge badge-pending" style="margin-left:auto;">Pending</span>
+        <span class="badge badge-pending" style="margin-left:auto;">${type==="needsMyApproval"?"Assignee Done":type==="waiting"?"Reassigned":"Pending"}</span>
       </div>
       <div class="task-title">${t.client}</div>
       <div class="task-desc">${(t.desc||"").substring(0,80)}</div>
       <div class="task-meta"><span>📅 ${t.due}</span><span>📁 ${t.category}</span></div>
-      <div class="task-actions">
-        <button class="btn btn-green" style="flex:2;padding:10px;" onclick="empComplete('${t.id}')">✅ Mark Complete</button>
-        ${canRe?`<button class="btn btn-yellow" style="flex:1;padding:10px;" onclick="openReassign('${t.id}')">↪️</button>`:""}
-      </div>
+      ${actionHtml}
     </div>`;
-  }).join("");
+  }
+
+  const allDone=[...doneDirect,...doneReassignedToMe,...doneReassignedByMe];
 
   return `<div>
     <div class="topbar">
@@ -1410,37 +1638,65 @@ function pgEmployee(){
         <div class="topbar-sub">Employee Dashboard</div>
       </div>
       <div class="topbar-right">
-        ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">🌴<div class="notif-dot"></div></div>`:""}
+        ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-num yellow">${pend.length}</div>
-        <div class="stat-label">Pending</div>
+
+    <div style="display:flex;gap:8px;padding:0 20px 10px;">
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
+        <div style="font-size:18px;font-weight:800;color:var(--yellow);">${totalPend}</div>
+        <div style="font-size:11px;color:var(--text2);">Pending</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-num green">${done.length}</div>
-        <div class="stat-label">Completed</div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
+        <div style="font-size:18px;font-weight:800;color:var(--green);">${totalDone}</div>
+        <div style="font-size:11px;color:var(--text2);">Completed</div>
       </div>
     </div>
-    ${taskCards||`<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No pending tasks 🎉</div>`}
-    ${done.length?`
-    <div style="padding:0 20px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:8px;">COMPLETED</div>
-    ${done.map(t=>`<div class="task-card" style="opacity:0.6;">
-      <div class="task-top"><span class="badge badge-${t.priority}">${t.priority.toUpperCase()}</span><span class="badge badge-done" style="margin-left:auto;">Done</span></div>
-      <div class="task-title">${t.client}</div>
-      <div class="task-meta"><span>📅 ${t.due}</span><span>📁 ${t.category}</span></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 20px 10px;">
+      <button class="btn btn-green" style="padding:10px;font-size:12px;" onclick="go('markAtt')">📍 Attendance</button>
+      <button class="btn btn-cyan" style="padding:10px;font-size:12px;" onclick="go('applyLeave')">✈️ Apply Leave${myPendLeaves?" ("+myPendLeaves+")":""}</button>
+      <button class="btn btn-ghost" style="padding:10px;font-size:12px;" onclick="go('myLeaves')">📋 My Leaves</button>
+      ${canApprove?`<button class="btn btn-outline" style="padding:10px;font-size:12px;" onclick="go('leaveAdmin')">👥 Approve${pendLeaveCount?" ("+pendLeaveCount+")":""}</button>`:`<button class="btn btn-yellow" style="padding:10px;font-size:12px;" onclick="go('changePass')">🔑 Password</button>`}
+      ${canApprove?`<button class="btn btn-yellow" style="padding:10px;font-size:12px;" onclick="go('changePass')">🔑 Password</button>`:``}
+    </div>
+
+    ${onLeaveToday?`<div style="margin:0 20px 10px;background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--cyan);">✈️ You are on approved leave today (${onLeaveToday.leaveType})${onLeaveToday.approvedBy?" · Approved by "+onLeaveToday.approvedBy:""}</div>`:""}
+
+    ${dueToday.length?`
+    <div style="padding:0 20px;font-size:11px;color:var(--yellow);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 DUE TODAY (${dueToday.length})</div>
+    ${dueToday.map(t=>{
+      const type=pendDirect.includes(t)?"direct":pendReassignedToMe.includes(t)?"reassignedToMe":pendNeedsMyApproval.includes(t)?"needsMyApproval":"waiting";
+      return buildTaskCard(t,type);
+    }).join("")}`:""}
+
+    ${allMyPending.filter(t=>t.due!==today).length?`
+    <div style="padding:0 20px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:8px;">ALL PENDING TASKS</div>
+    ${(()=>{let cards="";
+      pendNeedsMyApproval.filter(t=>t.due!==today).forEach(t=>cards+=buildTaskCard(t,"needsMyApproval"));
+      pendDirect.filter(t=>t.due!==today).forEach(t=>cards+=buildTaskCard(t,"direct"));
+      pendReassignedToMe.filter(t=>t.due!==today).forEach(t=>cards+=buildTaskCard(t,"reassignedToMe"));
+      waitingOnAssignee.filter(t=>t.due!==today).forEach(t=>cards+=buildTaskCard(t,"waiting"));
+      return cards;
+    })()}`
+    :!dueToday.length?`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No pending tasks 🎉</div>`:""}
+
+    ${allDone.length?`
+    <div style="padding:0 20px;font-size:11px;color:var(--text3);font-weight:700;letter-spacing:1px;margin-bottom:6px;">COMPLETED</div>
+    ${allDone.map(t=>`<div class="task-card" style="opacity:0.5;padding:8px 14px;margin:0 20px 6px;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="badge badge-${t.priority}" style="font-size:8px;padding:2px 6px;">${t.priority.toUpperCase()}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text);">${t.client}</span>
+        <span style="font-size:10px;color:var(--green);margin-left:auto;">✅</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${t.category||""} · ${t.due||""}${t.reassignedTo?" · ↪️ "+t.reassignedTo:""}</div>
     </div>`).join("")}`:""}
-    <div class="section" style="padding-top:10px;">
-      <button class="btn btn-green btn-mb" onclick="go('markAtt')">📍 Mark Attendance</button>
-      <button class="btn btn-cyan btn-mb" onclick="go('applyLeave')">🌴 Apply Leave${myPendLeaves?` (${myPendLeaves} pending)`:""}</button>
-      <button class="btn btn-ghost btn-mb" onclick="go('myLeaves')">📋 My Leaves</button>
-      <button class="btn btn-yellow btn-mb" onclick="go('changePass')">🔑 Change Password</button>
-      ${canApprove?`<button class="btn btn-outline btn-mb" onclick="go('leaveAdmin')">👥 Approve Leaves${pendLeaveCount?" ("+pendLeaveCount+")":""}</button>`:""}
-      <button class="btn btn-red" onclick="doLogout()">Logout</button>
+
+    <div style="padding:10px 20px;">
+      <button class="btn btn-red" style="padding:10px;font-size:12px;" onclick="doLogout()">Logout</button>
     </div>
-    <div style="height:20px;"></div>
+    <div style="height:16px;"></div>
   </div>`;
 }
 
@@ -1448,24 +1704,42 @@ function empComplete(id){
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
   confirm2({icon:"\u{2705}",title:"Mark Complete?",msg:`Mark "${t.client}" as done?`,
     yesLabel:"\u{2705} Yes",yesType:"success",
-    onYes:()=>{t.status="completed";if(window.FB)FB.updateTask(id,{status:"completed"});toast("Task completed \u{2705}","ok");R();}});
+    onYes:()=>{
+      t.status="completed";if(window.FB)FB.updateTask(id,{status:"completed"});
+      const notif={id:"n"+Date.now(),to:"partner",type:"taskDone",empName:S.user?.name,body:(S.user?.name||"")+" completed: "+t.client,read:false,createdAt:Date.now()};
+      S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+      toast("Task completed \u{2705}","ok");R();
+    }});
+}
+
+function empCompleteAsReassignee(id){
+  const t=S.tasks.find(x=>x.id===id); if(!t) return;
+  confirm2({icon:"\u{2705}",title:"Mark Complete?",msg:`Mark "${t.client}" as done? This will notify ${t.assignedTo}.`,
+    yesLabel:"\u{2705} Yes",yesType:"success",
+    onYes:()=>{
+      t.reassigneeCompleted=true;
+      if(window.FB)FB.updateTask(id,{reassigneeCompleted:true});
+      const notif={id:"n"+Date.now(),to:"partner",type:"taskDone",empName:S.user?.name,body:(S.user?.name||"")+" completed (reassigned): "+t.client,read:false,createdAt:Date.now()};
+      S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+      toast("Task completed! "+t.assignedTo+" will be notified \u{2705}","ok");R();
+    }});
 }
 
 function openReassign(id){
   S.reassignId=id; S.f.assignedTo="";
-  // show confirm with employee selector
-  const approved=S.employees.filter(e=>e.approved!==false&&e.name!==S.user?.name);
+  const approved=S.employees.filter(e=>e.approved!==false&&!SENIOR_EMP.includes(e.name));
   const opts=approved.map(e=>`<option value="${e.name}">${e.name}</option>`).join("");
   const t=S.tasks.find(x=>x.id===id); if(!t) return;
-  // Insert a temporary select into confirm detail
   confirm2({icon:"\u{21AA}\u{FE0F}",title:"Reassign Task",msg:`Reassign "${t.client}" to:`,
-    detail:`<select class="f-input" id="reassignSel" style="margin-top:8px;"><option value="">— Select —</option>${opts}</select>`,
+    detail:`<select class="f-input" id="reassignSel" style="margin-top:8px;"><option value="">— Select Employee —</option>${opts}</select>`,
     yesLabel:"\u{21AA}\u{FE0F} Reassign",yesType:"primary",
     onYes:()=>{
       const to=document.getElementById("reassignSel")?.value;
       if(!to){toast("Select an employee","err");return;}
-      t.assignedTo=to; t.assignedBy=S.user?.name;
-      if(window.FB) FB.updateTask(t.id,{assignedTo:to,assignedBy:t.assignedBy});
+      t.reassignedTo=to;
+      t.reassignedBy=S.user?.name;
+      t.reassigneeCompleted=false;
+      if(window.FB) FB.updateTask(t.id,{reassignedTo:to,reassignedBy:t.reassignedBy,reassigneeCompleted:false});
       toast("Reassigned to "+to+" \u{2705}","ok"); R();
     }
   });
@@ -1526,13 +1800,19 @@ function buildAttCal(empName){
     const hasOut=recs.some(a=>a.type==="OUT");
     const sel=dateStr===S.f.attDate;
     const isToday=dateStr===today;
+    const isFuture=dateStr>today;
     let cls="cal-day";
-    if(sel) cls+=" selected";
+    if(isFuture) cls+=" empty";
+    else if(sel) cls+=" selected";
     else if(hasIn&&hasOut) cls+=" marked-both";
     else if(hasIn) cls+=" marked-in";
     else if(hasOut) cls+=" marked-out";
     else if(isToday) cls+=" today";
-    cells.push(`<div class="${cls}" onclick="S.f.attDate='${dateStr}';R()">${d}</div>`);
+    if(isFuture){
+      cells.push(`<div class="${cls}" style="opacity:0.3;cursor:not-allowed;">${d}</div>`);
+    } else {
+      cells.push(`<div class="${cls}" onclick="S.f.attDate='${dateStr}';R()">${d}</div>`);
+    }
   }
   return `<div class="cal-nav">
     <button class="cal-nav-btn" onclick="if(S.f.attCalM===0){S.f.attCalM=11;S.f.attCalY--;}else S.f.attCalM--;R()">‹</button>
@@ -1544,6 +1824,8 @@ function buildAttCal(empName){
 
 function doMarkAtt(type){
   const name=S.user?.name; const date=S.f.attDate||todayStr();
+  const today=todayStr();
+  if(date>today){toast("Cannot mark attendance for future dates","err");return;}
   const recs=getAttForDay(name,date);
   if(type==="IN"&&recs.some(a=>a.type==="IN")){toast("Already marked IN for this date","err");return;}
   if(type==="OUT"&&recs.some(a=>a.type==="OUT")){toast("Already marked OUT for this date","err");return;}
@@ -1551,7 +1833,8 @@ function doMarkAtt(type){
   requireBiometric(()=>{
     const now=new Date();
     const time=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
-    const rec={id:"att"+Date.now(),empName:name,type,date,time,
+    const markedOn=todayStr();
+    const rec={id:"att"+Date.now(),empName:name,type,date,time,markedOn,
       lat:S.lastLat,lng:S.lastLng,
       location:S.lastLat?S.lastLat.toFixed(4)+", "+S.lastLng.toFixed(4):"unknown",
       createdAt:Date.now()};
@@ -1566,6 +1849,10 @@ function doMarkAtt(type){
       if(window.FB) FB.saveAtt(rec);
     }
     S.attendance.push(rec);
+    // Notify partner
+    const notif={id:"n"+Date.now(),to:"partner",type:"attendance",empName:name,body:name+" marked "+type+" at "+time+(date!==markedOn?" (for "+fmtDate(date)+")":""),read:false,createdAt:Date.now()};
+    S.notifications.push(notif);
+    if(window.FB) FB.saveNotif(notif);
     toast(`${type} marked at ${time} ✅`,"ok");
     R();
   });
@@ -1594,7 +1881,7 @@ function pgApplyLeave(){
       <div class="f-group"><div class="f-label">Reason (Optional)</div>
         <textarea class="f-input" placeholder="Reason for leave..." oninput="S.f.leaveReason=this.value">${S.f.leaveReason}</textarea>
       </div>
-      <button class="btn btn-accent" onclick="submitLeave()">🌴 Apply Leave</button>
+      <button class="btn btn-accent" onclick="submitLeave()">✈️ Apply Leave</button>
     </div>
   </div>`;
 }
@@ -1604,7 +1891,7 @@ function submitLeave(){
   if(!from){toast("Select from date","err");return;}
   if(!to){toast("Select to date","err");return;}
   if(from>to){toast("From date must be before to date","err");return;}
-  confirm2({icon:"\u{1F334}",title:"Are You Sure?",msg:`Apply ${S.f.leaveType} from ${fmtDate(from)} to ${fmtDate(to)}?`,
+  confirm2({icon:"✈️",title:"Are You Sure?",msg:`Apply ${S.f.leaveType} from ${fmtDate(from)} to ${fmtDate(to)}?`,
     detail:`<div class="lbl">Type</div>${S.f.leaveType}<div class="lbl">Duration</div>${fmtDate(from)} → ${fmtDate(to)}<div class="lbl">Reason</div>${S.f.leaveReason||"Not specified"}`,
     yesLabel:"\u{2705} Yes, Apply",yesType:"success",
     onYes:()=>{
@@ -1612,6 +1899,11 @@ function submitLeave(){
         from,to,reason:S.f.leaveReason,status:"pending",createdAt:Date.now()};
       S.leaves.push(l);
       if(window.FB) FB.saveLeave(l);
+      // Notify partner for senior leaves
+      if(SENIOR_EMP.includes(S.user?.name)){
+        const notif={id:"n"+Date.now(),to:"partner",type:"leaveRequest",empName:S.user?.name,body:(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")",read:false,createdAt:Date.now()};
+        S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+      }
       S.f.leaveFrom=""; S.f.leaveTo=""; S.f.leaveReason="";
       toast("Leave applied! Awaiting approval.","ok");
       go("employee");
@@ -1649,7 +1941,7 @@ function buildSeniorLeaveApproval(){
   const pLeaves=pendingLeaves();
   if(!pLeaves.length) return "";
   return `<div class="section">
-    <div class="section-title" style="color:var(--cyan);">🌴 Pending Leaves (${pLeaves.length})</div>
+    <div class="section-title" style="color:var(--cyan);">✈️ Pending Leaves (${pLeaves.length})</div>
     ${pLeaves.map(l=>`
       <div class="leave-card">
         <div style="font-size:14px;font-weight:700;margin-bottom:6px;">${l.empName}</div>
