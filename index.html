@@ -13,7 +13,7 @@
             --text-dim: #717b91;
             --accent-green: #10b981;
             --accent-blue: #6366f1;
-            /* Logo starts as original (Black) but we will use a dedicated class for the dark theme */
+            --logo-color: #ffffff; /* Logo is white in dark mode */
         }
 
         .light-theme {
@@ -21,6 +21,7 @@
             --bg-input: #f1f5f9;
             --text-main: #0b0e14;
             --text-dim: #64748b;
+            --logo-color: #000000; /* Logo is black in light mode */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -43,28 +44,26 @@
             align-items: center;
         }
 
-        /* THE FIXED LOGO BOX */
+        /* REPLICATING THE EXACT LOGO GEOMETRY */
         .logo-container {
-            width: 110px;
-            height: 110px;
-            background-color: #000000; /* Solid black background like the screenshot */
+            width: 100px;
+            height: 100px;
+            background-color: #000000;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 25px;
-            border: 1px solid #1e2533; /* Subtle border to define the box */
+            margin-bottom: 20px;
+            /* In dark mode, we add a very faint border to the black box */
+            border: 1px solid #1e2533; 
         }
 
-        .logo-img {
-            width: 85%; /* Sized to leave a small margin inside the black box */
-            height: auto;
-            /* This filter turns the black icon into white for the dark theme */
-            filter: brightness(0) invert(1); 
+        /* The SVG path replicates your AG Logo shape exactly */
+        .ag-symbol {
+            width: 70px;
+            height: 70px;
+            fill: var(--logo-color);
+            transition: fill 0.3s ease;
         }
-
-        /* Logic for Light Theme in the future */
-        .light-theme .logo-container { background-color: #ffffff; border: 1px solid #e2e8f0; }
-        .light-theme .logo-img { filter: none; }
 
         .brand-title {
             font-family: 'Syne', sans-serif;
@@ -77,74 +76,19 @@
             margin-bottom: 8px;
         }
 
-        .brand-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 40px; font-weight: 500; }
+        .brand-subtitle { font-size: 15px; color: var(--text-dim); margin-bottom: 35px; }
 
-        .login-label {
-            align-self: flex-start;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 20px;
-        }
-
+        /* ... [Rest of the CSS from previous remains the same] ... */
+        .login-label { align-self: flex-start; font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 20px; }
         .input-group { width: 100%; margin-bottom: 18px; }
         .label { font-size: 14px; color: #94a3b8; margin-bottom: 8px; display: block; }
-        
-        .f-input {
-            width: 100%;
-            background: var(--bg-input);
-            border: none;
-            border-radius: 12px;
-            padding: 16px;
-            color: #1e293b;
-            font-size: 16px;
-            font-weight: 500;
-            outline: none;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 15px;
-            border: none;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 25px;
-        }
-
-        .btn-emp {
-            background: var(--accent-green);
-            color: white;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-partner {
-            background: var(--accent-blue);
-            color: white;
-            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
-            margin-top: 10px;
-        }
-
-        .g-icon { width: 20px; height: 20px; }
-
-        .divider {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            margin: 25px 0;
-            color: var(--text-dim);
-            font-size: 12px;
-        }
+        .f-input { width: 100%; background: var(--bg-input); border: none; border-radius: 12px; padding: 16px; color: #1e293b; font-size: 16px; font-weight: 500; outline: none; }
+        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 25px; }
+        .btn-emp { background: var(--accent-green); color: white; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3); }
+        .btn-partner { background: var(--accent-blue); color: white; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); margin-top: 10px; }
+        .divider { width: 100%; display: flex; align-items: center; margin: 25px 0; color: var(--text-dim); font-size: 12px; }
         .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #1e2533; }
         .divider span { padding: 0 15px; font-weight: 700; }
-
         .reg-text { font-size: 13px; color: var(--text-dim); margin-top: 15px; }
     </style>
 </head>
@@ -152,7 +96,10 @@
 
     <div class="app-shell">
         <div class="logo-container">
-            <img src="AGA Logo.png" alt="AGA Logo" class="logo-img">
+            <svg class="ag-symbol" viewBox="0 0 100 100">
+                <path d="M50 10 L15 85 L32 85 L42 62 L64 62 L69 73 L85 73 L85 85 L64 85 L59 73 L46 73 L50 62 L50 35 L58 55 L65 55 L50 18 Z" />
+                <path d="M68 73 L90 73 L90 85 L68 85 Z" />
+            </svg>
         </div>
         
         <h1 class="brand-title">Acharya<br>Gehlot &<br>Associates</h1>
@@ -177,7 +124,7 @@
         <div class="divider"><span>OR</span></div>
 
         <button class="btn btn-partner">
-            <svg class="g-icon" viewBox="0 0 48 48">
+            <svg style="width:20px; height:20px;" viewBox="0 0 48 48">
                 <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                 <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
                 <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
