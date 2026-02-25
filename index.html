@@ -3,168 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>AGA Tasks</title>
+    <title>AGA Tasks - Partner</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0b0e14;
-            --card: #141824;
+            --card: #151923;
             --border: #1e2533;
             --accent-blue: #5c7cfa;
             --accent-green: #10b981;
+            --high: #ff4d4d;
+            --medium: #f39c12;
+            --pending: #e67e22;
             --text-main: #ffffff;
             --text-dim: #717b91;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'DM Sans', sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text-main); 
-            display: flex; 
-            justify-content: center; 
-            min-height: 100vh;
-        }
+        body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text-main); min-height: 100vh; }
+        .app-container { width: 100%; max-width: 420px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
 
-        .phone-frame { width: 100%; max-width: 400px; padding: 40px 25px; text-align: center; }
+        /* HEADER */
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; padding-top: 10px; }
+        .greeting h2 { font-family: 'Syne', sans-serif; font-size: 24px; }
+        .greeting p { color: var(--accent-blue); font-size: 13px; font-weight: 500; }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .notif-bell { font-size: 20px; color: #ffcc00; }
+        .logout-btn { background: #ff4d4d; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; font-size: 12px; }
 
-        /* LOGO STYLING */
-        .logo-box {
-            width: 100px; height: 100px; background: #000;
-            margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
-            border: 1px solid #333;
-        }
-        .logo-box svg { width: 70%; height: 70%; }
+        /* NEW QUICK ACTIONS GRID */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .action-btn { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 15px; text-align: left; transition: 0.2s; cursor: pointer; }
+        .action-btn:active { transform: scale(0.96); border-color: var(--accent-blue); }
+        .action-btn span { display: block; font-size: 18px; margin-bottom: 5px; }
+        .action-btn label { font-size: 12px; font-weight: 700; color: var(--text-main); cursor: pointer; }
 
-        .brand-name {
-            font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800;
-            line-height: 1; margin-bottom: 5px; text-transform: uppercase;
-        }
-        .app-title { font-size: 16px; color: var(--text-dim); margin-bottom: 40px; }
+        /* ATTENDANCE BUTTON */
+        .attendance-bar { width: 100%; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--accent-green); font-weight: bold; margin-bottom: 20px; cursor: pointer; }
 
-        /* FORM ELEMENTS */
-        .section-label {
-            display: block; text-align: left; font-size: 11px; font-weight: 700;
-            color: #3b4660; text-transform: uppercase; letter-spacing: 1px;
-            margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px;
-        }
-        .input-group { text-align: left; margin-bottom: 15px; }
-        .input-group label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
-        .f-input {
-            width: 100%; background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; padding: 15px; color: white; font-size: 15px; outline: none;
-        }
-        .f-input-fixed { background: rgba(92, 124, 250, 0.1); color: var(--accent-blue); font-weight: bold; }
-        .forgot-pass {
-            display: block; text-align: right; font-size: 12px; color: #3b5bdb;
-            margin-top: 10px; margin-bottom: 25px; text-decoration: none;
-        }
+        /* PENDING COUNT CARD */
+        .count-card { background: var(--card); border-radius: 20px; padding: 25px; margin-bottom: 20px; position: relative; border: 1px solid var(--border); }
+        .count-num { font-family: 'Syne', sans-serif; font-size: 48px; color: var(--accent-blue); line-height: 1; }
+        .count-label { color: var(--text-dim); font-size: 14px; margin-top: 5px; }
+        .pin-icon { position: absolute; right: 25px; top: 25px; font-size: 24px; opacity: 0.3; }
 
-        /* BUTTONS WITH GLOW */
-        .btn {
-            width: 100%; padding: 16px; border-radius: 15px; border: none;
-            font-weight: 700; font-size: 16px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
-            margin-bottom: 15px; transition: 0.3s;
-        }
-        .btn-employee { 
-            background: var(--accent-green); color: #000; 
-            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-        }
-        .btn-partner { 
-            background: var(--accent-blue); color: white; 
-            box-shadow: 0 4px 20px rgba(92, 124, 250, 0.3);
-        }
-        .btn-back { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
-        
-        .divider {
-            margin: 30px 0; display: flex; align-items: center; gap: 15px;
-            color: var(--text-dim); font-size: 12px; font-weight: 700;
-        }
-        .line { flex: 1; height: 1px; background: var(--border); }
+        /* TASK CARDS */
+        .task-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; margin-bottom: 15px; }
+        .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .badges { display: flex; gap: 8px; }
+        .badge { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; }
+        .badge-high { background: var(--high); color: white; }
+        .badge-medium { background: var(--medium); color: white; }
+        .badge-status { background: rgba(230, 126, 34, 0.2); color: var(--pending); }
+        .client-name { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+        .task-desc { font-size: 13px; color: var(--text-dim); margin-bottom: 15px; }
+        .task-meta { display: flex; gap: 15px; font-size: 12px; color: var(--text-dim); padding-bottom: 15px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .meta-item { display: flex; align-items: center; gap: 5px; }
 
-        /* NAVIGATION CONTROL */
-        .screen { display: none; }
-        .active-screen { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* FLOATING ADD BUTTON */
+        .fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--accent-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; box-shadow: 0 10px 25px rgba(92, 124, 250, 0.4); cursor: pointer; border: none; z-index: 100; }
     </style>
 </head>
 <body>
 
-    <div class="phone-frame">
-        
-        <div id="mainScreen" class="screen active-screen">
-            <div class="logo-box">
-                <svg viewBox="0 0 100 100"><path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/></svg>
+    <div class="app-container">
+        <div class="header">
+            <div class="greeting">
+                <h2>Hello, Chintan</h2>
+                <p>Partner Dashboard</p>
             </div>
-            <h1 class="brand-name">Acharya<br>Gehlot &<br>Associates</h1>
-            <p class="app-title">Task Assigner</p>
-
-            <span class="section-label">Employee Login</span>
-            <div class="input-group">
-                <label>Your Name</label>
-                <input type="text" id="empName" class="f-input" placeholder="Enter your full name">
+            <div class="header-actions">
+                <span class="notif-bell">🔔</span>
+                <button class="logout-btn" onclick="location.reload()">Logout</button>
             </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="empPass" class="f-input" placeholder="Enter password">
-            </div>
-            <a href="#" class="forgot-pass">Forgot Password?</a>
-
-            <button class="btn btn-employee" onclick="alert('Employee login logic...')">
-                <span>👤</span> Login as Employee
-            </button>
-            <p style="font-size:13px; color:var(--text-dim);">New employee? <span style="color:#3b5bdb; font-weight:700;">Register here →</span></p>
-
-            <div class="divider"><div class="line"></div> OR <div class="line"></div></div>
-
-            <button class="btn btn-partner" onclick="showScreen('partnerScreen')">
-                <span style="background:white; border-radius:50%; width:18px; height:18px; color:black; font-size:12px; display:flex; align-items:center; justify-content:center;">G</span> Login as Partner
-            </button>
         </div>
 
-        <div id="partnerScreen" class="screen">
-            <div class="logo-box">
-                <svg viewBox="0 0 100 100"><path d="M20 85 L50 15 L80 85 M35 60 L65 60" stroke="white" stroke-width="10" fill="none"/></svg>
+        <div class="action-grid">
+            <div class="action-btn">
+                <span>👥</span>
+                <label>Manage Team</label>
             </div>
-            <h1 class="brand-name">Partner Login</h1>
-            <p class="app-title">Acharya Gehlot & Associates</p>
-
-            <div class="input-group" style="margin-top:30px;">
-                <label>Email</label>
-                <input type="text" class="f-input f-input-fixed" value="chintan@acharyagehlot.com" readonly>
+            <div class="action-btn">
+                <span>📈</span>
+                <label>Task Analytics</label>
             </div>
-
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="partnerPass" class="f-input" placeholder="••••••••••••">
-            </div>
-            <a href="#" class="forgot-pass">Forgot Password?</a>
-
-            <button class="btn btn-partner" onclick="handlePartnerLogin()">
-                <span style="background:white; border-radius:50%; width:18px; height:18px; color:black; font-size:12px; display:flex; align-items:center; justify-content:center;">G</span> Sign In as Partner
-            </button>
-
-            <button class="btn btn-back" onclick="showScreen('mainScreen')">← Back</button>
         </div>
+
+        <div class="attendance-bar">
+            📊 Attendance Report
+        </div>
+
+        <div class="count-card">
+            <div class="count-num">3</div>
+            <div class="count-label">Pending Tasks</div>
+            <span class="pin-icon">📌</span>
+        </div>
+
+        <h3 style="font-family:'Syne'; font-size:16px; margin-bottom:15px; color:var(--text-dim);">Current Tasks</h3>
+
+        <div class="task-card">
+            <div class="task-header">
+                <div class="badges">
+                    <span class="badge badge-high">High</span>
+                    <span class="badge badge-status">Pending</span>
+                </div>
+                <div style="color:var(--text-dim);">✏️ 🗑️</div>
+            </div>
+            <div class="client-name">Hotel Sunrise Pvt Ltd</div>
+            <div class="task-desc">GST Annual Return — FY 2024-25</div>
+            <div class="task-meta">
+                <div class="meta-item">📂 GST</div>
+                <div class="meta-item">📅 2026-02-28</div>
+            </div>
+            <div style="font-size:13px; color:var(--accent-blue); font-weight:600;">👤 Heer Patel</div>
+        </div>
+
+        <button class="fab" title="Add New Task">+</button>
 
     </div>
 
-    <script type="module">
-        window.showScreen = (id) => {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-            document.getElementById(id).classList.add('active-screen');
-        };
-
-        window.handlePartnerLogin = () => {
-            const pass = document.getElementById('partnerPass').value;
-            if (pass === "Partner@AG2026") {
-                alert("Success! Entering Dashboard...");
-                // Next step: reveal your dashboard code here
-            } else {
-                alert("Incorrect Partner Password");
-            }
-        };
-    </script>
 </body>
 </html>
