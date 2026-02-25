@@ -331,12 +331,12 @@ onSnapshot(query(collection(db,"attendance"),orderBy("createdAt","desc")),snap=>
 
 async function seedEmps(){
   const defaults=[
-    {name:"Heer Patel",code:"001",email:"heer@acharyagehlot.com",mobile:"",password:"pass001",registered:true},
-    {name:"Bhavana Shinde",code:"002",email:"bhavana@acharyagehlot.com",mobile:"",password:"pass002",registered:true},
-    {name:"Moksha Jain",code:"003",email:"moksha@acharyagehlot.com",mobile:"",password:"pass003",registered:true},
-    {name:"Dhanisha Solanki",code:"004",email:"dhanisha@acharyagehlot.com",mobile:"",password:"pass004",registered:true},
-    {name:"Prapti Padhya",code:"005",email:"prapti@acharyagehlot.com",mobile:"",password:"pass005",registered:true},
-    {name:"Test",code:"006",email:"test@acharyagehlot.com",mobile:"9999999999",password:"test006",registered:true},
+    {name:"Heer Patel",code:"001",email:"heer@acharyagehlot.com",mobile:"",password:"pass001",registered:true,approved:true,pendingApproval:false},
+    {name:"Bhavana Shinde",code:"002",email:"bhavana@acharyagehlot.com",mobile:"",password:"pass002",registered:true,approved:true,pendingApproval:false},
+    {name:"Moksha Jain",code:"003",email:"moksha@acharyagehlot.com",mobile:"",password:"pass003",registered:true,approved:true,pendingApproval:false},
+    {name:"Dhanisha Solanki",code:"004",email:"dhanisha@acharyagehlot.com",mobile:"",password:"pass004",registered:true,approved:true,pendingApproval:false},
+    {name:"Prapti Padhya",code:"005",email:"prapti@acharyagehlot.com",mobile:"",password:"pass005",registered:true,approved:true,pendingApproval:false},
+    {name:"Test",code:"006",email:"test@acharyagehlot.com",mobile:"9999999999",password:"test006",registered:true,approved:true,pendingApproval:false},
   ];
   for(const e of defaults) await setDoc(doc(db,"employees",e.code),e);
 }
@@ -349,6 +349,19 @@ window.fbUpdateEmp  = async(code,d)=>{ try{await updateDoc(doc(db,"employees",co
 window.fbSaveAtt    = async a     =>{ try{await setDoc(doc(db,"attendance",a.id),a);}catch(e){console.error(e);} };
 window.fbSaveNotif  = async n     =>{ try{await setDoc(doc(db,"notifications",n.id),n);}catch(e){console.error(e);} };
 window.fbDeleteEmp  = async code  =>{ try{await deleteDoc(doc(db,"employees",code));}catch(e){console.error(e);} };
+
+// NOTIFICATIONS real-time — alert partner of new registrations
+onSnapshot(query(collection(db,"notifications"),orderBy("createdAt","desc")),snap=>{
+  const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+  if(window._st) window._st.notifications=list;
+  // Alert partner if logged in
+  if(window._st && window._st.user?.role==="boss"){
+    if(window._re) window._re();
+    // Toast for very recent unread registrations (last 15 seconds)
+    const fresh=list.find(n=>n.type==="registration"&&!n.read&&(Date.now()-n.createdAt)<15000);
+    if(fresh && window.toast) window.toast("🆕 New registration: "+fresh.body.split(" has")[0]);
+  }
+});
 console.log("Firebase ready");
 </script>
 <script>
@@ -381,6 +394,7 @@ const state = window._st = {
   reportFrom: "", reportTo: "",
   pinInput: "", pinMode: "set", pinTarget: null,
   reassignTaskId: null, reassignTo: "",
+  notifications: [],
   lastLat: null, lastLng: null,
   empCodeReset: "",
   f: { // form fields
@@ -868,7 +882,7 @@ function completeTask(id){
 function buildCreate(){
   const f=state.f;
   const catOpts=state.categories.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("");
-  const empOpts=state.employees.map(e=>`<option value="${e.name}" ${f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
+  const empOpts=state.employees.filter(e=>e.approved!==false).map(e=>`<option value="${e.name}" ${f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
   return `<div class="pg-form">
     <div class="ct-head">
       <div class="back-btn" onclick="navigate('boss','back')">←</div>
@@ -1120,9 +1134,9 @@ function buildRegister(){
     <div class="f-label">Full Name</div>
     <input class="f-inp" type="text" placeholder="Enter your full name"
       value="${f.regName||''}" oninput="state.f.regName=this.value"/>
-    <div class="f-label">Employee Code</div>
-    <input class="f-inp" type="text" placeholder="e.g. 001 (get from partner)"
-      value="${f.regCode||''}" oninput="state.f.regCode=this.value"/>
+    <div class="f-label">Mobile Number</div>
+    <input class="f-inp" type="tel" placeholder="10-digit mobile number"
+      value="${f.regMobile||''}" oninput="state.f.regMobile=this.value"/>
     <div class="f-label">Mobile Number</div>
     <input class="f-inp" type="tel" placeholder="10-digit mobile" maxlength="10"
       value="${f.regMobile||''}" oninput="state.f.regMobile=this.value.replace(/\D/g,'').slice(0,10)"/>
@@ -1152,23 +1166,26 @@ function doRegister(){
   if(!email||!email.includes("@")){toast("Enter valid email",true);return;}
   if(pass.length<6){toast("Password must be at least 6 characters",true);return;}
   if(pass!==conf){toast("Passwords do not match",true);return;}
-  const code=(f.regCode||"").trim();
-  if(!code){toast("Enter employee code",true);return;}
-  // Check if employee with this code already exists
-  let emp=state.employees.find(e=>e.code===code);
-  if(emp){
-    // Update existing employee
-    emp.name=name; emp.mobile=mobile; emp.email=email; emp.password=pass; emp.registered=true;
-  } else {
-    // Create new employee record
-    emp={name,code,mobile,email,password:pass,registered:true};
-    state.employees.push(emp);
-  }
+  // Check duplicate name
+  const dupName=state.employees.find(e=>e.name.toLowerCase()===name.toLowerCase());
+  if(dupName){toast("Name already registered. Contact partner.",true);return;}
+  // Auto-generate code
+  const maxCode=state.employees.reduce((m,e)=>Math.max(m,parseInt(e.code)||0),0);
+  const code=String(maxCode+1).padStart(3,"0");
+  const emp={name,code,mobile,email,password:"pending",registered:true};
+  state.employees.push(emp);
+  emp.approved=false;
+  emp.pendingApproval=true;
+  emp.registeredAt=Date.now();
   if(window.fbSaveEmp) window.fbSaveEmp(emp);
-  // Clear form
+  // Notify partner of new registration
+  const notif={id:"n"+Date.now(),to:"partner",type:"registration",
+    title:"🆕 New Registration",body:name+" has registered and is awaiting approval",
+    empCode:emp.code,read:false,createdAt:Date.now()};
+  if(window.fbSaveNotif) window.fbSaveNotif(notif);
   state.f.regName=""; state.f.regCode=""; state.f.regMobile=""; state.f.regEmail=""; state.f.regPass=""; state.f.regConf="";
-  log("✅ "+name+" registered — synced to Firebase","action");
-  toast("Registration complete! You can now login.");
+  log("📝 "+name+" registered — awaiting partner approval","action");
+  toast("Registration submitted! Partner approval required.");
   navigate("login","back");
 }
 
@@ -1398,32 +1415,57 @@ function exportTasksExcel(){
 
 // ═══════════════════════ MANAGE USERS (PARTNER) ═══════════════════════
 function buildManageUsers(){
-  const empRows=state.employees.map(e=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;">
-        <div style="font-size:12px;font-weight:600;color:var(--text);">${e.name}</div>
-        <div style="font-size:10px;color:var(--muted);">Code: ${e.code} · ${e.registered?"Registered":"Not registered"}</div>
-      </div>
-      <button onclick="confirmDeleteUser('${e.code}','${e.name}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">🗑️ Delete</button>
-    </div>`).join("");
+  // Mark all registration notifications as read
+  state.notifications.filter(n=>n.type==="registration"&&!n.read).forEach(n=>{
+    n.read=true;
+    if(window.fbSaveNotif) window.fbSaveNotif({...n,read:true});
+  });
+  const pending=state.employees.filter(e=>e.pendingApproval&&!e.approved);
+  const approved=state.employees.filter(e=>e.approved!==false);
+  
+  const pendingRows=pending.length?`
+    <div style="font-size:10px;font-weight:700;color:var(--yellow);letter-spacing:1px;margin:10px 0 6px;">⏳ PENDING APPROVAL (${pending.length})</div>
+    <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:4px 12px;margin-bottom:14px;">
+      ${pending.map(e=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid rgba(245,158,11,0.15);">
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:700;color:var(--text);">${e.name}</div>
+            <div style="font-size:10px;color:var(--muted);">Code: ${e.code} · ${e.mobile||"no mobile"} · ${e.email||"no email"}</div>
+          </div>
+          <button onclick="confirmApproveUser('${e.code}','${e.name}')" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--green);border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-right:4px;">✅ Approve</button>
+          <button onclick="confirmDeleteUser('${e.code}','${e.name}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">🗑️</button>
+        </div>`).join("")}
+    </div>`:"";
+
+  const approvedRows=`
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;margin:4px 0 6px;">✅ ACTIVE EMPLOYEES (${approved.length})</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px 12px;">
+      ${approved.length?approved.map(e=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;color:var(--text);">${e.name}</div>
+            <div style="font-size:10px;color:var(--muted);">Code: ${e.code} · Pass: ${e.password||"—"}</div>
+          </div>
+          <button onclick="confirmDeleteUser('${e.code}','${e.name}')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;">🗑️ Delete</button>
+        </div>`).join(""):'<div style="text-align:center;padding:16px;color:var(--muted);font-size:11px;">No active employees</div>'}
+    </div>`;
   return `<div class="pg-form">
     <div class="ct-head">
       <div class="back-btn" onclick="navigate('boss','back')">←</div>
       <div class="ct-ttl">Manage Employees</div>
     </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;">
-      ${empRows||'<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;">No employees</div>'}
-    </div>
+    ${pendingRows}
+    ${approvedRows}
   </div>`;
 }
 
 function confirmDeleteUser(code, name){
   showConfirm({
     icon:"🗑️",
-    title:"Delete Employee?",
-    msg:"This will permanently remove "+name+" and all their data.",
-    detail:'<div class="cd-lbl">Employee</div><strong>'+name+'</strong><br/>Code: '+code,
-    yesLabel:"🗑️ Yes, Delete",
+    title:"Are You Sure?",
+    msg:"Permanently remove "+name+" from the organisation?",
+    detail:'<div class="cd-lbl">Employee</div><strong>'+name+'</strong><br/>Code: '+code+'<br/><span style="color:var(--red);font-size:10px;">This cannot be undone. All their tasks will remain.</span>',
+    yesLabel:"🗑️ Yes, Delete Permanently",
     yesType:"danger",
     onYes:()=>deleteUser(code, name)
   });
@@ -1484,7 +1526,7 @@ function buildReassign(){
   const t=state.tasks.find(x=>x.id===state.reassignTaskId);
   if(!t) return '<div class="pg"><div style="padding:20px;text-align:center;color:var(--muted);">Task not found</div></div>';
   const empOpts=state.employees
-    .filter(e=>e.name!==state.user?.name) // don't show self
+    .filter(e=>e.name!==state.user?.name && e.approved!==false) // approved only
     .map(e=>`<option value="${e.name}">${e.name}</option>`).join("");
   return `<div class="pg-form">
     <div class="ct-head">
@@ -1531,6 +1573,41 @@ function confirmReassign(){
       navigate("employee","back");
     }
   });
+}
+
+
+// ═══════════════════════ APPROVE USER ═══════════════════════
+function confirmApproveUser(code, name){
+  const emp=state.employees.find(e=>e.code===code);
+  const nextNum=state.employees.filter(e=>e.approved!==false).length+1;
+  const defaultPass="pass"+String(nextNum).padStart(3,"0");
+  showConfirm({
+    icon:"✅",
+    title:"Approve Registration?",
+    msg:name+" will be added as an active employee.",
+    detail:'<div class="cd-lbl">Employee</div><strong>'+name+'</strong>'
+      +'<br/>Code: '+code
+      +'<br/>Mobile: '+(emp?.mobile||"—")
+      +'<br/>Email: '+(emp?.email||"—")
+      +'<div class="cd-lbl" style="margin-top:8px;">Default Password</div>'
+      +'<strong style="color:var(--accent);">'+defaultPass+'</strong>'
+      +'<br/><span style="font-size:10px;color:var(--muted);">Share this password with the employee</span>',
+    yesLabel:"✅ Yes, Approve",
+    yesType:"success",
+    onYes:()=>approveUser(code, name, defaultPass)
+  });
+}
+
+function approveUser(code, name, defaultPass){
+  const emp=state.employees.find(e=>e.code===code);
+  if(!emp) return;
+  emp.approved=true;
+  emp.pendingApproval=false;
+  emp.password=defaultPass;
+  if(window.fbUpdateEmp) window.fbUpdateEmp(code,{approved:true,pendingApproval:false,password:defaultPass});
+  log("✅ "+name+" approved — password: "+defaultPass,"action");
+  toast(name+" approved! Password: "+defaultPass);
+  render();
 }
 
 // ═══════════════════════ RESET ═══════════════════════
@@ -1600,7 +1677,9 @@ function updateTopbarButtons(){
   const btns = [];
   if(state.user.role==="boss"){
     btns.push({label:"🔑",color:"accent",action:"navigate('changePass')"});
-    btns.push({label:"👥",color:"red",action:"navigate('manageUsers')"});
+    const pendingCount=state.employees.filter(e=>e.pendingApproval&&!e.approved).length;
+    const badgeHtml=pendingCount>0?' <sup style="background:#ef4444;color:#fff;border-radius:8px;padding:0 4px;font-size:9px;font-weight:800;">'+pendingCount+'</sup>':"";
+    btns.push({label:"👥"+badgeHtml,color:"red",action:"navigate('manageUsers')"});
   }
   btns.push({label:"🌓",color:"muted",action:"toggleTheme()"});
   btns.push({label:"Logout",color:"logout",action:"doLogout()"});
