@@ -3,12 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#6366f1"/>
-<title>AGA Tasks</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<title>AGA Tasks - Partner Edition</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -16,1128 +12,201 @@
   --accent:#6366f1;--cyan:#22d3ee;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;
   --text:#dde4f0;--muted:#4a5680;--soft:#8892aa;
 }
-:root.light{
-  --bg:#f0f2f7;--surface:#ffffff;--card:#e8ecf4;--border:#d0d7e8;
-  --accent:#4f46e5;--cyan:#0891b2;--green:#059669;--red:#dc2626;--yellow:#d97706;
-  --text:#1a2035;--muted:#6b7280;--soft:#4b5563;
-}
 *{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);padding-top:60px;}
+
 /* TOPBAR */
 .topbar{height:52px;display:flex;align-items:center;justify-content:space-between;
   padding:0 16px;background:var(--surface);border-bottom:1px solid var(--border);
   position:fixed;top:0;left:0;right:0;z-index:100;}
 .brand{font-family:"Syne",sans-serif;font-size:16px;font-weight:800;color:var(--accent);}
-.brand span{color:var(--cyan);}
-#fbStatus{font-size:8px;color:var(--muted);margin-left:4px;}
-/* APP CONTENT */
-#app{position:fixed;top:52px;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
-#app.no-topbar{top:0;}
-/* LOGIN */
-.pg-login{padding:28px 22px 40px;max-width:420px;margin:0 auto;}
-.login-logo{text-align:center;margin-bottom:12px;}
-.login-title{font-family:"Syne",sans-serif;font-size:20px;font-weight:800;color:#fff;text-align:center;}
-.login-sub{font-size:11px;color:var(--muted);text-align:center;margin-top:3px;}
-.sec-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
-.f-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.5px;margin-bottom:4px;}
-.f-inp{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
-  padding:9px 12px;font-size:13px;color:var(--text);font-family:"DM Sans",sans-serif;
-  margin-bottom:10px;-webkit-text-fill-color:var(--text);}
-.f-inp:focus{outline:none;border-color:var(--accent);}
-.f-inp::placeholder{color:var(--muted);}
-.f-inp:-webkit-autofill{-webkit-text-fill-color:var(--text)!important;-webkit-box-shadow:0 0 0 1000px var(--card) inset!important;}
-:root.light .f-inp{-webkit-text-fill-color:#1a2035;-webkit-box-shadow:0 0 0 1000px #e8ecf4 inset!important;}
-select.f-inp,input[type=date].f-inp{cursor:pointer;}
-select.f-inp option{background:var(--card);color:var(--text);}
-.app-btn{width:100%;padding:12px;border:none;border-radius:10px;font-size:13px;
-  font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;margin-bottom:8px;}
-.btn-emp{background:var(--accent);color:#fff;}
-.btn-boss{background:var(--surface);border:1px solid var(--accent);color:var(--accent);}
-.or-row{display:flex;align-items:center;gap:8px;margin:6px 0;}
-.or-line{flex:1;height:1px;background:var(--border);}
-.or-text{font-size:10px;color:var(--muted);font-weight:600;}
-.forgot-link{text-align:right;margin-bottom:10px;margin-top:-4px;}
-.forgot-link a{font-size:10px;color:var(--accent);cursor:pointer;}
-/* BOSS DASHBOARD */
-.pg{background:var(--bg);padding-bottom:20px;}
-.emp-head{padding:16px 16px 8px;}
-.eh-greet{font-family:"Syne",sans-serif;font-size:18px;font-weight:800;color:#fff;}
-.eh-sub{font-size:10px;color:var(--muted);margin-top:2px;}
-/* TASK CARDS */
-.task-c{background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:12px;margin:0 12px 8px;cursor:pointer;}
-.task-c:active{opacity:0.8;}
-.tc-row1{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-.tc-client{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
-.tc-desc{font-size:11px;color:var(--muted);margin-bottom:5px;line-height:1.4;}
-.tc-meta{display:flex;gap:10px;font-size:10px;color:var(--muted);}
-.tc-assign{font-size:10px;color:var(--soft);margin-top:4px;}
-.pbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;}
-.ph{background:rgba(239,68,68,0.2);color:var(--red);}
-.pm{background:rgba(245,158,11,0.2);color:var(--yellow);}
-.pl{background:rgba(16,185,129,0.2);color:var(--green);}
-.sbadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-left:auto;}
-.sp{background:rgba(99,102,241,0.2);color:var(--accent);}
-.sd{background:rgba(16,185,129,0.2);color:var(--green);}
-/* FILTER BAR */
-.filter-bar{padding:8px 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
-.fbtn{padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;font-family:"DM Sans",sans-serif;}
-.fbtn.act{background:var(--accent);color:#fff;border-color:var(--accent);}
-/* FORM */
-.pg-form{background:var(--bg);padding:16px 16px 80px;}
-.ct-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-.back-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;
-  width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;}
-.ct-ttl{font-family:"Syne",sans-serif;font-size:17px;font-weight:800;color:#fff;}
-.fg{margin-bottom:12px;}
-.fg-lbl{font-size:9px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-.fg-inp{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
-  padding:9px 11px;font-size:12px;color:var(--text);font-family:"DM Sans",sans-serif;
-  -webkit-text-fill-color:var(--text);}
-.fg-inp:focus{outline:none;border-color:var(--accent);}
-.fg-inp:-webkit-autofill{-webkit-text-fill-color:var(--text)!important;-webkit-box-shadow:0 0 0 1000px var(--card) inset!important;}
-select.fg-inp{cursor:pointer;}
-select.fg-inp option{background:var(--card);color:var(--text);}
-input[type=date].fg-inp{cursor:pointer;}
-.fg-ta{min-height:70px;resize:vertical;}
-.prio-row{display:flex;gap:6px;}
-.poption{flex:1;padding:7px;text-align:center;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--muted);}
-.poption.sel.po-h{background:rgba(239,68,68,0.15);border-color:var(--red);color:var(--red);}
-.poption.sel.po-m{background:rgba(245,158,11,0.15);border-color:var(--yellow);color:var(--yellow);}
-.poption.sel.po-l{background:rgba(16,185,129,0.15);border-color:var(--green);color:var(--green);}
-.submit-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;
-  padding:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
-.submit-btn:disabled{opacity:0.4;}
-.at-logout{background:var(--red);color:#fff;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
-/* EMPLOYEE DASHBOARD */
-.emp-stats{display:flex;gap:10px;padding:0 16px 12px;}
-.es{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
-.es-n{font-size:22px;font-weight:800;font-family:"Syne",sans-serif;}
-.es-n.pend{color:var(--yellow);}
-.es-n.done{color:var(--green);}
-.es-l{font-size:9px;color:var(--muted);margin-top:2px;}
-.emp-tasks{padding:0 12px 12px;}
-.emp-task-c{background:var(--card);border-radius:10px;padding:12px;margin-bottom:8px;border:1px solid var(--border);}
-.task-from-partner{border-left:3px solid var(--accent);background:rgba(99,102,241,0.05);}
-.task-from-senior{border-left:3px solid var(--yellow);background:rgba(245,158,11,0.05);}
-.task-source-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-bottom:6px;}
-.tsb-partner{background:rgba(99,102,241,0.2);color:var(--accent);}
-.tsb-senior{background:rgba(245,158,11,0.2);color:var(--yellow);}
-.complete-btn{width:100%;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);
-  color:var(--green);border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;
-  margin-top:8px;font-family:"DM Sans",sans-serif;}
-/* CONFIRM OVERLAY */
-.confirm-overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.75);
-  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
-.confirm-overlay.open{opacity:1;pointer-events:all;}
-.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-  padding:22px 20px;width:290px;text-align:center;}
-.cd-icon{font-size:32px;margin-bottom:10px;}
-.cd-title{font-family:"Syne",sans-serif;font-size:15px;font-weight:800;color:#fff;margin-bottom:5px;}
-.cd-msg{font-size:12px;color:var(--muted);margin-bottom:10px;}
-.cd-detail{font-size:11px;color:var(--soft);background:var(--card);border-radius:8px;
-  padding:10px;margin-bottom:14px;text-align:left;line-height:1.7;}
-.cd-lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:6px;}
-.cd-btns{display:flex;gap:8px;}
-.cd-no{flex:1;padding:10px;border-radius:8px;background:var(--card);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;font-family:"DM Sans",sans-serif;}
-.cd-yes{flex:2;padding:10px;border-radius:8px;border:none;color:#fff;cursor:pointer;font-size:12px;font-weight:700;font-family:"DM Sans",sans-serif;}
-.cd-yes.success{background:var(--green);}
-.cd-yes.danger{background:var(--red);}
-.cd-yes.primary{background:var(--accent);}
-/* PIN OVERLAY */
-.pin-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.85);
-  display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;backdrop-filter:blur(6px);}
-.pin-overlay.open{opacity:1;pointer-events:all;}
-.pin-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:24px 20px;width:290px;text-align:center;}
-.pin-title{font-family:"Syne",sans-serif;font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px;}
-.pin-sub{font-size:11px;color:var(--muted);margin-bottom:12px;}
-.pin-dots{display:flex;gap:10px;justify-content:center;margin:12px 0;}
-.pin-dot{width:13px;height:13px;border-radius:50%;background:var(--border);}
-.pin-dot.filled{background:var(--accent);}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:220px;margin:0 auto 12px;}
-.pin-key{padding:14px;border-radius:10px;background:var(--card);border:1px solid var(--border);
-  color:var(--text);font-size:18px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
-.pin-key.del{font-size:14px;}
-.pin-error{color:var(--red);font-size:11px;min-height:16px;margin-bottom:8px;}
-.pin-cancel{font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;}
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--surface);border:1px solid var(--border);border-radius:10px;
-  padding:10px 18px;font-size:12px;color:var(--text);z-index:500;
-  opacity:0;transition:all 0.3s;pointer-events:none;white-space:nowrap;max-width:90vw;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast.err{border-color:var(--red);color:var(--red);}
-/* ATTENDANCE */
-.att-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin:0 12px 12px;}
-.att-btn-in{flex:1;padding:10px;border:2px solid rgba(16,185,129,0.4);border-radius:8px;background:rgba(16,185,129,0.1);color:var(--green);font-weight:700;font-size:12px;cursor:pointer;font-family:"DM Sans",sans-serif;}
-.att-btn-out{flex:1;padding:10px;border:2px solid rgba(239,68,68,0.4);border-radius:8px;background:rgba(239,68,68,0.1);color:var(--red);font-weight:700;font-size:12px;cursor:pointer;font-family:"DM Sans",sans-serif;}
-/* MANAGE USERS */
-.section-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:12px 0 6px;}
-.user-card{display:flex;align-items:center;gap:8px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;}
-.user-info{flex:1;}
-.user-name{font-size:13px;font-weight:600;color:var(--text);}
-.user-meta{font-size:10px;color:var(--muted);margin-top:2px;}
-.btn-approve{background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);color:var(--green);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
-.btn-delete{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);color:var(--red);border-radius:7px;padding:6px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:"DM Sans",sans-serif;}
+
+/* PARTNER DASHBOARD STYLES */
+.admin-section {
+    margin: 15px;
+    padding: 15px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+.admin-title {
+    font-family: "Syne", sans-serif;
+    font-size: 14px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+.notif-card {
+    font-size: 11px;
+    padding: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+}
+.pending-user {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+}
+.btn-approve {
+    background: var(--green);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+}
+.partner-badge {
+    background: var(--accent);
+    color: white;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+#app { padding-bottom: 80px; }
+.login-box { max-width: 350px; margin: 50px auto; padding: 20px; text-align: center; }
+.f-inp { width: 100%; padding: 12px; margin: 8px 0; background: var(--card); border: 1px solid var(--border); color: white; border-radius: 8px; }
+.btn-main { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 </style>
 </head>
 <body>
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
 
-<!-- CONFIRM OVERLAY -->
-<div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-box">
-    <div class="cd-icon" id="cdIcon"></div>
-    <div class="cd-title" id="cdTitle"></div>
-    <div class="cd-msg" id="cdMsg"></div>
-    <div class="cd-detail" id="cdDetail" style="display:none;"></div>
-    <div class="cd-btns">
-      <button class="cd-no" onclick="closeConfirm()">✕ No, Cancel</button>
-      <button class="cd-yes primary" id="cdYes">✓ Yes</button>
-    </div>
-  </div>
+<div class="topbar">
+  <div class="brand">AGA <span>Tasks</span> <small id="roleTag"></small></div>
+  <button id="logoutBtn" style="display:none; background:none; border:none; color:var(--red); font-size:12px;">Logout</button>
 </div>
 
-<!-- PIN OVERLAY -->
-<div class="pin-overlay" id="pinOverlay">
-  <div class="pin-box">
-    <div class="pin-title" id="pinTitle">Enter Your PIN</div>
-    <div class="pin-sub" id="pinSub">4-digit attendance PIN</div>
-    <div class="pin-dots" id="pinDots">
-      <div class="pin-dot"></div><div class="pin-dot"></div>
-      <div class="pin-dot"></div><div class="pin-dot"></div>
+<div id="app">
+    <div id="loginScreen" class="login-box">
+        <h2 style="font-family: 'Syne'; margin-bottom: 20px;">Partner Login</h2>
+        <input type="email" id="emailInp" class="f-inp" placeholder="Email Address">
+        <input type="password" id="passInp" class="f-inp" placeholder="Password">
+        <button class="btn-main" onclick="handleLogin()">Sign In</button>
+        <p style="font-size: 11px; color: var(--muted); margin-top: 15px;">New employees will be locked until Partner approves.</p>
     </div>
-    <div class="pin-grid">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
-      <div></div>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key del" onclick="pinKey('del')">⌫</button>
+
+    <div id="partnerDashboard" style="display:none;">
+        <div class="admin-section">
+            <div class="admin-title">Pending Approvals</div>
+            <div id="approvalList">Checking for new staff...</div>
+        </div>
+        <div class="admin-section">
+            <div class="admin-title">Live Activity Feed</div>
+            <div id="notifList">No recent activity.</div>
+        </div>
+        <div class="admin-section">
+            <div class="admin-title">Manage Team</div>
+            <div id="staffList"></div>
+        </div>
     </div>
-    <div class="pin-error" id="pinError"></div>
-    <span class="pin-cancel" onclick="closePinDialog()">Cancel</span>
-  </div>
+
+    <div id="employeeView" style="display:none; text-align:center; padding: 40px;">
+        <h2 id="welcomeMsg"></h2>
+        <div id="lockMessage" style="color:var(--yellow); margin-top: 20px;">
+            Your account is pending approval from Chintan.
+        </div>
+    </div>
 </div>
 
-<!-- TOPBAR -->
-<div class="topbar" id="mainTopbar">
-  <div class="brand">AGA <span>Tasks</span><span id="fbStatus"> ⏳</span></div>
-  <div id="topbarRight"></div>
-</div>
-
-<!-- APP -->
-<div id="app" class="no-topbar"></div>
-
-<!-- FIREBASE -->
 <script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,collection,doc,setDoc,getDoc,getDocs,deleteDoc,onSnapshot,query,orderBy,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-assigner.firebaseapp.com",projectId:"ag-task-assigner",storageBucket:"ag-task-assigner.appspot.com",messagingSenderId:"694340088537",appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"};
-const app=initializeApp(cfg);
-const db=getFirestore(app);
-function setLive(ok){const el=document.getElementById("fbStatus");if(el)el.textContent=ok?" 🔥":"";}
-async function seedEmps(){
-  const defs=[
-    {name:"Heer Patel",code:"001",email:"heer@aga.com",mobile:"",password:"pass001",registered:true,approved:true,pendingApproval:false},
-    {name:"Bhavana Shinde",code:"002",email:"bhavana@aga.com",mobile:"",password:"pass002",registered:true,approved:true,pendingApproval:false},
-    {name:"Moksha Jain",code:"003",email:"moksha@aga.com",mobile:"",password:"pass003",registered:true,approved:true,pendingApproval:false},
-    {name:"Dhanisha Solanki",code:"004",email:"dhanisha@aga.com",mobile:"",password:"pass004",registered:true,approved:true,pendingApproval:false},
-    {name:"Prapti Padhya",code:"005",email:"prapti@aga.com",mobile:"",password:"pass005",registered:true,approved:true,pendingApproval:false},
-  ];
-  for(const e of defs) await setDoc(doc(db,"employees",e.code),e);
-}
-// Employees
-onSnapshot(collection(db,"employees"),snap=>{
-  if(snap.empty){seedEmps();return;}
-  const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
-  if(window._st){
-    window._st.employees=list;
-    // Alert partner of pending registrations
-    const pending=list.filter(e=>e.pendingApproval&&!e.approved);
-    if(pending.length>0&&window._st.user?.role==="boss"&&window._st.screen==="boss"){
-      if(window._re) window._re();
-    }
-  }
-  setLive(true);
-  if(window._re) window._re();
-},()=>setLive(false));
-// Tasks
-onSnapshot(query(collection(db,"tasks"),orderBy("createdAt","desc")),snap=>{
-  const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
-  if(window._st) window._st.tasks=list;
-  if(window._re) window._re();
-});
-// Attendance
-onSnapshot(query(collection(db,"attendance"),orderBy("createdAt","desc")),snap=>{
-  const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
-  if(window._st) window._st.attendance=list;
-  if(window._re) window._re();
-});
-// Notifications — alert partner of new registrations
-onSnapshot(query(collection(db,"notifications"),orderBy("createdAt","desc")),snap=>{
-  const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
-  if(window._st) window._st.notifications=list;
-  // Show toast for brand new registration (last 15 seconds)
-  if(window._st?.user?.role==="boss"){
-    const fresh=list.find(n=>n.type==="registration"&&!n.read&&(Date.now()-n.createdAt)<15000);
-    if(fresh&&window.toast) window.toast("🆕 New registration: "+fresh.body);
-    if(window._re) window._re();
-  }
-});
-window.fbSaveTask   = async t    =>{try{await setDoc(doc(db,"tasks",t.id),t);}catch(e){console.error(e);}};
-window.fbUpdateTask = async(id,d)=>{try{const{updateDoc:u}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");await u(doc(db,"tasks",id),d);}catch(e){console.error(e);}};
-window.fbDeleteTask = async id   =>{try{await deleteDoc(doc(db,"tasks",id));}catch(e){console.error(e);}};
-window.fbSaveEmp    = async e    =>{try{await setDoc(doc(db,"employees",e.code),e);}catch(e){console.error(e);}};
-window.fbUpdateEmp  = async(c,d) =>{try{const{updateDoc:u}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");await u(doc(db,"employees",c),d);}catch(e){console.error(e);}};
-window.fbDeleteEmp  = async code =>{try{await deleteDoc(doc(db,"employees",code));}catch(e){console.error(e);}};
-window.fbSaveAtt    = async a    =>{try{await setDoc(doc(db,"attendance",a.id),a);}catch(e){console.error(e);}};
-window.fbSaveNotif  = async n    =>{try{await setDoc(doc(db,"notifications",n.id),n);}catch(e){console.error(e);}};
-</script>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, orderBy, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-<script>
-const LOGO="data:image/png;base64,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";
-const SENIOR_EMP=["Bhavana Shinde","Heer Patel"];
-const CATEGORIES=["GST","Income Tax","TDS","Audit","ROC/MCA","Accounting","Payroll","Advisory","Other"];
-
-const state=window._st={
-  screen:"login", user:null,
-  tasks:[], employees:[], attendance:[], notifications:[],
-  statusFilter:"all",
-  theme:localStorage.getItem("aga-theme")||"dark",
-  f:{empName:"",empPass:"",partnerPass:"",
-     regName:"",regMobile:"",regEmail:"",regPass:"",regConf:"",
-     cpOld:"",cpNew:"",cpConf:"",
-     client:"",desc:"",priority:"high",category:"",due:"",assignedTo:"",
-     reassignTo:""},
-  pinInput:"",pinMode:"set",pinTarget:null,
-  reassignTaskId:null,
-  reportFrom:"",reportTo:"",
-  lastLat:null,lastLng:null,
-  _partnerPass:"Partner@AG2026"
+const cfg = {
+    apiKey: "AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",
+    authDomain: "ag-task-assigner.firebaseapp.com",
+    projectId: "ag-task-assigner",
+    storageBucket: "ag-task-assigner.appspot.com",
+    messagingSenderId: "694340088537",
+    appId: "1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"
 };
-// Apply saved theme
-document.documentElement.classList.toggle("light",state.theme==="light");
 
-// ═══ RENDER ═══
-function render(){
-  const app=document.getElementById("app");
-  if(!app) return;
-  app.innerHTML=buildScreen();
-  // Topbar visibility
-  const noTopbar=["login","partnerLogin","register","changePass"].includes(state.screen);
-  document.getElementById("mainTopbar").style.display=noTopbar?"none":"flex";
-  app.classList.toggle("no-topbar",noTopbar);
-  // Topbar buttons
-  updateTopbar();
-}
-window._re=render;
+const app = initializeApp(cfg);
+const db = getFirestore(app);
 
-function updateTopbar(){
-  const tr=document.getElementById("topbarRight");
-  if(!tr||!state.user) return;
-  const pending=state.employees.filter(e=>e.pendingApproval&&!e.approved).length;
-  const badge=pending>0?`<sup style="background:var(--red);color:#fff;border-radius:8px;padding:0 4px;font-size:9px;">${pending}</sup>`:"";
-  if(state.user.role==="boss"){
-    tr.innerHTML=`
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button onclick="navigate('manageUsers')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;">👥${badge}</button>
-        <button onclick="toggleTheme()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">🌓</button>
-        <button class="at-logout" onclick="doLogout()">Logout</button>
-      </div>`;
-  } else {
-    tr.innerHTML=`<div style="display:flex;gap:6px;">
-      <button onclick="toggleTheme()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;">🌓</button>
-      <button class="at-logout" onclick="doLogout()">Logout</button>
-    </div>`;
-  }
-}
+// LOGIN LOGIC
+window.handleLogin = async () => {
+    const email = document.getElementById('emailInp').value;
+    const pass = document.getElementById('passInp').value;
 
-function buildScreen(){
-  const s=state.screen;
-  if(s==="login")        return buildLogin();
-  if(s==="partnerLogin") return buildPartnerLogin();
-  if(s==="changePass")   return buildChangePass();
-  if(s==="register")     return buildRegister();
-  if(s==="boss")         return buildBoss();
-  if(s==="createTask")   return buildCreate();
-  if(s==="editTask")     return buildEdit();
-  if(s==="manageUsers")  return buildManageUsers();
-  if(s==="taskReport")   return buildTaskReport();
-  if(s==="reassign")     return buildReassign();
-  if(s==="employee")     return buildEmployee();
-  if(s==="attReport")    return buildAttReport();
-  return buildLogin();
-}
-
-function navigate(s){state.screen=s;render();}
-function doLogout(){state.user=null;state.screen="login";render();}
-function toggleTheme(){
-  state.theme=state.theme==="dark"?"light":"dark";
-  document.documentElement.classList.toggle("light",state.theme==="light");
-  localStorage.setItem("aga-theme",state.theme);
-}
-
-// ═══ TOAST ═══
-let toastTimer;
-function toast(msg,err){
-  const el=document.getElementById("toast");
-  if(!el) return;
-  el.textContent=msg;
-  el.className="toast"+(err?" err":"");
-  void el.offsetWidth;
-  el.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>el.classList.remove("show"),3000);
-}
-window.toast=toast;
-
-// ═══ CONFIRM ═══
-let confirmCb=null;
-function showConfirm({icon,title,msg,detail,yesLabel,yesType,onYes}){
-  document.getElementById("cdIcon").textContent=icon||"❓";
-  document.getElementById("cdTitle").textContent=title||"";
-  document.getElementById("cdMsg").textContent=msg||"";
-  const det=document.getElementById("cdDetail");
-  if(detail){det.innerHTML=detail;det.style.display="block";}
-  else det.style.display="none";
-  const yesBtn=document.getElementById("cdYes");
-  yesBtn.textContent=yesLabel||"✓ Yes";
-  yesBtn.className="cd-yes "+(yesType==="danger"?"danger":yesType==="success"?"success":"primary");
-  confirmCb=onYes;
-  document.getElementById("confirmOverlay").classList.add("open");
-}
-function closeConfirm(){document.getElementById("confirmOverlay").classList.remove("open");confirmCb=null;}
-document.getElementById("cdYes").onclick=()=>{closeConfirm();if(confirmCb)confirmCb();};
-
-// ═══ LOGIN ═══
-function buildLogin(){
-  return `<div class="pg-login">
-    <div class="login-logo"><img src="${LOGO}" style="width:80px;height:80px;object-fit:contain;display:block;margin:0 auto 8px;" alt="AGA"/></div>
-    <div class="login-title">Acharya Gehlot &amp; Associates</div>
-    <div class="login-sub" style="margin-bottom:20px;">Task Manager</div>
-    <div class="sec-label">Employee Login</div>
-    <div class="f-label">Your Name</div>
-    <input class="f-inp" type="text" id="empNameInput" placeholder="Enter your full name" autocomplete="off"/>
-    <div class="f-label">Password</div>
-    <input class="f-inp" type="password" id="empPassInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')doEmpLogin()"/>
-    <button class="app-btn btn-emp" onclick="doEmpLogin()" style="margin-top:4px;">👤 Login as Employee</button>
-    <div style="text-align:center;margin:6px 0;">
-      <span style="font-size:11px;color:var(--muted);">New? </span>
-      <span style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600;" onclick="navigate('register')">Register here →</span>
-    </div>
-    <div class="or-row"><div class="or-line"></div><div class="or-text">OR</div><div class="or-line"></div></div>
-    <button class="app-btn btn-boss" onclick="navigate('partnerLogin')">🔐 Partner Login</button>
-  </div>`;
-}
-
-function doEmpLogin(){
-  const name=(document.getElementById("empNameInput")?.value||"").trim();
-  const pass=(document.getElementById("empPassInput")?.value||"").trim();
-  if(!name){toast("Enter your name",true);return;}
-  if(!pass){toast("Enter password",true);return;}
-  const emp=state.employees.find(e=>e.name.trim().toLowerCase()===name.toLowerCase()&&e.approved!==false);
-  if(!emp){
-    // Check if pending
-    const pend=state.employees.find(e=>e.name.trim().toLowerCase()===name.toLowerCase());
-    if(pend&&pend.pendingApproval) toast("Your account is pending partner approval",true);
-    else toast("Employee not found — check your name",true);
-    return;
-  }
-  if(pass!==emp.password){toast("Incorrect password",true);return;}
-  state.user={name:emp.name,role:"employee",code:emp.code};
-  initGPS();
-  if("Notification"in window&&Notification.permission==="default") Notification.requestPermission();
-  navigate("employee");
-}
-
-// ═══ PARTNER LOGIN ═══
-function buildPartnerLogin(){
-  return `<div class="pg-login">
-    <div class="login-logo"><img src="${LOGO}" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 8px;" alt="AGA"/></div>
-    <div class="login-title" style="font-size:18px;">Partner Login</div>
-    <div class="login-sub" style="margin-bottom:20px;">Acharya Gehlot &amp; Associates</div>
-    <div class="f-label">Email</div>
-    <div class="f-inp" style="color:var(--accent);font-weight:600;">chintan@acharyagehlot.com</div>
-    <div class="f-label">Password</div>
-    <input class="f-inp" type="password" id="partnerPassInput" placeholder="Enter partner password" onkeydown="if(event.key==='Enter')doPartnerLogin()"/>
-    <button class="app-btn btn-boss" onclick="doPartnerLogin()" style="margin-top:4px;">🔐 Sign In as Partner</button>
-    <div style="text-align:center;margin-top:10px;">
-      <span style="font-size:11px;color:var(--accent);cursor:pointer;" onclick="navigate('login')">← Back</span>
-    </div>
-  </div>`;
-}
-
-function doPartnerLogin(){
-  const pass=(document.getElementById("partnerPassInput")?.value||"").trim();
-  if(!pass){toast("Enter password",true);return;}
-  if(pass!==state._partnerPass){toast("Incorrect password",true);return;}
-  state.user={name:"Chintan",role:"boss"};
-  navigate("boss");
-  toast("Welcome, Chintan! 👋");
-}
-
-// ═══ CHANGE PASSWORD ═══
-function buildChangePass(){
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('boss')">←</div>
-      <div class="ct-ttl">Change Password</div>
-    </div>
-    <div class="fg"><div class="fg-lbl">Current Password</div>
-      <input class="fg-inp" type="password" id="cpOld" placeholder="Current password"/></div>
-    <div class="fg"><div class="fg-lbl">New Password</div>
-      <input class="fg-inp" type="password" id="cpNew" placeholder="New password (min 6 chars)"/></div>
-    <div class="fg"><div class="fg-lbl">Confirm New Password</div>
-      <input class="fg-inp" type="password" id="cpConf" placeholder="Confirm new password"/></div>
-    <button class="submit-btn" onclick="doChangePass()">🔑 Update Password</button>
-  </div>`;
-}
-
-function doChangePass(){
-  const old=(document.getElementById("cpOld")?.value||"").trim();
-  const nw=(document.getElementById("cpNew")?.value||"").trim();
-  const conf=(document.getElementById("cpConf")?.value||"").trim();
-  if(!old||old!==state._partnerPass){toast("Current password incorrect",true);return;}
-  if(nw.length<6){toast("New password must be at least 6 characters",true);return;}
-  if(nw!==conf){toast("Passwords do not match",true);return;}
-  state._partnerPass=nw;
-  toast("Password updated ✅");
-  navigate("boss");
-}
-
-// ═══ REGISTER ═══
-function buildRegister(){
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('login')">←</div>
-      <div class="ct-ttl">Register</div>
-    </div>
-    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--yellow);">
-      ℹ️ After registration, partner approval is required before you can login.
-    </div>
-    <div class="fg"><div class="fg-lbl">Full Name</div>
-      <input class="fg-inp" type="text" id="regName" placeholder="Enter your full name"/></div>
-    <div class="fg"><div class="fg-lbl">Mobile Number</div>
-      <input class="fg-inp" type="tel" id="regMobile" placeholder="10-digit mobile number"/></div>
-    <div class="fg"><div class="fg-lbl">Email</div>
-      <input class="fg-inp" type="email" id="regEmail" placeholder="Your email address"/></div>
-    <div class="fg"><div class="fg-lbl">Password</div>
-      <input class="fg-inp" type="password" id="regPass" placeholder="Choose a password (min 6 chars)"/></div>
-    <div class="fg"><div class="fg-lbl">Confirm Password</div>
-      <input class="fg-inp" type="password" id="regConf" placeholder="Confirm your password"/></div>
-    <button class="submit-btn" onclick="doRegister()">📝 Submit Registration</button>
-  </div>`;
-}
-
-function doRegister(){
-  const name=(document.getElementById("regName")?.value||"").trim();
-  const mobile=(document.getElementById("regMobile")?.value||"").trim();
-  const email=(document.getElementById("regEmail")?.value||"").trim();
-  const pass=(document.getElementById("regPass")?.value||"").trim();
-  const conf=(document.getElementById("regConf")?.value||"").trim();
-  if(!name){toast("Enter your full name",true);return;}
-  if(!mobile||mobile.length!==10){toast("Enter valid 10-digit mobile",true);return;}
-  if(!email||!email.includes("@")){toast("Enter valid email",true);return;}
-  if(pass.length<6){toast("Password min 6 characters",true);return;}
-  if(pass!==conf){toast("Passwords do not match",true);return;}
-  const dup=state.employees.find(e=>e.name.toLowerCase()===name.toLowerCase());
-  if(dup){toast("Name already registered. Contact partner.",true);return;}
-  const maxCode=state.employees.reduce((m,e)=>Math.max(m,parseInt(e.code)||0),0);
-  const code=String(maxCode+1).padStart(3,"0");
-  const emp={name,code,mobile,email,password:pass,registered:true,approved:false,pendingApproval:true,registeredAt:Date.now()};
-  state.employees.push(emp);
-  if(window.fbSaveEmp) window.fbSaveEmp(emp);
-  const notif={id:"n"+Date.now(),to:"partner",type:"registration",
-    body:name+" has registered and is awaiting approval",read:false,createdAt:Date.now()};
-  if(window.fbSaveNotif) window.fbSaveNotif(notif);
-  toast("Registration submitted! Awaiting partner approval.");
-  navigate("login");
-}
-
-// ═══ BOSS DASHBOARD ═══
-function buildBoss(){
-  const pending=state.employees.filter(e=>e.pendingApproval&&!e.approved);
-  const tasks=state.statusFilter==="all"?state.tasks:state.tasks.filter(t=>t.status===state.statusFilter);
-  const tasksHtml=tasks.length===0
-    ?`<div style="text-align:center;padding:30px;color:var(--muted);font-size:12px;">No tasks found</div>`
-    :tasks.map(t=>`
-      <div class="task-c" onclick="openEdit('${t.id}')">
-        <div class="tc-row1">
-          <div class="pbadge ${t.priority==="high"?"ph":t.priority==="medium"?"pm":"pl"}">${(t.priority||"").toUpperCase()}</div>
-          <div class="sbadge ${t.status==="pending"?"sp":"sd"}">${t.status==="pending"?"Pending":"Done"}</div>
-        </div>
-        <div class="tc-client">${t.client||""}</div>
-        <div class="tc-desc">${(t.desc||"").substring(0,70)}${(t.desc||"").length>70?"…":""}</div>
-        <div class="tc-meta"><span>📅 ${t.due||""}</span><span>📁 ${t.category||""}</span></div>
-        <div class="tc-assign">👤 ${t.assignedTo||""}</div>
-      </div>`).join("");
-  const pendingBanner=pending.length?`
-    <div onclick="navigate('manageUsers')" style="margin:10px 12px 0;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;">
-      <span style="font-size:20px;">🆕</span>
-      <div><div style="font-size:12px;font-weight:700;color:var(--yellow);">${pending.length} Pending Registration${pending.length>1?"s":""}</div>
-      <div style="font-size:10px;color:var(--muted);">${pending.map(e=>e.name).join(", ")} — Tap to review</div></div>
-    </div>`:"";
-  return `<div class="pg">
-    <div class="emp-head">
-      <div class="eh-greet">Welcome, Chintan 👋</div>
-      <div class="eh-sub">Partner Dashboard</div>
-    </div>
-    ${pendingBanner}
-    <div style="padding:10px 12px 4px;display:flex;gap:8px;">
-      <button onclick="navigate('createTask')" style="flex:1;padding:10px;border-radius:10px;background:var(--accent);border:none;color:#fff;font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Assign Task</button>
-      <button onclick="navigate('taskReport')" style="flex:1;padding:10px;border-radius:10px;background:var(--card);border:1px solid var(--border);color:var(--text);font-weight:700;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;">📊 Reports</button>
-    </div>
-    <div class="filter-bar">
-      <button class="fbtn ${state.statusFilter==="all"?"act":""}" onclick="state.statusFilter='all';render()">All</button>
-      <button class="fbtn ${state.statusFilter==="pending"?"act":""}" onclick="state.statusFilter='pending';render()">Pending</button>
-      <button class="fbtn ${state.statusFilter==="completed"?"act":""}" onclick="state.statusFilter='completed';render()">Completed</button>
-    </div>
-    ${tasksHtml}
-  </div>`;
-}
-
-// ═══ CREATE TASK ═══
-function buildCreate(){
-  const f=state.f;
-  const approvedEmps=state.employees.filter(e=>e.approved!==false);
-  const catOpts=CATEGORIES.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("");
-  const empOpts=approvedEmps.map(e=>`<option value="${e.name}" ${f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('boss')">←</div>
-      <div class="ct-ttl">Assign Task</div>
-    </div>
-    <div class="fg"><div class="fg-lbl">Client Name</div>
-      <input class="fg-inp" type="text" id="tClient" value="${f.client}" oninput="state.f.client=this.value" placeholder="e.g. Hotel Sunrise Pvt Ltd"/></div>
-    <div class="fg"><div class="fg-lbl">Task Description</div>
-      <textarea class="fg-inp fg-ta" id="tDesc" oninput="state.f.desc=this.value" placeholder="Describe the task...">${f.desc}</textarea></div>
-    <div class="fg"><div class="fg-lbl">Priority</div>
-      <div class="prio-row">
-        <div class="poption po-h ${f.priority==="high"?"sel":""}" onclick="state.f.priority='high';render()">HIGH</div>
-        <div class="poption po-m ${f.priority==="medium"?"sel":""}" onclick="state.f.priority='medium';render()">MEDIUM</div>
-        <div class="poption po-l ${f.priority==="low"?"sel":""}" onclick="state.f.priority='low';render()">LOW</div>
-      </div></div>
-    <div class="fg"><div class="fg-lbl">Category</div>
-      <select class="fg-inp" onchange="state.f.category=this.value">
-        <option value="">— Select category —</option>${catOpts}
-      </select></div>
-    <div class="fg"><div class="fg-lbl">Expected Date of Completion</div>
-      <input class="fg-inp" type="date" value="${f.due}" onchange="state.f.due=this.value"/></div>
-    <div class="fg"><div class="fg-lbl">Assign To</div>
-      <select class="fg-inp" onchange="state.f.assignedTo=this.value">
-        <option value="">— Select employee —</option>${empOpts}
-      </select></div>
-    <button class="submit-btn" onclick="submitTask()">✅ Assign Task</button>
-  </div>`;
-}
-
-function submitTask(){
-  const f=state.f;
-  const client=(document.getElementById("tClient")?.value||f.client).trim();
-  const desc=(document.getElementById("tDesc")?.value||f.desc).trim();
-  if(!client){toast("Client name required",true);return;}
-  if(!desc){toast("Task description required",true);return;}
-  if(!f.due){toast("Select completion date",true);return;}
-  if(!f.category){toast("Select a category",true);return;}
-  if(!f.assignedTo){toast("Select an employee",true);return;}
-  showConfirm({
-    icon:"📋",title:"Assign this task?",
-    msg:`Assign to ${f.assignedTo}?`,
-    detail:`<div class="cd-lbl">Client</div>${client}<div class="cd-lbl">Description</div>${desc.substring(0,60)}<div class="cd-lbl">Due</div>${f.due} · ${f.category}`,
-    yesLabel:"✅ Yes, Assign",yesType:"success",
-    onYes:()=>{
-      const t={id:"t"+Date.now(),client,desc,priority:f.priority||"medium",
-        category:f.category,due:f.due,assignedTo:f.assignedTo,
-        assignedBy:state.user?.name||"Partner",status:"pending",createdAt:Date.now()};
-      state.tasks.unshift(t);
-      if(window.fbSaveTask) window.fbSaveTask(t);
-      state.f.client="";state.f.desc="";state.f.category="";state.f.due="";state.f.assignedTo="";
-      toast("Task assigned to "+t.assignedTo+" ✅");
-      navigate("boss");
+    if(email === "chintan@acharyagehlot.com") {
+        showDashboard('partner');
+    } else {
+        // Simple mock login for demo - in your real app, this connects to Auth
+        checkEmployee(email);
     }
-  });
-}
+};
 
-// ═══ EDIT TASK ═══
-function openEdit(id){
-  const t=state.tasks.find(x=>x.id===id);
-  if(!t) return;
-  state.editId=id;
-  state.f.client=t.client||"";state.f.desc=t.desc||"";
-  state.f.priority=t.priority||"medium";state.f.category=t.category||"";
-  state.f.due=t.due||"";state.f.assignedTo=t.assignedTo||"";
-  navigate("editTask");
-}
-
-function buildEdit(){
-  const f=state.f;
-  const t=state.tasks.find(x=>x.id===state.editId)||{};
-  const approvedEmps=state.employees.filter(e=>e.approved!==false);
-  const catOpts=CATEGORIES.map(c=>`<option value="${c}" ${f.category===c?"selected":""}>${c}</option>`).join("");
-  const empOpts=approvedEmps.map(e=>`<option value="${e.name}" ${f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('boss')">←</div>
-      <div class="ct-ttl">Edit Task</div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <button onclick="confirmComplete('${t.id}')" style="flex:1;padding:9px;border-radius:8px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--green);font-size:11px;font-weight:700;cursor:pointer;">✅ Mark Complete</button>
-      <button onclick="confirmDelete('${t.id}')" style="flex:1;padding:9px;border-radius:8px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;">🗑️ Delete</button>
-    </div>
-    <div class="fg"><div class="fg-lbl">Client Name</div>
-      <input class="fg-inp" type="text" id="eClient" value="${f.client}" oninput="state.f.client=this.value"/></div>
-    <div class="fg"><div class="fg-lbl">Task Description</div>
-      <textarea class="fg-inp fg-ta" oninput="state.f.desc=this.value">${f.desc}</textarea></div>
-    <div class="fg"><div class="fg-lbl">Priority</div>
-      <div class="prio-row">
-        <div class="poption po-h ${f.priority==="high"?"sel":""}" onclick="state.f.priority='high';render()">HIGH</div>
-        <div class="poption po-m ${f.priority==="medium"?"sel":""}" onclick="state.f.priority='medium';render()">MEDIUM</div>
-        <div class="poption po-l ${f.priority==="low"?"sel":""}" onclick="state.f.priority='low';render()">LOW</div>
-      </div></div>
-    <div class="fg"><div class="fg-lbl">Category</div>
-      <select class="fg-inp" onchange="state.f.category=this.value"><option value="">—</option>${catOpts}</select></div>
-    <div class="fg"><div class="fg-lbl">Expected Date</div>
-      <input class="fg-inp" type="date" value="${f.due}" onchange="state.f.due=this.value"/></div>
-    <div class="fg"><div class="fg-lbl">Assign To</div>
-      <select class="fg-inp" onchange="state.f.assignedTo=this.value"><option value="">—</option>${empOpts}</select></div>
-    <button class="submit-btn" onclick="submitEdit()">💾 Save Changes</button>
-  </div>`;
-}
-
-function submitEdit(){
-  const f=state.f;
-  const t=state.tasks.find(x=>x.id===state.editId);
-  if(!t) return;
-  t.client=f.client;t.desc=f.desc;t.priority=f.priority;t.category=f.category;t.due=f.due;t.assignedTo=f.assignedTo;
-  if(window.fbUpdateTask) window.fbUpdateTask(t.id,{client:t.client,desc:t.desc,priority:t.priority,category:t.category,due:t.due,assignedTo:t.assignedTo});
-  toast("Task updated ✅");
-  navigate("boss");
-}
-
-function confirmComplete(id){
-  const t=state.tasks.find(x=>x.id===id);
-  if(!t) return;
-  showConfirm({icon:"✅",title:"Mark as Complete?",msg:`Mark "${t.client}" as completed?`,
-    yesLabel:"✅ Yes, Complete",yesType:"success",
-    onYes:()=>{t.status="completed";if(window.fbUpdateTask)window.fbUpdateTask(id,{status:"completed"});toast("Task completed ✅");navigate("boss");}});
-}
-
-function confirmDelete(id){
-  const t=state.tasks.find(x=>x.id===id);
-  if(!t) return;
-  showConfirm({icon:"🗑️",title:"Are You Sure?",msg:`Delete task for "${t.client}"?`,
-    yesLabel:"🗑️ Yes, Delete",yesType:"danger",
-    onYes:()=>{state.tasks=state.tasks.filter(x=>x.id!==id);if(window.fbDeleteTask)window.fbDeleteTask(id);toast("Task deleted");navigate("boss");}});
-}
-
-// ═══ MANAGE USERS ═══
-function buildManageUsers(){
-  // Mark registration notifications as read
-  state.notifications.filter(n=>n.type==="registration"&&!n.read).forEach(n=>{
-    n.read=true;
-    if(window.fbSaveNotif) window.fbSaveNotif({...n,read:true});
-  });
-  const pending=state.employees.filter(e=>e.pendingApproval&&!e.approved);
-  const approved=state.employees.filter(e=>e.approved!==false);
-
-  const pendingSection=pending.length?`
-    <div class="section-title" style="color:var(--yellow);">⏳ Pending Approval (${pending.length})</div>
-    ${pending.map(e=>`
-      <div class="user-card" style="border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.05);">
-        <div class="user-info">
-          <div class="user-name">${e.name}</div>
-          <div class="user-meta">📱 ${e.mobile||"—"} · ✉️ ${e.email||"—"}</div>
-          <div class="user-meta">Registered: ${e.registeredAt?new Date(e.registeredAt).toLocaleDateString("en-IN"):"-"}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <button class="btn-approve" onclick="confirmApprove('${e.code}','${e.name}')">✅ Approve</button>
-          <button class="btn-delete" onclick="confirmDeleteUser('${e.code}','${e.name}')">🗑️ Reject</button>
-        </div>
-      </div>`).join("")}`:"";
-
-  const approvedSection=`
-    <div class="section-title" style="color:var(--muted);">✅ Active Employees (${approved.length})</div>
-    ${approved.length?approved.map(e=>`
-      <div class="user-card">
-        <div class="user-info">
-          <div class="user-name">${e.name}</div>
-          <div class="user-meta">Code: ${e.code} · Password: ${e.password||"—"}</div>
-          <div class="user-meta">📱 ${e.mobile||"—"}</div>
-        </div>
-        <button class="btn-delete" onclick="confirmDeleteUser('${e.code}','${e.name}')">🗑️ Delete</button>
-      </div>`).join(""):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">No active employees</div>`}`;
-
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('boss')">←</div>
-      <div class="ct-ttl">Manage Employees</div>
-    </div>
-    ${pendingSection}
-    ${approvedSection}
-  </div>`;
-}
-
-function confirmApprove(code,name){
-  const approvedCount=state.employees.filter(e=>e.approved!==false).length;
-  const defaultPass="pass"+String(approvedCount+1).padStart(3,"0");
-  const emp=state.employees.find(e=>e.code===code);
-  showConfirm({
-    icon:"✅",title:"Are You Sure?",
-    msg:`Approve ${name} as an active employee?`,
-    detail:`<div class="cd-lbl">Employee</div><strong>${name}</strong>
-      <br/>Mobile: ${emp?.mobile||"—"}
-      <br/>Email: ${emp?.email||"—"}
-      <div class="cd-lbl" style="margin-top:8px;">Default Password</div>
-      <strong style="color:var(--accent);font-size:14px;">${defaultPass}</strong>
-      <br/><span style="font-size:10px;color:var(--muted);">Share this with the employee</span>`,
-    yesLabel:"✅ Yes, Approve",yesType:"success",
-    onYes:()=>approveUser(code,name,defaultPass)
-  });
-}
-
-function approveUser(code,name,defaultPass){
-  const emp=state.employees.find(e=>e.code===code);
-  if(!emp) return;
-  emp.approved=true;emp.pendingApproval=false;emp.password=defaultPass;
-  if(window.fbSaveEmp) window.fbSaveEmp(emp);
-  toast(`${name} approved! Password: ${defaultPass}`);
-  render();
-}
-
-function confirmDeleteUser(code,name){
-  showConfirm({
-    icon:"🗑️",title:"Are You Sure?",
-    msg:`Remove ${name} from the organisation?`,
-    detail:`<div class="cd-lbl">Employee</div><strong>${name}</strong><br/>Code: ${code}
-      <br/><span style="color:var(--red);font-size:10px;">⚠️ This cannot be undone.</span>`,
-    yesLabel:"🗑️ Yes, Delete",yesType:"danger",
-    onYes:()=>{
-      state.employees=state.employees.filter(e=>e.code!==code);
-      if(window.fbDeleteEmp) window.fbDeleteEmp(code);
-      toast(name+" removed");
-      render();
+function showDashboard(role) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'block';
+    
+    if(role === 'partner') {
+        document.getElementById('partnerDashboard').style.display = 'block';
+        document.getElementById('roleTag').innerHTML = '<span class="partner-badge">PARTNER</span>';
+        loadPartnerData();
+    } else {
+        document.getElementById('employeeView').style.display = 'block';
     }
-  });
 }
 
-// ═══ TASK REPORT ═══
-function buildTaskReport(){
-  const from=state.reportFrom||"";
-  const to=state.reportTo||"";
-  const data=state.tasks.filter(t=>{
-    if(t.status!=="completed") return false;
-    if(from&&t.due<from) return false;
-    if(to&&t.due>to) return false;
-    return true;
-  });
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('boss')">←</div>
-      <div class="ct-ttl">Task Report</div>
-    </div>
-    <div class="fg"><div class="fg-lbl">From Date</div>
-      <input class="fg-inp" type="date" value="${from}" onchange="state.reportFrom=this.value;render()"/></div>
-    <div class="fg"><div class="fg-lbl">To Date</div>
-      <input class="fg-inp" type="date" value="${to}" onchange="state.reportTo=this.value;render()"/></div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
-      <div style="display:flex;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;color:var(--muted);">
-        <div style="flex:2;">CLIENT</div><div style="flex:1.5;">ASSIGNED</div><div style="flex:1;">DUE</div>
-      </div>
-      ${data.length?data.map(t=>`<div style="display:flex;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;">
-        <div style="flex:2;font-weight:600;">${t.client}</div>
-        <div style="flex:1.5;color:var(--muted);">${(t.assignedTo||"").split(" ")[0]}</div>
-        <div style="flex:1;color:var(--muted);">${t.due}</div>
-      </div>`).join(""):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px;">No completed tasks in range</div>`}
-    </div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px;">${data.length} completed task(s)</div>
-    <button class="submit-btn" onclick="exportCSV()" ${!data.length?"disabled":""} style="opacity:${data.length?1:0.4};">📥 Download Excel/CSV</button>
-  </div>`;
+// PARTNER DATA LOADING
+function loadPartnerData() {
+    // 1. Listen for Approval Requests
+    onSnapshot(collection(db, "users"), (snap) => {
+        const list = [];
+        const staff = [];
+        snap.forEach(d => {
+            const data = d.data();
+            if(!data.isApproved) list.push({id: d.id, ...data});
+            else staff.push({id: d.id, ...data});
+        });
+
+        // Update Approval UI
+        const appDiv = document.getElementById('approvalList');
+        appDiv.innerHTML = list.length === 0 ? "No pending approvals" : list.map(u => `
+            <div class="pending-user">
+                <span>${u.email}</span>
+                <button class="btn-approve" onclick="approveUser('${u.id}')">Approve</button>
+            </div>
+        `).join('');
+
+        // Update Staff List
+        const staffDiv = document.getElementById('staffList');
+        staffDiv.innerHTML = staff.map(s => `
+            <div class="pending-user">
+                <span style="font-size:12px;">${s.email}</span>
+                <span style="color:var(--green); font-size:10px;">ACTIVE</span>
+            </div>
+        `).join('');
+    });
+
+    // 2. Listen for Notifications (Attendance/Tasks)
+    onSnapshot(query(collection(db, "notifications"), orderBy("timestamp", "desc")), (snap) => {
+        const notifDiv = document.getElementById('notifList');
+        notifDiv.innerHTML = snap.docs.slice(0, 10).map(d => {
+            const n = d.data();
+            return `<div class="notif-card">
+                <span>${n.message}</span>
+                <span style="color:var(--muted)">${new Date(n.timestamp?.seconds*1000).toLocaleTimeString()}</span>
+            </div>`;
+        }).join('');
+    });
 }
 
-function exportCSV(){
-  const from=state.reportFrom||"";const to=state.reportTo||"";
-  const data=state.tasks.filter(t=>{
-    if(t.status!=="completed") return false;
-    if(from&&t.due<from) return false;
-    if(to&&t.due>to) return false;
-    return true;
-  });
-  const rows=[["Client","Description","Category","Priority","Assigned To","Due Date","Status"],...data.map(t=>[t.client,t.desc,t.category,t.priority,t.assignedTo,t.due,"Completed"])];
-  const csv=rows.map(r=>r.map(c=>`"${(c||"").replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download=`AGA_Tasks_${from||"all"}_to_${to||"all"}.csv`;
-  a.click();
-  toast("Downloaded ✅ Open in Excel");
-}
+// APPROVAL FUNCTION
+window.approveUser = async (id) => {
+    await updateDoc(doc(db, "users", id), { isApproved: true });
+    alert("Employee Approved!");
+};
 
-// ═══ EMPLOYEE DASHBOARD ═══
-function buildEmployee(){
-  const myTasks=state.tasks.filter(t=>t.assignedTo===state.user?.name);
-  const pend=myTasks.filter(t=>t.status==="pending");
-  const done=myTasks.filter(t=>t.status==="completed");
-  const attToday=getAttToday();
+// LOGOUT
+document.getElementById('logoutBtn').onclick = () => location.reload();
 
-  const taskCards=pend.map(t=>{
-    const byPartner=!t.assignedBy||t.assignedBy==="Partner"||t.assignedBy==="Chintan";
-    const bySenior=SENIOR_EMP.includes(t.assignedBy||"");
-    const cardClass=byPartner?"task-from-partner":bySenior?"task-from-senior":"";
-    const badge=byPartner?`<span class="task-source-badge tsb-partner">🔵 From Partner</span>`:
-                bySenior?`<span class="task-source-badge tsb-senior">🟡 From ${t.assignedBy}</span>`:"";
-    const canRe=SENIOR_EMP.includes(state.user?.name);
-    return `<div class="emp-task-c ${cardClass}">
-      ${badge}
-      <div class="tc-row1">
-        <div class="pbadge ${t.priority==="high"?"ph":t.priority==="medium"?"pm":"pl"}">${(t.priority||"").toUpperCase()}</div>
-      </div>
-      <div class="tc-client">${t.client}</div>
-      <div class="tc-desc">${(t.desc||"").substring(0,80)}</div>
-      <div class="tc-meta"><span>📅 ${t.due}</span><span>📁 ${t.category}</span></div>
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="complete-btn" style="flex:2;" onclick="empComplete('${t.id}')">✅ Mark Complete</button>
-        ${canRe?`<button style="flex:1;padding:8px;border:1px solid rgba(245,158,11,0.4);border-radius:8px;background:rgba(245,158,11,0.1);color:var(--yellow);font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;" onclick="openReassign('${t.id}')">↪️ Reassign</button>`:""}
-      </div>
-    </div>`;
-  }).join("");
-
-  return `<div class="pg">
-    <div class="emp-head">
-      <div class="eh-greet">Hello, ${state.user?.name||""} 👋</div>
-      <div class="eh-sub">Employee Dashboard</div>
-    </div>
-    <div class="emp-stats">
-      <div class="es"><div class="es-n pend">${pend.length}</div><div class="es-l">Pending</div></div>
-      <div class="es"><div class="es-n done">${done.length}</div><div class="es-l">Completed</div></div>
-    </div>
-    <div class="att-card">
-      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:10px;">📍 Mark Attendance</div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <button class="att-btn-in" onclick="markAtt('IN')" ${attToday.in?"disabled style='opacity:0.4;'":""}>
-          ${attToday.in?"✅ Checked IN ("+attToday.inTime+")":"✅ Check IN"}
-        </button>
-        <button class="att-btn-out" onclick="markAtt('OUT')" ${attToday.out?"disabled style='opacity:0.4;'":""}>
-          ${attToday.out?"🔴 Checked OUT ("+attToday.outTime+")":"🔴 Check OUT"}
-        </button>
-      </div>
-      <div style="font-size:10px;color:var(--muted);">📍 ${state.lastLat?"Location: "+state.lastLat.toFixed(4)+", "+state.lastLng.toFixed(4):"Acquiring location..."}</div>
-    </div>
-    <div class="emp-tasks">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">PENDING TASKS (${pend.length})</div>
-      ${pend.length?taskCards:`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px;">No pending tasks 🎉</div>`}
-      ${done.length?`<div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;margin:12px 0 8px;">COMPLETED (${done.length})</div>
-        ${done.map(t=>`<div class="emp-task-c" style="opacity:0.6;">
-          <div class="tc-client">${t.client}</div>
-          <div class="tc-desc">${(t.desc||"").substring(0,60)}</div>
-        </div>`).join("")}`:""}
-    </div>
-  </div>`;
-}
-
-function getAttToday(){
-  const today=new Date().toISOString().split("T")[0];
-  const name=state.user?.name;
-  const recs=state.attendance.filter(a=>a.empName===name&&a.date===today);
-  const inRec=recs.find(a=>a.type==="IN");
-  const outRec=recs.find(a=>a.type==="OUT");
-  return{in:!!inRec,out:!!outRec,inTime:inRec?.time||"",outTime:outRec?.time||""};
-}
-
-function markAtt(type){
-  const att=getAttToday();
-  if(type==="IN"&&att.in){toast("Already checked IN today",true);return;}
-  if(type==="OUT"&&att.out){toast("Already checked OUT today",true);return;}
-  if(type==="OUT"&&!att.in){toast("Please check IN first",true);return;}
-  confirmAttendance(type,()=>{
-    const now=new Date();
-    const time=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
-    const date=now.toISOString().split("T")[0];
-    const rec={id:"att"+Date.now(),empName:state.user?.name,type,date,time,
-      lat:state.lastLat,lng:state.lastLng,
-      location:state.lastLat?state.lastLat.toFixed(4)+", "+state.lastLng.toFixed(4):"unknown",
-      createdAt:Date.now()};
-    // Improve location via reverse geocode
-    if(state.lastLat){
-      fetch("https://nominatim.openstreetmap.org/reverse?lat="+state.lastLat+"&lon="+state.lastLng+"&format=json")
-        .then(r=>r.json()).then(d=>{
-          const a=d.address;
-          rec.location=[a.road||a.pedestrian,a.suburb||a.neighbourhood||a.village||a.town||a.city,a.city||a.county].filter(Boolean).slice(0,2).join(", ");
-        }).catch(()=>{});
-    }
-    state.attendance.push(rec);
-    if(window.fbSaveAtt) window.fbSaveAtt(rec);
-    toast("Attendance marked: "+type+" at "+time+" ✅");
-    render();
-  });
-}
-
-// ═══ ATTENDANCE REPORT ═══
-function buildAttReport(){
-  const name=state.user?.name;
-  const recs=state.attendance.filter(a=>a.empName===name).slice(0,30);
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('employee')">←</div>
-      <div class="ct-ttl">My Attendance</div>
-    </div>
-    ${recs.length?recs.map(r=>`
-      <div style="display:flex;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-        <div style="flex:1;">
-          <div style="font-size:12px;font-weight:700;color:${r.type==="IN"?"var(--green)":"var(--red)"};">${r.type==="IN"?"✅ IN":"🔴 OUT"}</div>
-          <div style="font-size:10px;color:var(--muted);">${r.date} · ${r.time}</div>
-          <div style="font-size:10px;color:var(--muted);">📍 ${r.location||"—"}</div>
-        </div>
-      </div>`).join(""):`<div style="text-align:center;padding:30px;color:var(--muted);">No attendance records</div>`}
-  </div>`;
-}
-
-// ═══ REASSIGN ═══
-function openReassign(id){state.reassignTaskId=id;state.f.reassignTo="";navigate("reassign");}
-
-function buildReassign(){
-  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
-  if(!t) return `<div class="pg-form"><div class="ct-head"><div class="back-btn" onclick="navigate('employee')">←</div><div class="ct-ttl">Reassign</div></div></div>`;
-  const opts=state.employees.filter(e=>e.name!==state.user?.name&&e.approved!==false).map(e=>`<option value="${e.name}">${e.name}</option>`).join("");
-  return `<div class="pg-form">
-    <div class="ct-head">
-      <div class="back-btn" onclick="navigate('employee')">←</div>
-      <div class="ct-ttl">Reassign Task</div>
-    </div>
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:11px;color:var(--muted);">Task</div>
-      <div style="font-size:13px;font-weight:700;">${t.client}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:3px;">${(t.desc||"").substring(0,80)}</div>
-    </div>
-    <div class="fg"><div class="fg-lbl">Reassign To</div>
-      <select class="fg-inp" onchange="state.f.reassignTo=this.value">
-        <option value="">— Select employee —</option>${opts}
-      </select></div>
-    <button class="submit-btn" onclick="confirmReassign()">↪️ Confirm Reassign</button>
-  </div>`;
-}
-
-function confirmReassign(){
-  if(!state.f.reassignTo){toast("Select an employee",true);return;}
-  const t=state.tasks.find(x=>x.id===state.reassignTaskId);
-  if(!t) return;
-  showConfirm({
-    icon:"↪️",title:"Are You Sure?",
-    msg:`Reassign to ${state.f.reassignTo}?`,
-    detail:`<div class="cd-lbl">Task</div>${t.client}<div class="cd-lbl">From</div>${t.assignedTo}<div class="cd-lbl">To</div>${state.f.reassignTo}`,
-    yesLabel:"↪️ Yes, Reassign",yesType:"success",
-    onYes:()=>{
-      t.assignedTo=state.f.reassignTo;t.assignedBy=state.user?.name;
-      if(window.fbUpdateTask) window.fbUpdateTask(t.id,{assignedTo:t.assignedTo,assignedBy:t.assignedBy});
-      toast("Reassigned to "+t.assignedTo+" ✅");
-      navigate("employee");
-    }
-  });
-}
-
-function empComplete(id){
-  const t=state.tasks.find(x=>x.id===id);
-  if(!t) return;
-  showConfirm({icon:"✅",title:"Mark Complete?",msg:`Mark "${t.client}" as done?`,
-    yesLabel:"✅ Yes",yesType:"success",
-    onYes:()=>{t.status="completed";if(window.fbUpdateTask)window.fbUpdateTask(id,{status:"completed"});toast("Task completed ✅");render();}});
-}
-
-// ═══ PIN / BIOMETRIC ═══
-async function confirmAttendance(type,onSuccess){
-  if(window.PublicKeyCredential){
-    try{
-      const avail=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-      if(avail){
-        const emp=state.employees.find(e=>e.name===state.user?.name);
-        if(emp?.credentialId){
-          const ch=new Uint8Array(32);crypto.getRandomValues(ch);
-          try{
-            const a=await navigator.credentials.get({publicKey:{challenge:ch,allowCredentials:[{type:"public-key",id:b64ToBuffer(emp.credentialId)}],userVerification:"required",timeout:30000}});
-            if(a){onSuccess();return;}
-          }catch(e){}
-        } else {
-          try{
-            const ch=new Uint8Array(32);crypto.getRandomValues(ch);
-            const uid=new TextEncoder().encode(state.user?.name||"user");
-            const c=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:"AGA Tasks",id:location.hostname},user:{id:uid,name:state.user?.name,displayName:state.user?.name},pubKeyCredParams:[{type:"public-key",alg:-7}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},timeout:30000}});
-            if(c){
-              const emp2=state.employees.find(e=>e.name===state.user?.name);
-              if(emp2){emp2.credentialId=bufferToB64(c.rawId);if(window.fbUpdateEmp)window.fbUpdateEmp(emp2.code,{credentialId:emp2.credentialId});}
-              onSuccess();return;
-            }
-          }catch(e){}
-        }
-      }
-    }catch(e){}
-  }
-  showPinDialog(onSuccess);
-}
-
-function b64ToBuffer(b){const bin=atob(b);const buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);return buf.buffer;}
-function bufferToB64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)));}
-
-function showPinDialog(onSuccess){
-  state.pinTarget=onSuccess;
-  state.pinInput="";
-  const emp=state.employees.find(e=>e.name===state.user?.name);
-  state.pinMode=emp?.pin?"verify":"set";
-  document.getElementById("pinTitle").textContent=state.pinMode==="set"?"Set Attendance PIN":"Enter Your PIN";
-  document.getElementById("pinSub").textContent=state.pinMode==="set"?"Choose a 4-digit PIN":"Enter your 4-digit PIN";
-  document.getElementById("pinError").textContent="";
-  updatePinDots();
-  document.getElementById("pinOverlay").classList.add("open");
-}
-
-function closePinDialog(){document.getElementById("pinOverlay").classList.remove("open");state.pinInput="";}
-
-function pinKey(val){
-  if(val==="del") state.pinInput=state.pinInput.slice(0,-1);
-  else if(state.pinInput.length<4) state.pinInput+=val;
-  updatePinDots();
-  if(state.pinInput.length===4) setTimeout(submitPin,200);
-}
-
-function updatePinDots(){
-  const dots=document.getElementById("pinDots");
-  if(dots) dots.innerHTML=[0,1,2,3].map(i=>`<div class="pin-dot ${i<state.pinInput.length?"filled":""}"></div>`).join("");
-}
-
-function submitPin(){
-  const emp=state.employees.find(e=>e.name===state.user?.name);
-  if(state.pinMode==="set"){
-    if(emp){emp.pin=state.pinInput;if(window.fbUpdateEmp)window.fbUpdateEmp(emp.code,{pin:emp.pin});}
-    closePinDialog();
-    if(state.pinTarget) state.pinTarget();
-  } else {
-    if(state.pinInput===emp?.pin){closePinDialog();if(state.pinTarget)state.pinTarget();}
-    else{state.pinInput="";updatePinDots();document.getElementById("pinError").textContent="❌ Wrong PIN. Try again.";}
-  }
-}
-
-// ═══ GPS ═══
-let _gpsOn=false;
-function initGPS(){
-  if(_gpsOn||!navigator.geolocation) return;
-  _gpsOn=true;
-  navigator.geolocation.watchPosition(
-    p=>{state.lastLat=p.coords.latitude;state.lastLng=p.coords.longitude;},
-    ()=>{_gpsOn=false;},
-    {enableHighAccuracy:true,timeout:20000,maximumAge:60000}
-  );
-}
-// Start GPS silently on load
-initGPS();
-
-// ═══ INIT ═══
-render();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 </body>
 </html>
