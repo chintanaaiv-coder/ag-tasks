@@ -7,6 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="theme-color" content="#0a0d16"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <link rel="manifest" href="./manifest.json"/>
 <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png"/>
 <link rel="apple-touch-icon" href="./icon-192.png"/>
@@ -565,9 +568,12 @@ window.FB={
   updateEmp:  async(c,d)=>updateDoc(doc(db,"employees",c),d),
   deleteEmp:  async c =>deleteDoc(doc(db,"employees",c)),
   saveAtt:    async a =>setDoc(doc(db,"attendance",a.id),a),
+  deleteAtt:  async id =>deleteDoc(doc(db,"attendance",id)),
   saveLeave:  async l =>setDoc(doc(db,"leaves",l.id),l),
   updateLeave:async(id,d)=>updateDoc(doc(db,"leaves",id),d),
+  deleteLeave:async id =>deleteDoc(doc(db,"leaves",id)),
   saveNotif:  async n =>setDoc(doc(db,"notifications",n.id),n),
+  deleteNotif:async id =>deleteDoc(doc(db,"notifications",id)),
 };
 </script>
 
@@ -1267,6 +1273,12 @@ function pgManageUsers(){
           </div>
           <button class="btn btn-red btn-sm" onclick="confirmDelUser('${e.code}','${e.name}')">🗑️</button>
         </div>`).join("")}
+
+      <div style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border);">
+        <div class="section-title" style="color:var(--red);">⚠️ Danger Zone</div>
+        <button class="btn btn-red btn-mb" onclick="confirmResetAllData()">🗑️ Reset All Data (Delete Everything)</button>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">This will delete all tasks, attendance records, leaves, and notifications. Employees will be re-seeded with default passwords.</div>
+      </div>
     </div>
   </div>`;
 }
@@ -1295,6 +1307,28 @@ function confirmDelUser(code,name){
       S.employees=S.employees.filter(e=>e.code!==code);
       if(window.FB) FB.deleteEmp(code);
       toast(name+" removed");R();
+    }
+  });
+}
+
+function confirmResetAllData(){
+  confirm2({icon:"⚠️",title:"RESET ALL DATA?",msg:"This will permanently delete ALL tasks, attendance, leaves, and notifications. Employees will be reset to defaults.",
+    detail:`<span style="color:var(--red);font-size:12px;font-weight:700;">⚠️ THIS CANNOT BE UNDONE!</span>`,
+    yesLabel:"🗑️ Yes, Delete Everything",yesType:"danger",
+    onYes:async ()=>{
+      toast("Deleting all data...","ok");
+      // Delete from Firebase
+      if(window.FB){
+        for(const t of S.tasks) await FB.deleteTask(t.id).catch(()=>{});
+        for(const a of S.attendance) await FB.deleteAtt(a.id).catch(()=>{});
+        for(const l of S.leaves) await FB.deleteLeave(l.id).catch(()=>{});
+        for(const n of S.notifications) await FB.deleteNotif(n.id).catch(()=>{});
+        for(const e of S.employees) await FB.deleteEmp(e.code||e.id).catch(()=>{});
+      }
+      // Clear local
+      S.tasks=[];S.attendance=[];S.leaves=[];S.notifications=[];S.employees=[];
+      toast("All data deleted! Employees will re-seed on refresh.","ok");
+      setTimeout(()=>location.reload(),1500);
     }
   });
 }
