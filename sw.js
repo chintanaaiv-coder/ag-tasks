@@ -1,54 +1,44 @@
-// AG Task Assigner — Service Worker v1.0
-const CACHE = 'ag-tasks-v1';
+const CACHE_NAME = 'aga-tasks-v2';
 const ASSETS = [
-  './app-tester.html',
-  './manifest.json',
-  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap'
+  './aga-tasks.html',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
-// Install — cache core assets
+// Install - cache core assets
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => {
-      return cache.addAll(ASSETS).catch(err => {
-        console.log('SW cache error (non-fatal):', err);
-      });
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
+// Activate - clean old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-// Fetch — serve from cache, fallback to network
+// Fetch - network first, fallback to cache
 self.addEventListener('fetch', e => {
-  // Always go network-first for Firebase calls
-  if(e.request.url.includes('firebase') || e.request.url.includes('firestore') || e.request.url.includes('googleapis.com/firestore')) {
-    return; // Let Firebase handle its own requests
+  // Skip Firebase and API requests
+  if (e.request.url.includes('firebasejs') || 
+      e.request.url.includes('firestore') || 
+      e.request.url.includes('googleapis.com/identitytoolkit') ||
+      e.request.url.includes('nominatim')) {
+    return;
   }
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      return cached || fetch(e.request).then(response => {
-        // Cache successful GET responses
-        if(e.request.method === 'GET' && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => {
-        // Offline fallback — serve main HTML
-        if(e.request.destination === 'document') {
-          return caches.match('./app-tester.html');
-        }
-      });
-    })
+    fetch(e.request)
+      .then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
