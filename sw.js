@@ -1,11 +1,10 @@
-const CACHE_NAME = 'aga-tasks-v2';
+const CACHE_NAME = 'aga-tasks-v3';
 const ASSETS = [
-  './aga-tasks.html',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
-// Install - cache core assets
+// Install - only cache external libraries
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
@@ -23,22 +22,29 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch - network first, fallback to cache
+// Fetch - ALWAYS network first for HTML/JS, cache only for external libs
 self.addEventListener('fetch', e => {
-  // Skip Firebase and API requests
+  const url = new URL(e.request.url);
+  // Skip Firebase, API, and other external requests
   if (e.request.url.includes('firebasejs') || 
       e.request.url.includes('firestore') || 
       e.request.url.includes('googleapis.com/identitytoolkit') ||
       e.request.url.includes('nominatim')) {
     return;
   }
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
+  // For our own HTML/JS files - always go to network first
+  if (url.origin === location.origin) {
+    e.respondWith(
+      fetch(e.request).then(res => {
         const clone = res.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
         return res;
-      })
-      .catch(() => caches.match(e.request))
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  // For external CDN resources - cache first
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request))
   );
 });
