@@ -557,6 +557,21 @@ onSnapshot(query(collection(db,"leaves"),orderBy("createdAt","desc")),snap=>{
 });
 onSnapshot(query(collection(db,"notifications"),orderBy("createdAt","desc")),snap=>{
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
+  // Detect NEW unread notifications for current user and push browser notification
+  if(window.S && window.S.user){
+    const myName=S.user.name||"";
+    const isBoss=S.user.role==="boss";
+    const isSenior=["Heer Patel","Bhavana Shinde"].includes(myName);
+    const oldIds=new Set(S.notifications.map(n=>n.id));
+    l.forEach(n=>{
+      if(n.read) return;
+      if(oldIds.has(n.id)) return;
+      const isForMe=(isBoss&&n.to==="partner")||(n.to===myName)||(isSenior&&n.to==="seniors");
+      if(isForMe && "Notification" in window && Notification.permission==="granted"){
+        try{new Notification("AGA Tasks",{body:n.body,icon:"./icon-192.png"});}catch(e){}
+      }
+    });
+  }
   if(window.S) S.notifications=l;
   if(window.R) R();
 });
@@ -1017,9 +1032,6 @@ function pgBoss(){
       <div class="topbar-right">
         <div class="rel icon-btn" onclick="go('notifications')">
           🔔${unread.length?'<div class="notif-dot"></div>':""}
-        </div>
-        <div class="rel icon-btn" onclick="go('manageUsers')">
-          👥${pending.length||pendingLeave.length?'<div class="notif-dot"></div>':""}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -1858,9 +1870,6 @@ function pgEmployee(){
       <div style="font-size:10px;color:var(--text3);margin-top:2px;">${t.category||""} · ${t.due||""}${t.reassignedTo?" · ↪️ "+t.reassignedTo:""}</div>
     </div>`).join("")}`:""}`}
 
-    <div style="padding:10px 20px;">
-      <button class="btn btn-red" style="padding:10px;font-size:12px;" onclick="doLogout()">Logout</button>
-    </div>
     <div style="height:16px;"></div>
   </div>`;
 }
