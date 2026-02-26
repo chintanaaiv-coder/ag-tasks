@@ -601,10 +601,12 @@ const S = window.S = {
     client:"", desc:"", priority:"high", category:"", due:"", assignedTo:"",
     leaveFrom:"", leaveTo:"", leaveType:"Casual Leave", leaveReason:"",
     attDate: new Date().toISOString().split("T")[0],
+    attActualTime: "",
     rptFrom:"", rptTo:"",
     attCalY: new Date().getFullYear(), attCalM: new Date().getMonth(),
   },
   empFilter: "all",
+  showNotifs: false,
   editId: null, reassignId: null,
   pinInput:"", pinMode:"set", pinCb:null,
   lastLat:null, lastLng:null,
@@ -638,6 +640,7 @@ function buildScreen(){
   if(s==="applyLeave")   return pgApplyLeave();
   if(s==="myLeaves")     return pgMyLeaves();
   if(s==="changePass")   return pgChangePass();
+  if(s==="notifications") return pgNotifications();
   return pgLogin();
 }
 
@@ -760,6 +763,32 @@ function startGPS(){
 }
 // GPS starts only after employee login
 
+// ── BROWSER PUSH NOTIFICATIONS ──
+function requestNotifPermission(){
+  if("Notification" in window && Notification.permission==="default"){
+    Notification.requestPermission();
+  }
+}
+function pushNotif(title,body){
+  if("Notification" in window && Notification.permission==="granted"){
+    try{new Notification(title,{body,icon:"./icon-192.png"});}catch(e){}
+  }
+}
+function addNotif(to,type,empName,body){
+  const n={id:"n"+Date.now()+Math.random().toString(36).substr(2,4),to,type,empName,body,read:false,createdAt:Date.now()};
+  S.notifications.push(n);
+  if(window.FB) FB.saveNotif(n);
+  // Push browser notification if recipient is currently logged in
+  if((to==="partner"&&S.user?.role==="boss")||(to===empName&&S.user?.name===empName)){
+    pushNotif("AGA Tasks",body);
+  }
+  // Also push for senior notifications
+  if(to==="seniors"&&SENIOR_EMP.includes(S.user?.name)){
+    pushNotif("AGA Tasks",body);
+  }
+  return n;
+}
+
 // === HELPERS ===
 function fmtDate(d){ if(!d) return "\u{2014}"; const p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; }
 function todayStr(){ return new Date().toISOString().split("T")[0]; }
@@ -821,7 +850,7 @@ function pgLogin(){
         <input class="f-input" type="text" id="empName" placeholder="Enter your full name" autocomplete="off"/>
       </div>
       <div class="f-group"><div class="f-label">Password</div>
-        <input class="f-input" type="password" id="empPass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doEmpLogin()"/>
+        <input class="f-input" type="password" id="empPass" placeholder="Enter password" autocomplete="new-password" onkeydown="if(event.key==='Enter')doEmpLogin()"/>
       </div>
       <button class="btn btn-green btn-mb" onclick="doEmpLogin()">👤 Login as Employee</button>
       <div style="text-align:center;margin:8px 0;">
@@ -845,6 +874,7 @@ function doEmpLogin(){
   if(!emp.approved){toast("Account not approved","err");return;}
   if(pass!==emp.password){toast("Incorrect password","err");return;}
   S.user={name:emp.name,role:"employee",code:emp.code};
+  requestNotifPermission();
   startGPS();
   go("employee");
 }
@@ -865,7 +895,7 @@ function pgPartnerLogin(){
         <div class="f-input" style="color:var(--accent);font-weight:600;">${PARTNER_EMAIL}</div>
       </div>
       <div class="f-group"><div class="f-label">Password</div>
-        <input class="f-input" type="password" id="pPass" placeholder="Enter partner password" onkeydown="if(event.key==='Enter')doPartnerLogin()"/>
+        <input class="f-input" type="password" id="pPass" placeholder="Enter partner password" autocomplete="new-password" value="" onkeydown="if(event.key==='Enter')doPartnerLogin()"/>
       </div>
       <button class="btn btn-accent btn-mb" onclick="doPartnerLogin()">🔐 Sign In as Partner</button>
       <button class="btn btn-ghost" onclick="go('login')">← Back</button>
@@ -878,6 +908,7 @@ function doPartnerLogin(){
   if(!p){toast("Enter password","err");return;}
   if(p!==S.partnerPass){toast("Incorrect password","err");return;}
   S.user={name:"Chintan",role:"boss"};
+  requestNotifPermission();
   go("boss");
 }
 
@@ -943,7 +974,8 @@ function pgBoss(){
       return `<div class="task-card" style="padding:10px 14px;">
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="badge badge-${t.priority}" style="font-size:9px;">${t.priority.toUpperCase()}</span>
-          <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${t.client} <span style="color:var(--text3);">–</span> <span style="font-weight:400;color:var(--text2);">${(t.desc||"").substring(0,50)}${(t.desc||"").length>50?"…":""}</span></div>
+          <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${t.client} <span style="color:var(--text3);">–</span> <span style="font-weight:400;color:var(--text2);">${(t.desc||"").substring(0,40)}${(t.desc||"").length>40?"…":""}</span></div>
+          ${t.status==="pending"?`<div class="act-btn" style="font-size:12px;" onclick="openEdit('${t.id}')">✏️</div><div class="act-btn" style="font-size:12px;" onclick="confirmDelTask('${t.id}')">🗑️</div>`:`<span style="font-size:10px;color:var(--green);">✅</span>`}
         </div>
         <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-top:4px;">
           <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span><span>👤 ${t.assignedTo||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}</span>`:""}
@@ -977,8 +1009,11 @@ function pgBoss(){
         <div class="topbar-sub">Partner Dashboard</div>
       </div>
       <div class="topbar-right">
+        <div class="rel icon-btn" onclick="go('notifications')">
+          🔔${unread.length?'<div class="notif-dot"></div>':""}
+        </div>
         <div class="rel icon-btn" onclick="go('manageUsers')">
-          👥${unread.length||pending.length||pendingLeave.length?'<div class="notif-dot"></div>':""}
+          👥${pending.length||pendingLeave.length?'<div class="notif-dot"></div>':""}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -1000,32 +1035,36 @@ function pgBoss(){
       <button class="btn btn-cyan btn-mb" onclick="go('attReport')">🗒️ Attendance Report</button>
       <button class="btn btn-green btn-mb" onclick="S.f.rptFrom='';S.f.rptTo='';go('taskReport')">📋 Task Completed Report</button>
     </div>
-    <div style="display:flex;gap:10px;padding:0 20px 12px;">
-      <div onclick="S.filter='incomplete';R()" style="flex:1;background:var(--card);border:1px solid ${S.filter==='incomplete'?'var(--yellow)':'var(--border)'};border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">
-        <div style="font-size:22px;font-weight:800;color:var(--yellow);">${S.tasks.filter(t=>t.status==="pending").length}</div>
-        <div style="font-size:12px;color:var(--text2);">Pending</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 20px 12px;">
+      <div onclick="openCreateTask()" style="background:var(--accent);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;">
+        <div style="font-size:18px;">➕</div>
+        <div style="font-size:10px;font-weight:700;color:#fff;">Assign Task</div>
       </div>
-      <div onclick="S.filter='completed';R()" style="flex:1;background:var(--card);border:1px solid ${S.filter==='completed'?'var(--green)':'var(--border)'};border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">
-        <div style="font-size:22px;font-weight:800;color:var(--green);">${S.tasks.filter(t=>t.status==="completed").length}</div>
-        <div style="font-size:12px;color:var(--text2);">Completed</div>
+      <div onclick="S.filter='incomplete';R()" style="background:var(--card);border:1px solid ${S.filter==='incomplete'?'var(--yellow)':'var(--border)'};border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:2px;">
+        <div style="font-size:16px;font-weight:800;color:var(--yellow);">${S.tasks.filter(t=>t.status==="pending").length}</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;">Pending Task</div>
       </div>
-    </div>
-    <div style="padding:0 20px 10px;display:flex;gap:8px;">
-      <button class="btn btn-accent" style="flex:1;" onclick="openCreateTask()">+ Assign Task</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="go('leaveAdmin')">✈️ Leave Requests</button>
+      <div onclick="S.filter='completed';R()" style="background:var(--card);border:1px solid ${S.filter==='completed'?'var(--green)':'var(--border)'};border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:2px;">
+        <div style="font-size:16px;font-weight:800;color:var(--green);">${S.tasks.filter(t=>t.status==="completed").length}</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;">Completed Task</div>
+      </div>
+      <div onclick="go('manageUsers')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;">
+        <div style="font-size:16px;">👥</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;">Manage Team</div>
+      </div>
+      <div onclick="go('leaveAdmin')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;">
+        <div style="font-size:16px;">✈️</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;">Leave Approval</div>
+      </div>
+      <div onclick="go('changePass')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;">
+        <div style="font-size:16px;">🔑</div>
+        <div style="font-size:10px;color:var(--text3);font-weight:600;">Password Change</div>
+      </div>
     </div>
     <div style="padding:0 20px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
       ${S.filter==="incomplete"?"PENDING":S.filter==="completed"?"COMPLETED":"ALL"} TASKS
     </div>
     ${taskCards}
-    ${unread.length?`
-    <div style="padding:0 20px;font-size:11px;font-weight:700;color:var(--accent2);letter-spacing:1.5px;text-transform:uppercase;margin:10px 0 8px;">🔔 NOTIFICATIONS (${unread.length} new)</div>
-    ${recentNotifs.map(n=>`<div style="margin:0 20px 6px;padding:8px 12px;background:${n.read?"var(--card)":"rgba(99,102,241,0.08)"};border:1px solid ${n.read?"var(--border)":"rgba(99,102,241,0.25)"};border-radius:10px;font-size:12px;color:var(--text2);">
-      ${n.type==="attendance"?"📍":n.type==="taskDone"?"✅":n.type==="leaveRequest"?"✈️":n.type==="registration"?"🆕":"🔔"} ${n.body}
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${new Date(n.createdAt).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
-    </div>`).join("")}
-    <div style="text-align:center;padding:8px;"><span style="font-size:11px;color:var(--accent);cursor:pointer;" onclick="S.notifications.filter(n=>n.to==='partner').forEach(n=>{n.read=true;if(window.FB)FB.saveNotif({...n,read:true});});R();">Mark all as read</span></div>
-    `:""}
     <div style="height:30px;"></div>
   </div>`;
 }
@@ -1093,6 +1132,7 @@ function submitTask(){
         assignedBy:S.user?.name||"Partner",status:"pending",createdAt:Date.now()};
       S.tasks.unshift(t);
       if(window.FB) FB.saveTask(t);
+      addNotif(t.assignedTo,"taskAssigned","Partner","New task assigned: "+t.client+" (Due: "+fmtDate(t.due)+")");
       toast("Task assigned to "+t.assignedTo+" \u{2705}","ok");
       go("boss");
     }
@@ -1158,8 +1198,8 @@ function confirmComplete(id){
   confirm2({icon:"\u{2705}",title:"Mark Complete?",msg:`Mark "${t.client}" as completed?`,
     yesLabel:"\u{2705} Yes",yesType:"success",
     onYes:()=>{
-      t.status="completed";
-      if(window.FB)FB.updateTask(id,{status:"completed"});
+      t.status="completed"; t.completedAt=new Date().toISOString();
+      if(window.FB)FB.updateTask(id,{status:"completed",completedAt:t.completedAt});
       toast("Task completed \u{2705}","ok");go("boss");
     }});
 }
@@ -1266,6 +1306,7 @@ function confirmApproveLeave(id,empName){
       const l=S.leaves.find(x=>x.id===id); if(!l) return;
       l.status="approved"; l.approvedBy=S.user?.name||"Partner";
       if(window.FB) FB.updateLeave(id,{status:"approved",approvedBy:l.approvedBy});
+      addNotif(empName,"leaveApproved",l.approvedBy,"Your "+l.leaveType+" ("+fmtDate(l.from)+" → "+fmtDate(l.to)+") has been approved by "+l.approvedBy);
       toast("Leave approved for "+empName,"ok"); R();
     }
   });
@@ -1278,6 +1319,7 @@ function confirmRejectLeave(id,empName){
       const l=S.leaves.find(x=>x.id===id); if(!l) return;
       l.status="rejected";
       if(window.FB) FB.updateLeave(id,{status:"rejected"});
+      addNotif(empName,"leaveRejected",S.user?.name||"Partner","Your "+l.leaveType+" ("+fmtDate(l.from)+" → "+fmtDate(l.to)+") has been rejected");
       toast("Leave rejected"); R();
     }
   });
@@ -1296,9 +1338,9 @@ function pgAttReport(){
   const grouped={};
   allRecs.forEach(a=>{
     const key=a.empName+"||"+a.date;
-    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:""};
-    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;}
-    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;}
+    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:"",inMarkedTime:"",outMarkedTime:""};
+    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;grouped[key].inMarkedTime=a.markedTime||a.time||"";}
+    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;grouped[key].outMarkedTime=a.markedTime||a.time||"";}
   });
   const rows=Object.values(grouped).sort((a,b)=>b.date.localeCompare(a.date));
 
@@ -1354,21 +1396,23 @@ function downloadAtt(){
   const grouped={};
   allRecs.forEach(a=>{
     const key=a.empName+"||"+a.date;
-    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:""};
-    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;}
-    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;}
+    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:"",inMarkedTime:"",outMarkedTime:""};
+    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;grouped[key].inMarkedTime=a.markedTime||a.time||"";}
+    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;grouped[key].outMarkedTime=a.markedTime||a.time||"";}
   });
   const rows=Object.values(grouped).sort((a,b)=>b.date.localeCompare(a.date));
   if(!window.XLSX){toast("Excel library not loaded","err");return;}
-  const xlRows=[["Employee","Date (DD/MM/YYYY)","IN Time","OUT Time","IN Location","OUT Location","IN Marked On","OUT Marked On","Leave Status","Leave Approved By"]];
+  const xlRows=[["Employee","Date (DD/MM/YYYY)","IN Time","IN Marked At","IN Location","OUT Time","OUT Marked At","OUT Location","IN Marked On","OUT Marked On","Leave Status","Leave Approved By"]];
   rows.forEach(r=>{
     const li=S.leaves.find(l=>l.empName===r.empName&&l.status==="approved"&&l.from<=r.date&&l.to>=r.date);
     xlRows.push([
       r.empName,
       fmtDate(r.date),
       r.inTime||"—",
-      r.outTime||"—",
+      r.inMarkedTime||"—",
       r.inLoc||"—",
+      r.outTime||"—",
+      r.outMarkedTime||"—",
       r.outLoc||"—",
       r.inMarkedOn?fmtDate(r.inMarkedOn):"—",
       r.outMarkedOn?fmtDate(r.outMarkedOn):"—",
@@ -1377,7 +1421,7 @@ function downloadAtt(){
     ]);
   });
   const ws=XLSX.utils.aoa_to_sheet(xlRows);
-  ws["!cols"]=[{wch:20},{wch:14},{wch:10},{wch:10},{wch:22},{wch:22},{wch:14},{wch:14},{wch:14},{wch:16}];
+  ws["!cols"]=[{wch:20},{wch:14},{wch:10},{wch:10},{wch:22},{wch:10},{wch:10},{wch:22},{wch:14},{wch:14},{wch:14},{wch:16}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Attendance");
   XLSX.writeFile(wb,"AGA_Attendance_"+(from||"all")+"_to_"+(to||"all")+".xlsx");
@@ -1469,7 +1513,7 @@ function downloadTaskExcel(){
   const data=S.tasks.filter(t=>{if(t.status!=="completed") return false;if(from&&t.due<from) return false;if(to&&t.due>to) return false;return true;});
   if(!window.XLSX){toast("Excel library not loaded. Check internet.","err");return;}
   const rows=[
-    ["Sr No","Client Name","Task Description","Category","Priority","Due Date","Assigned To (Assigner)","Reassigned To","Status"],
+    ["Sr No","Client Name","Task Description","Category","Priority","Due Date","Actual Completion Date","Assigned To (Assigner)","Reassigned To","Status"],
     ...data.map((t,i)=>[
       i+1,
       t.client||"",
@@ -1477,6 +1521,7 @@ function downloadTaskExcel(){
       t.category||"",
       t.priority||"",
       t.due||"",
+      t.completedAt?new Date(t.completedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"2-digit",year:"numeric"}):"—",
       t.assignedTo||"",
       t.reassignedTo||"—",
       "Completed"
@@ -1484,7 +1529,7 @@ function downloadTaskExcel(){
   ];
   const ws=XLSX.utils.aoa_to_sheet(rows);
   // Set column widths
-  ws["!cols"]=[{wch:6},{wch:22},{wch:35},{wch:14},{wch:10},{wch:14},{wch:22},{wch:18},{wch:12}];
+  ws["!cols"]=[{wch:6},{wch:22},{wch:35},{wch:14},{wch:10},{wch:14},{wch:18},{wch:22},{wch:18},{wch:12}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Completed Tasks");
   const fname="AGA_Completed_Tasks_"+(from||"all")+"_to_"+(to||"all")+".xlsx";
@@ -1548,6 +1593,37 @@ function doChangePass(){
     emp.password=nw; if(window.FB)FB.updateEmp(emp.code,{password:nw});
     toast("Password updated \u{2705}","ok"); go("employee");
   }
+}
+
+// ── NOTIFICATIONS PAGE ──
+function pgNotifications(){
+  const backScreen=S.user?.role==="boss"?"boss":"employee";
+  const myName=S.user?.name||"";
+  const isBoss=S.user?.role==="boss";
+  const myNotifs=S.notifications.filter(n=>{
+    if(isBoss) return n.to==="partner";
+    if(SENIOR_EMP.includes(myName)) return n.to===myName||n.to==="seniors";
+    return n.to===myName;
+  }).sort((a,b)=>b.createdAt-a.createdAt);
+  const unreadCount=myNotifs.filter(n=>!n.read).length;
+  // Mark all as read
+  myNotifs.forEach(n=>{if(!n.read){n.read=true;if(window.FB)FB.saveNotif({...n,read:true});}});
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('${backScreen}')">←</div>
+      <div><div class="page-title">🔔 Notifications</div><div class="page-sub">${unreadCount?unreadCount+" new":"All read"}</div></div>
+    </div>
+    <div class="section">
+      ${myNotifs.length?myNotifs.map(n=>`<div style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${n.type==="attendance"?"📍":n.type==="taskDone"?"✅":n.type==="leaveRequest"?"✈️":n.type==="leaveApproved"?"✈️":n.type==="leaveRejected"?"❌":n.type==="taskAssigned"?"📋":n.type==="registration"?"🆕":"🔔"}</span>
+          <div style="flex:1;font-size:12px;color:var(--text2);">${n.body}</div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">${new Date(n.createdAt).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
+      </div>`).join("")
+      :`<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">No notifications yet</div>`}
+    </div>
+  </div>`;
 }
 
 // =======================================
@@ -1635,6 +1711,13 @@ function pgEmployee(){
 
   const allDone=[...doneDirect,...doneReassignedToMe,...doneReassignedByMe];
 
+  // Employee notifications
+  const empUnread=S.notifications.filter(n=>{
+    if(n.to===name) return !n.read;
+    if(n.to==="seniors"&&SENIOR_EMP.includes(name)) return !n.read;
+    return false;
+  }).length;
+
   return `<div>
     <div class="topbar">
       <div>
@@ -1642,6 +1725,9 @@ function pgEmployee(){
         <div class="topbar-sub">Employee Dashboard</div>
       </div>
       <div class="topbar-right">
+        <div class="rel icon-btn" onclick="go('notifications')">
+          🔔${empUnread?'<div class="notif-dot"></div>':""}
+        </div>
         ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -1681,15 +1767,19 @@ function pgEmployee(){
 
     ${S.empFilter==="pending"?`
     <div style="padding:0 20px;font-size:11px;color:var(--yellow);font-weight:700;letter-spacing:1px;margin-bottom:8px;">PENDING TASKS (${totalPend})</div>
-    ${allMyPending.length?allMyPending.map(t=>`<div class="task-card" style="padding:10px 14px;">
+    ${allMyPending.length?allMyPending.map(t=>{
+      const isReassignedToMe=pendReassignedToMe.includes(t);
+      const completeFn=isReassignedToMe?"empCompleteAsReassignee":"empComplete";
+      return `<div class="task-card" style="padding:10px 14px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="badge badge-${t.priority}" style="font-size:9px;">${t.priority.toUpperCase()}</span>
         <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${t.client} <span style="color:var(--text3);">–</span> <span style="font-weight:400;color:var(--text2);">${(t.desc||"").substring(0,40)}${(t.desc||"").length>40?"…":""}</span></div>
+        <div class="act-btn" style="font-size:12px;color:var(--green);" onclick="${completeFn}('${t.id}')">✅</div>
       </div>
       <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-top:4px;">
         <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}</span>`:""}
       </div>
-    </div>`).join(""):`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No pending tasks 🎉</div>`}`
+    </div>`;}).join(""):`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No pending tasks 🎉</div>`}`
 
     :S.empFilter==="completed"?`
     <div style="padding:0 20px;font-size:11px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px;">COMPLETED TASKS (${totalDone})</div>
@@ -1746,9 +1836,9 @@ function empComplete(id){
   confirm2({icon:"\u{2705}",title:"Mark Complete?",msg:`Mark "${t.client}" as done?`,
     yesLabel:"\u{2705} Yes",yesType:"success",
     onYes:()=>{
-      t.status="completed";if(window.FB)FB.updateTask(id,{status:"completed"});
-      const notif={id:"n"+Date.now(),to:"partner",type:"taskDone",empName:S.user?.name,body:(S.user?.name||"")+" completed: "+t.client,read:false,createdAt:Date.now()};
-      S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+      t.status="completed";t.completedAt=new Date().toISOString();
+      if(window.FB)FB.updateTask(id,{status:"completed",completedAt:t.completedAt});
+      addNotif("partner","taskDone",S.user?.name,(S.user?.name||"")+" completed: "+t.client);
       toast("Task completed \u{2705}","ok");R();
     }});
 }
@@ -1760,8 +1850,8 @@ function empCompleteAsReassignee(id){
     onYes:()=>{
       t.reassigneeCompleted=true;
       if(window.FB)FB.updateTask(id,{reassigneeCompleted:true});
-      const notif={id:"n"+Date.now(),to:"partner",type:"taskDone",empName:S.user?.name,body:(S.user?.name||"")+" completed (reassigned): "+t.client,read:false,createdAt:Date.now()};
-      S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+      addNotif("partner","taskDone",S.user?.name,(S.user?.name||"")+" completed (reassigned): "+t.client);
+      addNotif(t.assignedTo,"taskDone",S.user?.name,(S.user?.name||"")+" completed your reassigned task: "+t.client);
       toast("Task completed! "+t.assignedTo+" will be notified \u{2705}","ok");R();
     }});
 }
@@ -1781,6 +1871,7 @@ function openReassign(id){
       t.reassignedBy=S.user?.name;
       t.reassigneeCompleted=false;
       if(window.FB) FB.updateTask(t.id,{reassignedTo:to,reassignedBy:t.reassignedBy,reassigneeCompleted:false});
+      addNotif(to,"taskAssigned",S.user?.name,"Task reassigned to you: "+t.client+" (Due: "+fmtDate(t.due)+")");
       toast("Reassigned to "+to+" \u{2705}","ok"); R();
     }
   });
@@ -1820,6 +1911,10 @@ function pgMarkAtt(){
         <div class="att-btn-row">
           <button class="att-in" onclick="doMarkAtt('IN')" ${hasIn?"disabled":""}>☑️ IN</button>
           <button class="att-out" onclick="doMarkAtt('OUT')" ${hasOut?"disabled":""}>🔴 OUT</button>
+        </div>
+        <div class="f-group" style="margin-top:10px;"><div class="f-label">Actual Time (optional)</div>
+          <input class="f-input" type="time" id="attActualTime" value="${S.f.attActualTime}" onchange="S.f.attActualTime=this.value"/>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px;">Leave blank to use current time. Use this if marking for a past time.</div>
         </div>
         <div class="att-hint">Your location will be captured automatically.<br/>Biometric or PIN required to confirm.</div>
       </div>
@@ -1873,9 +1968,18 @@ function doMarkAtt(type){
   if(type==="OUT"&&!recs.some(a=>a.type==="IN")){toast("Please mark IN first","err");return;}
   requireBiometric(()=>{
     const now=new Date();
-    const time=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
+    const markedTime=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
+    const actualTimeRaw=S.f.attActualTime||"";
+    let actualTime=markedTime;
+    if(actualTimeRaw){
+      const [h,m]=actualTimeRaw.split(":").map(Number);
+      const ampm=h>=12?"pm":"am";
+      const h12=h%12||12;
+      actualTime=String(h12).padStart(2,"0")+":"+String(m).padStart(2,"0")+" "+ampm;
+    }
     const markedOn=todayStr();
-    const rec={id:"att"+Date.now(),empName:name,type,date,time,markedOn,
+    const rec={id:"att"+Date.now(),empName:name,type,date,
+      time:actualTime,markedTime:markedTime,markedOn,
       lat:S.lastLat,lng:S.lastLng,
       location:S.lastLat?S.lastLat.toFixed(4)+", "+S.lastLng.toFixed(4):"unknown",
       createdAt:Date.now()};
@@ -1890,11 +1994,9 @@ function doMarkAtt(type){
       if(window.FB) FB.saveAtt(rec);
     }
     S.attendance.push(rec);
-    // Notify partner
-    const notif={id:"n"+Date.now(),to:"partner",type:"attendance",empName:name,body:name+" marked "+type+" at "+time+(date!==markedOn?" (for "+fmtDate(date)+")":""),read:false,createdAt:Date.now()};
-    S.notifications.push(notif);
-    if(window.FB) FB.saveNotif(notif);
-    toast(`${type} marked at ${time} ✅`,"ok");
+    S.f.attActualTime="";
+    addNotif("partner","attendance",name,name+" marked "+type+" at "+actualTime+(date!==markedOn?" (for "+fmtDate(date)+")":""));
+    toast(`${type} marked at ${actualTime} ✅`,"ok");
     R();
   });
 }
@@ -1940,10 +2042,11 @@ function submitLeave(){
         from,to,reason:S.f.leaveReason,status:"pending",createdAt:Date.now()};
       S.leaves.push(l);
       if(window.FB) FB.saveLeave(l);
-      // Notify partner for senior leaves
+      // Notify appropriate approver
       if(SENIOR_EMP.includes(S.user?.name)){
-        const notif={id:"n"+Date.now(),to:"partner",type:"leaveRequest",empName:S.user?.name,body:(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")",read:false,createdAt:Date.now()};
-        S.notifications.push(notif);if(window.FB)FB.saveNotif(notif);
+        addNotif("partner","leaveRequest",S.user?.name,(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")");
+      } else {
+        addNotif("seniors","leaveRequest",S.user?.name,(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")");
       }
       S.f.leaveFrom=""; S.f.leaveTo=""; S.f.leaveReason="";
       toast("Leave applied! Awaiting approval.","ok");
