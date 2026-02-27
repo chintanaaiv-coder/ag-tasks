@@ -502,6 +502,13 @@ async function seed(){
   ];
   for(const e of defaults) await setDoc(doc(db,"employees",e.code),e);
 }
+// Load partner password from Firebase
+onSnapshot(doc(db,"settings","config"),snap=>{
+  if(snap.exists()){
+    const d=snap.data();
+    if(d.partnerPass&&window.S) S.partnerPass=d.partnerPass;
+  }
+});
 onSnapshot(collection(db,"employees"),snap=>{
   if(snap.empty){seed();return;}
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
@@ -575,6 +582,24 @@ onSnapshot(query(collection(db,"notifications"),orderBy("createdAt","desc")),sna
   if(window.S) S.notifications=l;
   if(window.R) R();
 });
+onSnapshot(query(collection(db,"chats"),orderBy("createdAt","asc")),snap=>{
+  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
+  // Push browser notification for new chat messages
+  if(window.S && window.S.user){
+    const myName=S.user.name||(S.user.role==="boss"?"Chintan":"");
+    const oldIds=new Set(S.chatMessages.map(m=>m.id));
+    l.forEach(m=>{
+      if(oldIds.has(m.id)||m.sender===myName) return;
+      const isForMe=m.channel==="team"||(m.channel===myName)||
+        (m.sender===myName)||(m.to===myName);
+      if(isForMe && "Notification" in window && Notification.permission==="granted"){
+        try{new Notification(m.channel==="team"?"AGA Team Chat":m.sender,{body:m.text,icon:"./icon-192.png"});}catch(e){}
+      }
+    });
+  }
+  if(window.S) S.chatMessages=l;
+  if(window.R) R();
+});
 window.FB={
   saveTask:   async t =>setDoc(doc(db,"tasks",t.id),t),
   updateTask: async(id,d)=>updateDoc(doc(db,"tasks",id),d),
@@ -589,6 +614,9 @@ window.FB={
   deleteLeave:async id =>deleteDoc(doc(db,"leaves",id)),
   saveNotif:  async n =>setDoc(doc(db,"notifications",n.id),n),
   deleteNotif:async id =>deleteDoc(doc(db,"notifications",id)),
+  saveChat:   async m =>setDoc(doc(db,"chats",m.id),m),
+  deleteChat: async id =>deleteDoc(doc(db,"chats",id)),
+  saveSetting:async(id,d)=>setDoc(doc(db,"settings",id),d,{merge:true}),
 };
 </script>
 
@@ -610,7 +638,7 @@ const S = window.S = {
     {code:"003",name:"Moksha Jain",email:"moksha@aga.com",mobile:"",password:"mokshajain",approved:true,pendingApproval:false,registered:true},
     {code:"004",name:"Dhanisha Solanki",email:"dhanisha@aga.com",mobile:"",password:"dhanishasolanki",approved:true,pendingApproval:false,registered:true},
     {code:"005",name:"Prapti Padhya",email:"prapti@aga.com",mobile:"",password:"praptipadhya",approved:true,pendingApproval:false,registered:true},
-  ], tasks:[], attendance:[], leaves:[], notifications:[],
+  ], tasks:[], attendance:[], leaves:[], notifications:[], chatMessages:[],
   filter:"incomplete",
   partnerPass:"Partner@AG2026",
   theme: localStorage.getItem("aga-theme")||"dark",
@@ -628,6 +656,7 @@ const S = window.S = {
   },
   empFilter: "all",
   showNotifs: false,
+  chatWith: "",
   editId: null, reassignId: null,
   pinInput:"", pinMode:"set", pinCb:null,
   lastLat:null, lastLng:null,
@@ -639,8 +668,13 @@ document.documentElement.classList.toggle("light", S.theme==="light");
 window.R = function(){
   const el = document.getElementById("app");
   if(!el) return;
-  el.innerHTML = buildScreen();
+  const noToggle=["login","partnerLogin","register","empLogin"];
+  const showToggle=S.user&&!noToggle.includes(S.screen);
+  el.innerHTML = buildScreen()+(showToggle?`
+    <div onclick="toggleTheme()" style="position:fixed;top:18px;left:16px;width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;z-index:200;">${S.theme==="dark"?"🌙":"☀️"}</div>`:"");
   el.querySelectorAll("input,textarea,select").forEach(i=>i.setAttribute("autocomplete","off"));
+  const chatBox=document.getElementById("chatMsgs");
+  if(chatBox) chatBox.scrollTop=chatBox.scrollHeight;
 };
 R();
 
@@ -662,6 +696,8 @@ function buildScreen(){
   if(s==="myLeaves")     return pgMyLeaves();
   if(s==="changePass")   return pgChangePass();
   if(s==="notifications") return pgNotifications();
+  if(s==="chatList")      return pgChatList();
+  if(s==="chatConvo")     return pgChatConvo();
   return pgLogin();
 }
 
@@ -1033,6 +1069,9 @@ function pgBoss(){
         <div class="rel icon-btn" onclick="go('notifications')">
           🔔${unread.length?'<div class="notif-dot"></div>':""}
         </div>
+        <div class="rel icon-btn" onclick="go('chatList')">
+          💬${(()=>{const mn="Chintan";const uc=S.chatMessages.filter(m=>m.sender!==mn&&!(m.readBy||[]).includes(mn)&&(m.channel==="team"||m.channel===getChatChannel(mn,m.sender))).length;return uc?'<div class="notif-dot"></div>':"";})()}
+        </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
@@ -1244,6 +1283,15 @@ function pgManageUsers(){
       <div><div class="page-title">👥 Manage Team</div><div class="page-sub">Employees &amp; Leaves</div></div>
     </div>
     <div class="section">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);font-weight:600;">🔐 YOUR PASSWORD (Partner)</div>
+            <div id="partnerPassDisplay" style="font-size:14px;font-weight:700;color:var(--accent);margin-top:4px;">••••••••</div>
+          </div>
+          <span style="font-size:11px;color:var(--accent);cursor:pointer;" onclick="const el=document.getElementById('partnerPassDisplay');el.textContent=el.textContent==='••••••••'?S.partnerPass:'••••••••';">👁 Show/Hide</span>
+        </div>
+      </div>
       ${pending.length?`
       <div class="section-title" style="color:var(--yellow);">⏳ Pending Approval (${pending.length})</div>
       ${pending.map(e=>`
@@ -1335,10 +1383,11 @@ function confirmResetAllData(){
         for(const a of S.attendance) await FB.deleteAtt(a.id).catch(()=>{});
         for(const l of S.leaves) await FB.deleteLeave(l.id).catch(()=>{});
         for(const n of S.notifications) await FB.deleteNotif(n.id).catch(()=>{});
+        for(const m of S.chatMessages) await FB.deleteChat(m.id).catch(()=>{});
         for(const e of S.employees) await FB.deleteEmp(e.code||e.id).catch(()=>{});
       }
       // Clear local
-      S.tasks=[];S.attendance=[];S.leaves=[];S.notifications=[];S.employees=[];
+      S.tasks=[];S.attendance=[];S.leaves=[];S.notifications=[];S.chatMessages=[];S.employees=[];
       toast("All data deleted! Employees will re-seed on refresh.","ok");
       setTimeout(()=>location.reload(),1500);
     }
@@ -1630,7 +1679,9 @@ function doChangePass(){
     if(old!==S.partnerPass){toast("Current password incorrect","err");return;}
     if(nw.length<6){toast("Min 6 characters","err");return;}
     if(nw!==conf){toast("Passwords do not match","err");return;}
-    S.partnerPass=nw; toast("Password updated \u{2705}","ok"); go("boss");
+    S.partnerPass=nw;
+    if(window.FB) FB.saveSetting("config",{partnerPass:nw});
+    toast("Password updated \u{2705}","ok"); go("boss");
   } else {
     const emp=S.employees.find(e=>e.name===S.user?.name);
     if(!emp||old!==emp.password){toast("Current password incorrect","err");return;}
@@ -1658,6 +1709,7 @@ function pgNotifications(){
     <div class="back-row">
       <div class="back-btn" onclick="go('${backScreen}')">←</div>
       <div><div class="page-title">🔔 Notifications</div><div class="page-sub">${unreadCount?unreadCount+" new":"All read"}</div></div>
+      ${myNotifs.length?`<div style="margin-left:auto;"><span style="font-size:11px;color:var(--red);cursor:pointer;font-weight:600;" onclick="clearMyNotifs()">🗑️ Clear All</span></div>`:""}
     </div>
     <div class="section">
       ${myNotifs.length?myNotifs.map(n=>`<div style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;">
@@ -1670,6 +1722,174 @@ function pgNotifications(){
       :`<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">No notifications yet</div>`}
     </div>
   </div>`;
+}
+
+function clearMyNotifs(){
+  const myName=S.user?.name||"";
+  const isBoss=S.user?.role==="boss";
+  const isSenior=SENIOR_EMP.includes(myName);
+  const toDelete=S.notifications.filter(n=>{
+    if(isBoss) return n.to==="partner";
+    if(isSenior) return n.to===myName||n.to==="seniors";
+    return n.to===myName;
+  });
+  confirm2({icon:"🗑️",title:"Clear Notifications?",msg:`Delete all ${toDelete.length} notifications?`,
+    yesLabel:"🗑️ Yes, Clear All",yesType:"danger",
+    onYes:async ()=>{
+      for(const n of toDelete){
+        S.notifications=S.notifications.filter(x=>x.id!==n.id);
+        if(window.FB) await FB.deleteNotif(n.id).catch(()=>{});
+      }
+      toast("Notifications cleared","ok");R();
+    }
+  });
+}
+
+// =======================================
+// CHAT SYSTEM
+// =======================================
+
+function getChatChannel(a,b){
+  return [a,b].sort().join("||");
+}
+
+function pgChatList(){
+  const backScreen=S.user?.role==="boss"?"boss":"employee";
+  const myName=S.user?.name||(S.user?.role==="boss"?"Chintan":"");
+  const allMembers=["Chintan",...S.employees.filter(e=>e.approved!==false).map(e=>e.name)];
+  const otherMembers=allMembers.filter(n=>n!==myName);
+
+  // Team chat info
+  const teamMsgs=S.chatMessages.filter(m=>m.channel==="team");
+  const lastTeam=teamMsgs.length?teamMsgs[teamMsgs.length-1]:null;
+  const teamUnread=teamMsgs.filter(m=>m.sender!==myName&&!(m.readBy||[]).includes(myName)).length;
+
+  // Individual chats
+  const individuals=otherMembers.map(name=>{
+    const ch=getChatChannel(myName,name);
+    const msgs=S.chatMessages.filter(m=>m.channel===ch);
+    const last=msgs.length?msgs[msgs.length-1]:null;
+    const unread=msgs.filter(m=>m.sender!==myName&&!(m.readBy||[]).includes(myName)).length;
+    return {name,last,unread,ch};
+  }).sort((a,b)=>{
+    const at=a.last?a.last.createdAt:0;
+    const bt=b.last?b.last.createdAt:0;
+    return bt-at;
+  });
+
+  function fmtChatTime(ts){
+    if(!ts) return "";
+    const d=new Date(ts);
+    const now=new Date();
+    const diff=now-d;
+    if(diff<86400000) return d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+    if(diff<172800000) return "Yesterday";
+    return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short"});
+  }
+
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('${backScreen}')">←</div>
+      <div><div class="page-title">💬 Chats</div></div>
+    </div>
+
+    <div style="padding:0 20px 6px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;">TEAM</div>
+    <div onclick="S.chatWith='team';go('chatConvo')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--border);">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">AG</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;">AGA Team Chat</div>
+        <div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lastTeam?(lastTeam.sender===myName?"You":lastTeam.sender.split(" ")[0])+": "+lastTeam.text:"No messages yet"}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:10px;color:var(--text3);">${fmtChatTime(lastTeam?.createdAt)}</div>
+        ${teamUnread?`<div style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:4px;margin-left:auto;">${teamUnread}</div>`:""}
+      </div>
+    </div>
+
+    <div style="padding:14px 20px 6px;font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;">INDIVIDUAL</div>
+    ${individuals.map(c=>`
+    <div onclick="S.chatWith='${c.name}';go('chatConvo')" style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;border-bottom:1px solid var(--border);">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${c.name.split(" ").map(w=>w[0]).join("")}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;">${c.name}</div>
+        <div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.last?(c.last.sender===myName?"You: ":"")+c.last.text:"Tap to start chatting"}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:10px;color:var(--text3);">${fmtChatTime(c.last?.createdAt)}</div>
+        ${c.unread?`<div style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:4px;margin-left:auto;">${c.unread}</div>`:""}
+      </div>
+    </div>`).join("")}
+  </div>`;
+}
+
+function pgChatConvo(){
+  const myName=S.user?.name||(S.user?.role==="boss"?"Chintan":"");
+  const isTeam=S.chatWith==="team";
+  const channel=isTeam?"team":getChatChannel(myName,S.chatWith);
+  const msgs=S.chatMessages.filter(m=>m.channel===channel);
+
+  // Mark messages as read
+  msgs.forEach(m=>{
+    if(m.sender!==myName&&!(m.readBy||[]).includes(myName)){
+      if(!m.readBy) m.readBy=[];
+      m.readBy.push(myName);
+      if(window.FB) FB.saveChat({...m});
+    }
+  });
+
+  const avatar=isTeam?"AG":S.chatWith.split(" ").map(w=>w[0]).join("");
+  const avatarBg=isTeam?"var(--green)":"var(--accent)";
+  const memberCount=S.employees.filter(e=>e.approved!==false).length+1;
+
+  return `<div style="padding:0 0 0;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--surface);border-bottom:1px solid var(--border);">
+      <div class="back-btn" onclick="go('chatList')">←</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:${avatarBg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${avatar}</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;">${isTeam?"AGA Team Chat":S.chatWith}</div>
+        <div style="font-size:10px;color:var(--text3);">${isTeam?memberCount+" members":""}</div>
+      </div>
+    </div>
+
+    <div id="chatMsgs" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;height:calc(100vh - 140px);overflow-y:auto;">
+      ${msgs.length?msgs.map(m=>{
+        const isMine=m.sender===myName;
+        const time=new Date(m.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+        return `<div style="max-width:75%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.4;align-self:${isMine?"flex-end":"flex-start"};background:${isMine?"var(--accent)":"var(--card)"};color:${isMine?"#fff":"var(--text)"};${isMine?"border-bottom-right-radius:4px;":"border-bottom-left-radius:4px;"}">
+          ${isTeam&&!isMine?`<div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:2px;">${m.sender}</div>`:""}
+          ${m.text}
+          <div style="font-size:9px;color:${isMine?"rgba(255,255,255,0.5)":"var(--text3)"};text-align:right;margin-top:4px;">${time}</div>
+        </div>`;
+      }).join(""):`<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:12px;">No messages yet. Say hello! 👋</div>`}
+    </div>
+
+    <div style="display:flex;gap:8px;padding:12px 20px;background:var(--surface);border-top:1px solid var(--border);">
+      <input class="f-input" id="chatInput" placeholder="Type a message..." style="flex:1;border-radius:24px;padding:10px 16px;font-size:13px;" onkeydown="if(event.key==='Enter')sendChat()"/>
+      <button onclick="sendChat()" style="width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">➤</button>
+    </div>
+  </div>`;
+}
+
+function sendChat(){
+  const input=document.getElementById("chatInput");
+  const text=(input?.value||"").trim();
+  if(!text) return;
+  const myName=S.user?.name||(S.user?.role==="boss"?"Chintan":"");
+  const isTeam=S.chatWith==="team";
+  const channel=isTeam?"team":getChatChannel(myName,S.chatWith);
+  const msg={
+    id:"chat"+Date.now()+Math.random().toString(36).substr(2,4),
+    channel,
+    sender:myName,
+    to:isTeam?"team":S.chatWith,
+    text,
+    readBy:[myName],
+    createdAt:Date.now()
+  };
+  S.chatMessages.push(msg);
+  if(window.FB) FB.saveChat(msg);
+  input.value="";
+  R();
 }
 
 // =======================================
@@ -1774,6 +1994,9 @@ function pgEmployee(){
         <div class="rel icon-btn" onclick="go('notifications')">
           🔔${empUnread?'<div class="notif-dot"></div>':""}
         </div>
+        <div class="rel icon-btn" onclick="go('chatList')">
+          💬${(()=>{const uc=S.chatMessages.filter(m=>m.sender!==name&&!(m.readBy||[]).includes(name)&&(m.channel==="team"||m.channel===getChatChannel(name,m.sender))).length;return uc?'<div class="notif-dot"></div>':"";})()}
+        </div>
         ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -1815,15 +2038,20 @@ function pgEmployee(){
     <div style="padding:0 20px;font-size:11px;color:var(--yellow);font-weight:700;letter-spacing:1px;margin-bottom:8px;">PENDING TASKS (${totalPend})</div>
     ${allMyPending.length?allMyPending.map(t=>{
       const isReassignedToMe=pendReassignedToMe.includes(t);
+      const isWaiting=waitingOnAssignee.includes(t);
+      const isNeedsApproval=pendNeedsMyApproval.includes(t);
       const completeFn=isReassignedToMe?"empCompleteAsReassignee":"empComplete";
+      const canComplete=!isWaiting;
       return `<div class="task-card" style="padding:10px 14px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span class="badge badge-${t.priority}" style="font-size:9px;">${t.priority.toUpperCase()}</span>
         <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${t.client} <span style="color:var(--text3);">–</span> <span style="font-weight:400;color:var(--text2);">${(t.desc||"").substring(0,40)}${(t.desc||"").length>40?"…":""}</span></div>
-        <div class="act-btn" style="font-size:12px;color:var(--green);" onclick="${completeFn}('${t.id}')">✅</div>
+        ${isWaiting?`<span style="font-size:10px;color:var(--yellow);">⏳</span>`
+        :isNeedsApproval?`<div class="act-btn" style="font-size:12px;color:var(--green);" onclick="empComplete('${t.id}')">✅</div>`
+        :canComplete?`<div class="act-btn" style="font-size:12px;color:var(--green);" onclick="${completeFn}('${t.id}')">✅</div>`:``}
       </div>
       <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-top:4px;">
-        <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}</span>`:""}
+        <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}${isWaiting?" (waiting)":isNeedsApproval?" ✅ done":""}</span>`:""}
       </div>
     </div>`;}).join(""):`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No pending tasks 🎉</div>`}`
 
