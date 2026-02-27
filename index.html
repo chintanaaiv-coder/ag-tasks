@@ -650,7 +650,7 @@ const S = window.S = {
     client:"", desc:"", priority:"high", category:"", due:"", assignedTo:"",
     leaveFrom:"", leaveTo:"", leaveType:"Casual Leave", leaveReason:"",
     attDate: new Date().toISOString().split("T")[0],
-    attActualTime: "",
+    attActualTime: "", attHour:"", attMin:"", attAmPm:"AM",
     rptFrom:"", rptTo:"",
     attCalY: new Date().getFullYear(), attCalM: new Date().getMonth(),
   },
@@ -663,6 +663,17 @@ const S = window.S = {
 };
 // Apply theme
 document.documentElement.classList.toggle("light", S.theme==="light");
+
+// Restore session
+try{
+  const sess=JSON.parse(localStorage.getItem("aga-session"));
+  if(sess&&sess.name&&sess.role){
+    S.user=sess;
+    S.screen=sess.role==="boss"?"boss":"employee";
+    if(sess.role==="employee") startGPS();
+    requestNotifPermission();
+  }
+}catch(e){}
 
 // === RENDER ===
 window.R = function(){
@@ -702,7 +713,7 @@ function buildScreen(){
 }
 
 function go(s){ S.screen=s; R(); window.scrollTo(0,0); }
-function doLogout(){ S.user=null; S.screen="login"; R(); }
+function doLogout(){ S.user=null; localStorage.removeItem("aga-session"); S.screen="login"; R(); }
 function toggleTheme(){
   S.theme = S.theme==="dark"?"light":"dark";
   document.documentElement.classList.toggle("light", S.theme==="light");
@@ -931,6 +942,7 @@ function doEmpLogin(){
   if(!emp.approved){toast("Account not approved","err");return;}
   if(pass!==emp.password){toast("Incorrect password","err");return;}
   S.user={name:emp.name,role:"employee",code:emp.code};
+  localStorage.setItem("aga-session",JSON.stringify(S.user));
   requestNotifPermission();
   startGPS();
   go("employee");
@@ -965,6 +977,7 @@ function doPartnerLogin(){
   if(!p){toast("Enter password","err");return;}
   if(p!==S.partnerPass){toast("Incorrect password","err");return;}
   S.user={name:"Chintan",role:"boss"};
+  localStorage.setItem("aga-session",JSON.stringify(S.user));
   requestNotifPermission();
   go("boss");
 }
@@ -2179,13 +2192,26 @@ function pgMarkAtt(){
         <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Selected: <strong>${fmtDate(selDate)}</strong></div>
         ${hasIn?`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--green);">✅ IN marked at ${inRec?.time||"\u{2014}"} · ${inRec?.location||"location not captured"}</div>`:""}
         ${hasOut?`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--red);">🔴 OUT marked at ${outRec?.time||"\u{2014}"} · ${outRec?.location||""}</div>`:""}
+        <div class="f-group" style="margin-bottom:10px;"><div class="f-label">Select Time <span style="color:var(--red);">*</span></div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="f-input" id="attHour" style="flex:1;text-align:center;" onchange="updateAttTime()">
+              <option value="">HH</option>
+              ${[12,1,2,3,4,5,6,7,8,9,10,11].map(h=>`<option value="${h}" ${S.f.attHour==h?"selected":""}>${String(h).padStart(2,"0")}</option>`).join("")}
+            </select>
+            <span style="font-size:18px;font-weight:700;color:var(--text);">:</span>
+            <select class="f-input" id="attMin" style="flex:1;text-align:center;" onchange="updateAttTime()">
+              <option value="">MM</option>
+              ${[0,5,10,15,20,25,30,35,40,45,50,55].map(m=>`<option value="${m}" ${S.f.attMin==m&&S.f.attMin!==""?"selected":""}>${String(m).padStart(2,"0")}</option>`).join("")}
+            </select>
+            <select class="f-input" id="attAmPm" style="flex:1;text-align:center;" onchange="updateAttTime()">
+              <option value="AM" ${S.f.attAmPm==="AM"?"selected":""}>AM</option>
+              <option value="PM" ${S.f.attAmPm==="PM"?"selected":""}>PM</option>
+            </select>
+          </div>
+        </div>
         <div class="att-btn-row">
           <button class="att-in" onclick="doMarkAtt('IN')" ${hasIn?"disabled":""}>☑️ IN</button>
           <button class="att-out" onclick="doMarkAtt('OUT')" ${hasOut?"disabled":""}>🔴 OUT</button>
-        </div>
-        <div class="f-group" style="margin-top:10px;"><div class="f-label">Actual Time (optional)</div>
-          <input class="f-input" type="time" id="attActualTime" value="${S.f.attActualTime}" onchange="S.f.attActualTime=this.value"/>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px;">Leave blank to use current time. Use this if marking for a past time.</div>
         </div>
         <div class="att-hint">Your location will be captured automatically.<br/>Biometric or PIN required to confirm.</div>
       </div>
@@ -2229,10 +2255,19 @@ function buildAttCal(empName){
   <div class="cal-grid">${dayNames}${cells.join("")}</div>`;
 }
 
+function updateAttTime(){
+  S.f.attHour=document.getElementById("attHour")?.value||"";
+  S.f.attMin=document.getElementById("attMin")?.value||"";
+  S.f.attAmPm=document.getElementById("attAmPm")?.value||"AM";
+}
+
 function doMarkAtt(type){
   const name=S.user?.name; const date=S.f.attDate||todayStr();
   const today=todayStr();
   if(date>today){toast("Cannot mark attendance for future dates","err");return;}
+  // Validate time
+  updateAttTime();
+  if(S.f.attHour===""||S.f.attMin===""){toast("Please select the time first","err");return;}
   const recs=getAttForDay(name,date);
   if(type==="IN"&&recs.some(a=>a.type==="IN")){toast("Already marked IN for this date","err");return;}
   if(type==="OUT"&&recs.some(a=>a.type==="OUT")){toast("Already marked OUT for this date","err");return;}
@@ -2240,14 +2275,7 @@ function doMarkAtt(type){
   requireBiometric(()=>{
     const now=new Date();
     const markedTime=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
-    const actualTimeRaw=S.f.attActualTime||"";
-    let actualTime=markedTime;
-    if(actualTimeRaw){
-      const [h,m]=actualTimeRaw.split(":").map(Number);
-      const ampm=h>=12?"pm":"am";
-      const h12=h%12||12;
-      actualTime=String(h12).padStart(2,"0")+":"+String(m).padStart(2,"0")+" "+ampm;
-    }
+    const actualTime=String(S.f.attHour).padStart(2,"0")+":"+String(S.f.attMin).padStart(2,"0")+" "+S.f.attAmPm.toLowerCase();
     const markedOn=todayStr();
     const rec={id:"att"+Date.now(),empName:name,type,date,
       time:actualTime,markedTime:markedTime,markedOn,
@@ -2265,7 +2293,7 @@ function doMarkAtt(type){
       if(window.FB) FB.saveAtt(rec);
     }
     S.attendance.push(rec);
-    S.f.attActualTime="";
+    S.f.attHour="";S.f.attMin="";S.f.attAmPm="AM";
     addNotif("partner","attendance",name,name+" marked "+type+" at "+actualTime+(date!==markedOn?" (for "+fmtDate(date)+")":""));
     toast(`${type} marked at ${actualTime} ✅`,"ok");
     R();
