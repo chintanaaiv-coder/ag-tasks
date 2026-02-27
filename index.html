@@ -600,6 +600,12 @@ onSnapshot(query(collection(db,"chats"),orderBy("createdAt","asc")),snap=>{
   if(window.S) S.chatMessages=l;
   if(window.R) R();
 });
+// Expenses listener
+onSnapshot(query(collection(db,"expenses"),orderBy("createdAt","desc")),snap=>{
+  const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
+  if(window.S) S.expenses=l;
+  if(window.R) R();
+});
 window.FB={
   saveTask:   async t =>setDoc(doc(db,"tasks",t.id),t),
   updateTask: async(id,d)=>updateDoc(doc(db,"tasks",id),d),
@@ -617,6 +623,9 @@ window.FB={
   saveChat:   async m =>setDoc(doc(db,"chats",m.id),m),
   deleteChat: async id =>deleteDoc(doc(db,"chats",id)),
   saveSetting:async(id,d)=>setDoc(doc(db,"settings",id),d,{merge:true}),
+  saveExpense:async e=>setDoc(doc(db,"expenses",e.id),e),
+  updateExpense:async(id,d)=>updateDoc(doc(db,"expenses",id),d),
+  deleteExpense:async id=>deleteDoc(doc(db,"expenses",id)),
 };
 </script>
 
@@ -638,7 +647,7 @@ const S = window.S = {
     {code:"003",name:"Moksha Jain",email:"moksha@aga.com",mobile:"",password:"mokshajain",approved:true,pendingApproval:false,registered:true},
     {code:"004",name:"Dhanisha Solanki",email:"dhanisha@aga.com",mobile:"",password:"dhanishasolanki",approved:true,pendingApproval:false,registered:true},
     {code:"005",name:"Prapti Padhya",email:"prapti@aga.com",mobile:"",password:"praptipadhya",approved:true,pendingApproval:false,registered:true},
-  ], tasks:[], attendance:[], leaves:[], notifications:[], chatMessages:[],
+  ], tasks:[], attendance:[], leaves:[], notifications:[], chatMessages:[], expenses:[],
   filter:"incomplete",
   partnerPass:"Partner@AG2026",
   theme: localStorage.getItem("aga-theme")||"dark",
@@ -653,8 +662,11 @@ const S = window.S = {
     attActualTime: "", attHour:"", attMin:"", attAmPm:"AM",
     rptFrom:"", rptTo:"",
     attCalY: new Date().getFullYear(), attCalM: new Date().getMonth(),
+    expDate: new Date().toISOString().split("T")[0], expAmount:"", expCategory:"", expDesc:"", expPhoto:null, expPhotoName:"",
+    expRptFrom:"", expRptTo:"",
   },
   empFilter: "all",
+  expFilter: "all", expPartnerFilter: "pending",
   showNotifs: false,
   chatWith: "",
   editId: null, reassignId: null,
@@ -686,6 +698,12 @@ window.R = function(){
   el.querySelectorAll("input,textarea,select").forEach(i=>i.setAttribute("autocomplete","off"));
   const chatBox=document.getElementById("chatMsgs");
   if(chatBox) chatBox.scrollTop=chatBox.scrollHeight;
+  // Live attendance clock
+  const clk=document.getElementById("attLiveClock");
+  if(clk){
+    const updClk=()=>{const n=new Date();const h=n.getHours()%12||12;clk.textContent=h+":"+String(n.getMinutes()).padStart(2,"0")+":"+String(n.getSeconds()).padStart(2,"0")+" "+(n.getHours()>=12?"PM":"AM");};
+    updClk();if(!window._attClkInt) window._attClkInt=setInterval(updClk,1000);
+  } else { if(window._attClkInt){clearInterval(window._attClkInt);window._attClkInt=null;} }
 };
 R();
 
@@ -709,6 +727,10 @@ function buildScreen(){
   if(s==="notifications") return pgNotifications();
   if(s==="chatList")      return pgChatList();
   if(s==="chatConvo")     return pgChatConvo();
+  if(s==="myExpenses")    return pgMyExpenses();
+  if(s==="addExpense")    return pgAddExpense();
+  if(s==="expenseAdmin")  return pgExpenseAdmin();
+  if(s==="expenseReport") return pgExpenseReport();
   return pgLogin();
 }
 
@@ -826,8 +848,18 @@ function startGPS(){
   navigator.geolocation.watchPosition(
     p=>{S.lastLat=p.coords.latitude;S.lastLng=p.coords.longitude;},
     ()=>{},
-    {enableHighAccuracy:true,timeout:20000,maximumAge:60000}
+    {enableHighAccuracy:true,timeout:20000,maximumAge:10000}
   );
+}
+function refreshGPS(){
+  return new Promise(res=>{
+    if(!navigator.geolocation) return res();
+    navigator.geolocation.getCurrentPosition(
+      p=>{S.lastLat=p.coords.latitude;S.lastLng=p.coords.longitude;res();},
+      ()=>res(),
+      {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+    );
+  });
 }
 // GPS starts only after employee login
 
@@ -1084,6 +1116,9 @@ function pgBoss(){
         </div>
         <div class="rel icon-btn" onclick="go('chatList')">
           💬${(()=>{const mn="Chintan";const uc=S.chatMessages.filter(m=>m.sender!==mn&&!(m.readBy||[]).includes(mn)&&(m.channel==="team"||m.channel===getChatChannel(mn,m.sender))).length;return uc?'<div class="notif-dot"></div>':"";})()}
+        </div>
+        <div class="rel icon-btn" onclick="go('expenseAdmin')">
+          💰${(()=>{const pe=S.expenses.filter(e=>e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -1397,10 +1432,11 @@ function confirmResetAllData(){
         for(const l of S.leaves) await FB.deleteLeave(l.id).catch(()=>{});
         for(const n of S.notifications) await FB.deleteNotif(n.id).catch(()=>{});
         for(const m of S.chatMessages) await FB.deleteChat(m.id).catch(()=>{});
+        for(const x of S.expenses) await FB.deleteExpense(x.id).catch(()=>{});
         for(const e of S.employees) await FB.deleteEmp(e.code||e.id).catch(()=>{});
       }
       // Clear local
-      S.tasks=[];S.attendance=[];S.leaves=[];S.notifications=[];S.chatMessages=[];S.employees=[];
+      S.tasks=[];S.attendance=[];S.leaves=[];S.notifications=[];S.chatMessages=[];S.expenses=[];S.employees=[];
       toast("All data deleted! Employees will re-seed on refresh.","ok");
       setTimeout(()=>location.reload(),1500);
     }
@@ -1759,6 +1795,307 @@ function clearMyNotifs(){
 }
 
 // =======================================
+// EXPENSE (OpEx) SYSTEM
+// =======================================
+const EXP_CATS=["Travel","Food","Stationery","Client Meeting","Courier","Printing","Telephone","Internet","Other"];
+
+function pgMyExpenses(){
+  const name=S.user?.name||"";
+  const myExp=S.expenses.filter(e=>e.empName===name).sort((a,b)=>b.createdAt-a.createdAt);
+  const pending=myExp.filter(e=>e.status==="pending");
+  const approved=myExp.filter(e=>e.status==="approved");
+  const rejected=myExp.filter(e=>e.status==="rejected");
+  const pendAmt=pending.reduce((s,e)=>s+Number(e.amount||0),0);
+  const appAmt=approved.reduce((s,e)=>s+Number(e.amount||0),0);
+  const filtered=S.expFilter==="pending"?pending:S.expFilter==="approved"?approved:S.expFilter==="rejected"?rejected:myExp;
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('employee')">←</div>
+      <div><div class="page-title">💰 My Expenses</div><div class="page-sub">${myExp.length} total</div></div>
+      <button class="btn btn-accent btn-sm" style="margin-left:auto;width:auto;padding:6px 14px;" onclick="S.f.expDate=new Date().toISOString().split('T')[0];S.f.expAmount='';S.f.expCategory='';S.f.expDesc='';S.f.expPhoto=null;S.f.expPhotoName='';go('addExpense')">+ New</button>
+    </div>
+    <div style="display:flex;gap:8px;padding:0 20px 12px;">
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--yellow);">₹${pendAmt.toLocaleString("en-IN")}</div>
+        <div style="font-size:10px;color:var(--text3);">Pending</div>
+      </div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--green);">₹${appAmt.toLocaleString("en-IN")}</div>
+        <div style="font-size:10px;color:var(--text3);">Approved</div>
+      </div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--text);">₹${(pendAmt+appAmt).toLocaleString("en-IN")}</div>
+        <div style="font-size:10px;color:var(--text3);">Total</div>
+      </div>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--border);margin:0 20px 12px;">
+      ${["all","pending","approved","rejected"].map(f=>`<div onclick="S.expFilter='${f}';R()" style="flex:1;text-align:center;padding:10px;font-size:12px;font-weight:700;color:${S.expFilter===f?"var(--accent)":"var(--text3)"};cursor:pointer;border-bottom:2px solid ${S.expFilter===f?"var(--accent)":"transparent"};">${f==="all"?"All"+(myExp.length?" ("+myExp.length+")":""):f==="pending"?"⏳ "+pending.length:f==="approved"?"✅ "+approved.length:"❌ "+rejected.length}</div>`).join("")}
+    </div>
+    <div class="section">
+      ${filtered.length?filtered.map(e=>`<div class="task-card" style="padding:12px 14px;${e.status==="approved"?"border-left:3px solid var(--green);":""}${e.status==="rejected"?"border-left:3px solid var(--red);":""}">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:42px;height:42px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:${e.photo?"pointer":"default"};" ${e.photo?`onclick="viewReceiptPhoto('${e.id}')"`:""}>
+            ${e.photo?"📷":"🧾"}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:14px;font-weight:700;">₹${Number(e.amount).toLocaleString("en-IN")}</span>
+              <span class="badge badge-${e.status==="pending"?"pending":e.status==="approved"?"done":"rejected"}" style="${e.status==="rejected"?"background:rgba(239,68,68,0.15);color:var(--red);":""}">${e.status==="pending"?"⏳ Pending":e.status==="approved"?"✅ Approved":"❌ Rejected"}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${e.desc||"—"}</div>
+            <div style="display:flex;gap:10px;margin-top:4px;font-size:10px;color:var(--text3);">
+              <span>🏷️ ${e.category||"—"}</span>
+              <span>📅 ${fmtDate(e.date)}</span>
+            </div>
+            ${e.status==="approved"?`<div style="font-size:10px;color:var(--green);margin-top:4px;">✅ Approved by ${e.approvedBy||"Partner"}${e.approvedAt?" · "+fmtDate(new Date(e.approvedAt).toISOString().split("T")[0]):""}</div>`:""}
+            ${e.status==="rejected"?`<div style="font-size:10px;color:var(--red);margin-top:4px;">❌ Rejected${e.rejectRemark?" · "+e.rejectRemark:""}${e.approvedBy?" by "+e.approvedBy:""}</div>`:""}
+            ${e.status==="pending"?`<div style="margin-top:6px;"><span style="font-size:10px;color:var(--red);cursor:pointer;" onclick="deleteExpense('${e.id}')">🗑️ Delete</span></div>`:""}
+          </div>
+        </div>
+      </div>`).join(""):`<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">No expenses found</div>`}
+    </div>
+  </div>`;
+}
+
+function pgAddExpense(){
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('myExpenses')">←</div>
+      <div><div class="page-title">💰 New Expense</div></div>
+    </div>
+    <div class="section">
+      <div class="f-group"><div class="f-label">Date <span style="color:var(--red);">*</span></div>
+        <input class="f-input" type="date" value="${S.f.expDate}" onchange="S.f.expDate=this.value"/>
+      </div>
+      <div class="f-group"><div class="f-label">Amount (₹) <span style="color:var(--red);">*</span></div>
+        <input class="f-input" type="number" placeholder="Enter amount" value="${S.f.expAmount}" oninput="S.f.expAmount=this.value"/>
+      </div>
+      <div class="f-group"><div class="f-label">Category <span style="color:var(--red);">*</span></div>
+        <select class="f-input" onchange="S.f.expCategory=this.value">
+          <option value="">— Select —</option>
+          ${EXP_CATS.map(c=>`<option value="${c}" ${S.f.expCategory===c?"selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="f-group"><div class="f-label">Description <span style="color:var(--red);">*</span></div>
+        <input class="f-input" placeholder="e.g., Auto to ABC Corp" value="${S.f.expDesc}" oninput="S.f.expDesc=this.value"/>
+      </div>
+      <div class="f-group"><div class="f-label">Receipt Photo (optional)</div>
+        <div id="expUploadArea" onclick="document.getElementById('expFileInput').click()" style="border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;">
+          ${S.f.expPhoto?`<div style="font-size:14px;color:var(--green);">📷 ${S.f.expPhotoName}</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Tap to change</div>`:`<div style="font-size:32px;margin-bottom:6px;">📷</div><div style="font-size:12px;color:var(--text3);">Tap to upload receipt photo</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">JPG, PNG · Max 5MB</div>`}
+        </div>
+        <input type="file" id="expFileInput" accept="image/*" style="display:none;" onchange="handleExpPhoto(this)"/>
+      </div>
+      <button class="btn btn-accent" onclick="submitExpense()">💰 Submit Expense</button>
+    </div>
+  </div>`;
+}
+
+function handleExpPhoto(input){
+  const file=input.files[0]; if(!file) return;
+  if(file.size>5*1024*1024){toast("Photo must be under 5MB","err");return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    S.f.expPhoto=e.target.result;
+    S.f.expPhotoName=file.name;
+    R();
+  };
+  reader.readAsDataURL(file);
+}
+
+function submitExpense(){
+  const{expDate,expAmount,expCategory,expDesc,expPhoto}=S.f;
+  if(!expDate){toast("Select date","err");return;}
+  if(!expAmount||Number(expAmount)<=0){toast("Enter valid amount","err");return;}
+  if(!expCategory){toast("Select category","err");return;}
+  if(!expDesc.trim()){toast("Enter description","err");return;}
+  const name=S.user?.name||"";
+  const exp={
+    id:"exp"+Date.now()+Math.random().toString(36).substr(2,4),
+    empName:name,
+    date:expDate,
+    amount:Number(expAmount),
+    category:expCategory,
+    desc:expDesc.trim(),
+    photo:expPhoto||null,
+    status:"pending",
+    approvedBy:null, approvedAt:null, rejectRemark:null,
+    createdAt:Date.now()
+  };
+  S.expenses.unshift(exp);
+  if(window.FB) FB.saveExpense(exp);
+  addNotif("partner","expense",name,name+" submitted expense ₹"+Number(expAmount).toLocaleString("en-IN")+" ("+expCategory+")");
+  S.f.expDate=new Date().toISOString().split("T")[0];
+  S.f.expAmount="";S.f.expCategory="";S.f.expDesc="";S.f.expPhoto=null;S.f.expPhotoName="";
+  toast("Expense submitted ✅","ok"); go("myExpenses");
+}
+
+function deleteExpense(id){
+  confirm2({icon:"🗑️",title:"Delete Expense?",msg:"Delete this expense claim?",
+    yesLabel:"🗑️ Delete",yesType:"danger",
+    onYes:()=>{
+      S.expenses=S.expenses.filter(e=>e.id!==id);
+      if(window.FB) FB.deleteExpense(id);
+      toast("Deleted","ok");R();
+    }
+  });
+}
+
+function viewReceiptPhoto(id){
+  const exp=S.expenses.find(e=>e.id===id);
+  if(!exp||!exp.photo) return;
+  const w=window.open();
+  w.document.write(`<html><head><title>Receipt</title><style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;}</style></head><body><img src="${exp.photo}"/></body></html>`);
+}
+
+// ── PARTNER EXPENSE ADMIN ──
+function pgExpenseAdmin(){
+  const allExp=S.expenses.sort((a,b)=>b.createdAt-a.createdAt);
+  const pending=allExp.filter(e=>e.status==="pending");
+  const approved=allExp.filter(e=>e.status==="approved");
+  const rejected=allExp.filter(e=>e.status==="rejected");
+  const approvedAmt=approved.reduce((s,e)=>s+Number(e.amount||0),0);
+  const f=S.expPartnerFilter;
+  const filtered=f==="pending"?pending:f==="approved"?approved:f==="rejected"?rejected:allExp;
+
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('boss')">←</div>
+      <div><div class="page-title">💰 Expenses</div><div class="page-sub">Team Expense Claims</div></div>
+    </div>
+    <div style="display:flex;gap:8px;padding:0 20px 12px;">
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--yellow);">${pending.length}</div>
+        <div style="font-size:10px;color:var(--text3);">Pending</div>
+      </div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;color:var(--green);">₹${approvedAmt.toLocaleString("en-IN")}</div>
+        <div style="font-size:10px;color:var(--text3);">Approved Total</div>
+      </div>
+    </div>
+    <div class="section">
+      <button class="btn btn-cyan" onclick="go('expenseReport')">📥 Download Expense Report (Excel)</button>
+    </div>
+    <div style="display:flex;border-bottom:1px solid var(--border);margin:0 20px 12px;">
+      ${["pending","approved","rejected"].map(t=>`<div onclick="S.expPartnerFilter='${t}';R()" style="flex:1;text-align:center;padding:10px;font-size:12px;font-weight:700;color:${f===t?"var(--accent)":"var(--text3)"};cursor:pointer;border-bottom:2px solid ${f===t?"var(--accent)":"transparent"};">${t==="pending"?"⏳ Pending ("+pending.length+")":t==="approved"?"✅ Approved ("+approved.length+")":"❌ Rejected ("+rejected.length+")"}</div>`).join("")}
+    </div>
+    <div class="section">
+      ${filtered.length?filtered.map(e=>`<div class="task-card" style="padding:12px 14px;${e.status==="pending"?"border-left:3px solid var(--yellow);":""}${e.status==="approved"?"border-left:3px solid var(--green);":""}${e.status==="rejected"?"border-left:3px solid var(--red);":""}">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:42px;height:42px;border-radius:8px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:${e.photo?"pointer":"default"};" ${e.photo?`onclick="viewReceiptPhoto('${e.id}')"`:""}>
+            ${e.photo?"📷":"🧾"}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:14px;font-weight:700;">₹${Number(e.amount).toLocaleString("en-IN")}</span>
+              <span class="badge badge-${e.status==="pending"?"pending":e.status==="approved"?"done":"rejected"}" style="${e.status==="rejected"?"background:rgba(239,68,68,0.15);color:var(--red);":""}">${e.status==="pending"?"⏳ Pending":e.status==="approved"?"✅ Approved":"❌ Rejected"}</span>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--accent);margin-top:2px;">${e.empName}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;">${e.desc||"—"}</div>
+            <div style="display:flex;gap:10px;margin-top:4px;font-size:10px;color:var(--text3);">
+              <span>🏷️ ${e.category||"—"}</span>
+              <span>📅 ${fmtDate(e.date)}</span>
+            </div>
+            ${e.status==="pending"?`<div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn btn-green btn-sm" style="flex:1;padding:8px;" onclick="approveExpense('${e.id}')">✅ Approve</button>
+              <button class="btn btn-sm" style="flex:1;padding:8px;background:rgba(239,68,68,0.15);color:var(--red);" onclick="rejectExpense('${e.id}')">❌ Reject</button>
+            </div>`:""}
+            ${e.status==="approved"?`<div style="font-size:10px;color:var(--green);margin-top:4px;">Approved ${e.approvedAt?fmtDate(new Date(e.approvedAt).toISOString().split("T")[0]):""}</div>`:""}
+            ${e.status==="rejected"?`<div style="font-size:10px;color:var(--red);margin-top:4px;">Rejected${e.rejectRemark?" · "+e.rejectRemark:""}</div>`:""}
+          </div>
+        </div>
+      </div>`).join(""):`<div style="text-align:center;padding:30px;color:var(--text3);font-size:12px;">No ${f} expenses</div>`}
+    </div>
+  </div>`;
+}
+
+function approveExpense(id){
+  const e=S.expenses.find(x=>x.id===id); if(!e) return;
+  confirm2({icon:"✅",title:"Approve Expense?",msg:`Approve ₹${Number(e.amount).toLocaleString("en-IN")} by ${e.empName}?`,
+    yesLabel:"✅ Approve",yesType:"green",
+    onYes:()=>{
+      e.status="approved"; e.approvedBy="Chintan"; e.approvedAt=Date.now();
+      if(window.FB) FB.updateExpense(id,{status:"approved",approvedBy:"Chintan",approvedAt:Date.now()});
+      addNotif(e.empName,"expenseApproved","Partner","Your expense ₹"+Number(e.amount).toLocaleString("en-IN")+" ("+e.category+") has been approved ✅");
+      toast("Approved ✅","ok");R();
+    }
+  });
+}
+
+function rejectExpense(id){
+  const e=S.expenses.find(x=>x.id===id); if(!e) return;
+  confirm2({icon:"❌",title:"Reject Expense?",msg:`Reject ₹${Number(e.amount).toLocaleString("en-IN")} by ${e.empName}?`,
+    detail:`<div style="margin-top:8px;"><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:4px;">Reason (optional)</div><input id="rejectRemarkInput" class="f-input" placeholder="Enter reason..." style="font-size:13px;"/></div>`,
+    yesLabel:"❌ Reject",yesType:"danger",
+    onYes:()=>{
+      const remark=(document.getElementById("rejectRemarkInput")?.value||"").trim();
+      e.status="rejected"; e.approvedBy="Chintan"; e.approvedAt=Date.now(); e.rejectRemark=remark;
+      if(window.FB) FB.updateExpense(id,{status:"rejected",approvedBy:"Chintan",approvedAt:Date.now(),rejectRemark:remark});
+      addNotif(e.empName,"expenseRejected","Partner","Your expense ₹"+Number(e.amount).toLocaleString("en-IN")+" ("+e.category+") was rejected"+(remark?" — "+remark:""));
+      toast("Rejected","ok");R();
+    }
+  });
+}
+
+// ── EXPENSE REPORT ──
+function pgExpenseReport(){
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('expenseAdmin')">←</div>
+      <div><div class="page-title">📥 Expense Report</div></div>
+    </div>
+    <div class="section">
+      <div class="f-group"><div class="f-label">From Date</div>
+        <input class="f-input" type="date" value="${S.f.expRptFrom}" onchange="S.f.expRptFrom=this.value"/>
+      </div>
+      <div class="f-group"><div class="f-label">To Date</div>
+        <input class="f-input" type="date" value="${S.f.expRptTo}" onchange="S.f.expRptTo=this.value"/>
+      </div>
+      <button class="btn btn-green" onclick="downloadExpenseExcel()">📥 Download Excel Report</button>
+    </div>
+  </div>`;
+}
+
+function downloadExpenseExcel(){
+  const from=S.f.expRptFrom; const to=S.f.expRptTo;
+  if(!from||!to){toast("Select both dates","err");return;}
+  const filtered=S.expenses.filter(e=>e.date>=from&&e.date<=to);
+  if(!filtered.length){toast("No expenses in this range","err");return;}
+
+  // Sheet 1: Summary
+  const empNames=[...new Set(filtered.map(e=>e.empName))].sort();
+  const summaryRows=[["Employee","Total (₹)","Approved (₹)","Pending (₹)","Rejected (₹)"]];
+  let gTotal=0,gApp=0,gPend=0,gRej=0;
+  empNames.forEach(name=>{
+    const empExp=filtered.filter(e=>e.empName===name);
+    const total=empExp.reduce((s,e)=>s+Number(e.amount||0),0);
+    const app=empExp.filter(e=>e.status==="approved").reduce((s,e)=>s+Number(e.amount||0),0);
+    const pend=empExp.filter(e=>e.status==="pending").reduce((s,e)=>s+Number(e.amount||0),0);
+    const rej=empExp.filter(e=>e.status==="rejected").reduce((s,e)=>s+Number(e.amount||0),0);
+    summaryRows.push([name,total,app,pend,rej]);
+    gTotal+=total; gApp+=app; gPend+=pend; gRej+=rej;
+  });
+  summaryRows.push(["TOTAL",gTotal,gApp,gPend,gRej]);
+
+  // Sheet 2: Line Items
+  const lineRows=[["Date","Employee","Category","Description","Amount (₹)","Status","Approved By","Remark"]];
+  filtered.sort((a,b)=>a.date.localeCompare(b.date)).forEach(e=>{
+    lineRows.push([e.date,e.empName,e.category,e.desc,Number(e.amount),
+      e.status.charAt(0).toUpperCase()+e.status.slice(1),
+      e.approvedBy||"—",e.rejectRemark||"—"]);
+  });
+
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet(summaryRows);
+  ws1["!cols"]=[{wch:20},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws1,"Summary");
+  const ws2=XLSX.utils.aoa_to_sheet(lineRows);
+  ws2["!cols"]=[{wch:12},{wch:18},{wch:15},{wch:35},{wch:12},{wch:10},{wch:14},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Line Items");
+  XLSX.writeFile(wb,"AGA_Expenses_"+from+"_to_"+to+".xlsx");
+  toast("Report downloaded ✅","ok");
+}
+
+// =======================================
 // CHAT SYSTEM
 // =======================================
 
@@ -2059,6 +2396,9 @@ function pgEmployee(){
         <div class="rel icon-btn" onclick="go('chatList')">
           💬${(()=>{const uc=S.chatMessages.filter(m=>m.sender!==name&&!(m.readBy||[]).includes(name)&&(m.channel==="team"||m.channel===getChatChannel(name,m.sender))).length;return uc?'<div class="notif-dot"></div>':"";})()}
         </div>
+        <div class="rel icon-btn" onclick="go('myExpenses')">
+          💰${(()=>{const pe=S.expenses.filter(e=>e.empName===name&&e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
+        </div>
         ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -2213,56 +2553,63 @@ function openReassign(id){
 // ── MARK ATTENDANCE ──
 function pgMarkAtt(){
   const name=S.user?.name||"";
-  const selDate=S.f.attDate||todayStr();
-  const dayRecs=getAttForDay(name,selDate);
+  const today=todayStr();
+  const selDate=S.f.attDate||today;
+  // Force date to not be in the future
+  if(selDate>today) S.f.attDate=today;
+  const useDate=S.f.attDate||today;
+  const dayRecs=getAttForDay(name,useDate);
   const hasIn=dayRecs.some(a=>a.type==="IN");
   const hasOut=dayRecs.some(a=>a.type==="OUT");
   const inRec=dayRecs.find(a=>a.type==="IN");
   const outRec=dayRecs.find(a=>a.type==="OUT");
-  // Build calendar
   const cal=buildAttCal(name);
 
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
       <div>
-        <div class="page-title">Mark Attendance</div>
+        <div class="page-title">📍 Attendance</div>
         <div class="page-sub">${name}</div>
       </div>
     </div>
-    <div class="section">
+
+    <div style="text-align:center;padding:10px 20px 0;">
+      <div id="attLiveClock" style="font-size:42px;font-weight:800;color:var(--text);letter-spacing:2px;"></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">${new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+    </div>
+
+    <div class="section" style="margin-top:14px;">
       <div class="card">
         <div class="att-section-title">📅 Select Date</div>
         ${cal}
       </div>
       <div style="height:14px;"></div>
       <div class="card">
-        <div class="att-section-title">Mark Your Status</div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Selected: <strong>${fmtDate(selDate)}</strong></div>
-        ${hasIn?`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--green);">✅ IN marked at ${inRec?.time||"\u{2014}"} · ${inRec?.location||"location not captured"}</div>`:""}
-        ${hasOut?`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--red);">🔴 OUT marked at ${outRec?.time||"\u{2014}"} · ${outRec?.location||""}</div>`:""}
-        <div class="f-group" style="margin-bottom:10px;"><div class="f-label">Select Time <span style="color:var(--red);">*</span></div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <select class="f-input" id="attHour" style="flex:1;text-align:center;" onchange="updateAttTime()">
-              <option value="">HH</option>
-              ${[12,1,2,3,4,5,6,7,8,9,10,11].map(h=>`<option value="${h}" ${S.f.attHour==h?"selected":""}>${String(h).padStart(2,"0")}</option>`).join("")}
-            </select>
-            <span style="font-size:18px;font-weight:700;color:var(--text);">:</span>
-            <select class="f-input" id="attMin" style="flex:1;text-align:center;" onchange="updateAttTime()">
-              <option value="">MM</option>
-              ${[0,5,10,15,20,25,30,35,40,45,50,55].map(m=>`<option value="${m}" ${S.f.attMin==m&&S.f.attMin!==""?"selected":""}>${String(m).padStart(2,"0")}</option>`).join("")}
-            </select>
-            <select class="f-input" id="attAmPm" style="flex:1;text-align:center;" onchange="updateAttTime()">
-              <option value="AM" ${S.f.attAmPm==="AM"?"selected":""}>AM</option>
-              <option value="PM" ${S.f.attAmPm==="PM"?"selected":""}>PM</option>
-            </select>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Selected: <strong>${fmtDate(useDate)}</strong>${useDate===today?" (Today)":""}</div>
+
+        ${hasIn?`<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--green);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>☑️ IN — ${inRec?.time||"—"}</div>
+            <div style="font-size:11px;">📍 ${inRec?.location||"—"}</div>
           </div>
+        </div>`:""}
+        ${hasOut?`<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:var(--red);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>🔴 OUT — ${outRec?.time||"—"}</div>
+            <div style="font-size:11px;">📍 ${outRec?.location||"—"}</div>
+          </div>
+        </div>`:""}
+
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button onclick="doMarkAtt('IN')" ${hasIn?"disabled":""} style="flex:1;padding:16px;border:${hasIn?"1px solid var(--border)":"2px solid rgba(16,185,129,0.3)"};border-radius:14px;background:${hasIn?"var(--card)":"rgba(16,185,129,0.1)"};color:${hasIn?"var(--text3)":"var(--green)"};font-size:15px;font-weight:800;font-family:inherit;cursor:${hasIn?"not-allowed":"pointer"};opacity:${hasIn?"0.4":"1"};">
+            ☑️ MARK IN${hasIn?" ✅":""}
+          </button>
+          <button onclick="doMarkAtt('OUT')" ${hasOut?"disabled":""} style="flex:1;padding:16px;border:${hasOut?"1px solid var(--border)":"2px solid rgba(239,68,68,0.3)"};border-radius:14px;background:${hasOut?"var(--card)":"rgba(239,68,68,0.1)"};color:${hasOut?"var(--text3)":"var(--red)"};font-size:15px;font-weight:800;font-family:inherit;cursor:${hasOut?"not-allowed":"pointer"};opacity:${hasOut?"0.4":"1"};">
+            🔴 MARK OUT${hasOut?" ✅":""}
+          </button>
         </div>
-        <div class="att-btn-row">
-          <button class="att-in" onclick="doMarkAtt('IN')" ${hasIn?"disabled":""}>☑️ IN</button>
-          <button class="att-out" onclick="doMarkAtt('OUT')" ${hasOut?"disabled":""}>🔴 OUT</button>
-        </div>
-        <div class="att-hint">Your location will be captured automatically.<br/>Biometric or PIN required to confirm.</div>
+        <div style="text-align:center;font-size:10px;color:var(--text3);margin-top:8px;">⏰ Time & 📍 location captured automatically on authentication</div>
       </div>
     </div>
   </div>`;
@@ -2304,30 +2651,22 @@ function buildAttCal(empName){
   <div class="cal-grid">${dayNames}${cells.join("")}</div>`;
 }
 
-function updateAttTime(){
-  S.f.attHour=document.getElementById("attHour")?.value||"";
-  S.f.attMin=document.getElementById("attMin")?.value||"";
-  S.f.attAmPm=document.getElementById("attAmPm")?.value||"AM";
-}
 
 function doMarkAtt(type){
   const name=S.user?.name; const date=S.f.attDate||todayStr();
   const today=todayStr();
   if(date>today){toast("Cannot mark attendance for future dates","err");return;}
-  // Validate time
-  updateAttTime();
-  if(S.f.attHour===""||S.f.attMin===""){toast("Please select the time first","err");return;}
   const recs=getAttForDay(name,date);
   if(type==="IN"&&recs.some(a=>a.type==="IN")){toast("Already marked IN for this date","err");return;}
   if(type==="OUT"&&recs.some(a=>a.type==="OUT")){toast("Already marked OUT for this date","err");return;}
   if(type==="OUT"&&!recs.some(a=>a.type==="IN")){toast("Please mark IN first","err");return;}
-  requireBiometric(()=>{
+  requireBiometric(async ()=>{
+    await refreshGPS();
     const now=new Date();
-    const markedTime=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
-    const actualTime=String(S.f.attHour).padStart(2,"0")+":"+String(S.f.attMin).padStart(2,"0")+" "+S.f.attAmPm.toLowerCase();
+    const timeStr=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
     const markedOn=todayStr();
     const rec={id:"att"+Date.now(),empName:name,type,date,
-      time:actualTime,markedTime:markedTime,markedOn,
+      time:timeStr,markedTime:timeStr,markedOn,
       lat:S.lastLat,lng:S.lastLng,
       location:S.lastLat?S.lastLat.toFixed(4)+", "+S.lastLng.toFixed(4):"unknown",
       createdAt:Date.now()};
@@ -2342,9 +2681,8 @@ function doMarkAtt(type){
       if(window.FB) FB.saveAtt(rec);
     }
     S.attendance.push(rec);
-    S.f.attHour="";S.f.attMin="";S.f.attAmPm="AM";
-    addNotif("partner","attendance",name,name+" marked "+type+" at "+actualTime+(date!==markedOn?" (for "+fmtDate(date)+")":""));
-    toast(`${type} marked at ${actualTime} ✅`,"ok");
+    addNotif("partner","attendance",name,name+" marked "+type+" at "+timeStr+(date!==markedOn?" (for "+fmtDate(date)+")":""));
+    toast(`${type} marked at ${timeStr} ✅`,"ok");
     R();
   });
 }
