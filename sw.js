@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aga-tasks-v11';
+const CACHE_NAME = 'aga-tasks-v14';
 const ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
