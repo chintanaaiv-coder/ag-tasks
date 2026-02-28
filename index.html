@@ -657,7 +657,7 @@ const S = window.S = {
     partnerPass:"",
     regName:"", regMobile:"", regEmail:"", regPass:"", regConf:"",
     client:"", desc:"", priority:"high", category:"", due:"", assignedTo:"",
-    leaveFrom:"", leaveTo:"", leaveType:"Casual Leave", leaveReason:"",
+    leaveFrom:"", leaveTo:"", leaveType:"Casual Leave", leaveReason:"", leaveMode:"", leaveHalf:"AM",
     attDate: new Date().toISOString().split("T")[0],
     attActualTime: "", attHour:"", attMin:"", attAmPm:"AM",
     rptFrom:"", rptTo:"",
@@ -691,10 +691,7 @@ try{
 window.R = function(){
   const el = document.getElementById("app");
   if(!el) return;
-  const noToggle=["login","partnerLogin","register","empLogin"];
-  const showToggle=S.user&&!noToggle.includes(S.screen);
-  el.innerHTML = buildScreen()+(showToggle?`
-    <div onclick="toggleTheme()" style="position:fixed;top:18px;left:16px;width:32px;height:32px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;z-index:200;">${S.theme==="dark"?"🌙":"☀️"}</div>`:"");
+  el.innerHTML = buildScreen();
   el.querySelectorAll("input,textarea,select").forEach(i=>i.setAttribute("autocomplete","off"));
   const chatBox=document.getElementById("chatMsgs");
   if(chatBox) chatBox.scrollTop=chatBox.scrollHeight;
@@ -722,6 +719,7 @@ function buildScreen(){
   if(s==="employee")     return pgEmployee();
   if(s==="markAtt")      return pgMarkAtt();
   if(s==="applyLeave")   return pgApplyLeave();
+  if(s==="leaveForm")    return pgLeaveForm();
   if(s==="myLeaves")     return pgMyLeaves();
   if(s==="changePass")   return pgChangePass();
   if(s==="notifications") return pgNotifications();
@@ -772,8 +770,13 @@ function closeConfirm(){ document.getElementById("confirmOverlay").classList.rem
 document.getElementById("ovYes").onclick=()=>{ const cb=_cb; closeConfirm(); if(cb) cb(); };
 
 // === PIN / BIOMETRIC ===
+function isMobileDevice(){
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||('ontouchstart' in window && window.innerWidth<900);
+}
 async function requireBiometric(onSuccess){
-  if(window.PublicKeyCredential){
+  // Mobile: try biometric (fingerprint/face/pattern) via WebAuthn
+  // Desktop/browser: go straight to PIN
+  if(isMobileDevice()&&window.PublicKeyCredential){
     try{
       const ok=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
       if(ok){
@@ -798,6 +801,7 @@ async function requireBiometric(onSuccess){
       }
     }catch(e){}
   }
+  // Desktop browser or biometric failed: use PIN
   showPin(onSuccess);
 }
 function b64buf(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer;}
@@ -808,7 +812,7 @@ function showPin(cb){
   const emp=S.employees.find(e=>e.name===S.user?.name);
   S.pinMode=emp?.pin?"verify":"set";
   document.getElementById("pinTitle").textContent=S.pinMode==="set"?"Set Attendance PIN":"Enter Your PIN";
-  document.getElementById("pinSub").textContent=S.pinMode==="set"?"Choose a 4-digit PIN for attendance":"Enter your PIN to confirm";
+  document.getElementById("pinSub").textContent=S.pinMode==="set"?"Choose a 4-digit PIN for attendance":"Enter your 4-digit PIN to confirm";
   document.getElementById("pinErr").textContent="";
   updPinDots();
   document.getElementById("pinOverlay").classList.add("open");
@@ -1119,6 +1123,9 @@ function pgBoss(){
         </div>
         <div class="rel icon-btn" onclick="go('expenseAdmin')">
           💰${(()=>{const pe=S.expenses.filter(e=>e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
+        </div>
+        <div class="rel icon-btn" onclick="toggleTheme()" style="width:26px;height:26px;font-size:11px;">
+          ${S.theme==="dark"?"🌙":"☀️"}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
@@ -2322,7 +2329,7 @@ function pgEmployee(){
   const totalDone=doneDirect.length+doneReassignedToMe.length+doneReassignedByMe.length;
 
   // Tasks due today
-  const allMyPending=[...pendDirect,...pendReassignedToMe,...pendNeedsMyApproval,...waitingOnAssignee];
+  const allMyPending=[...pendDirect,...pendReassignedToMe,...pendNeedsMyApproval,...waitingOnAssignee].sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
   const dueToday=allMyPending.filter(t=>t.due===today);
 
   // Check if on approved leave today
@@ -2374,7 +2381,7 @@ function pgEmployee(){
     </div>`;
   }
 
-  const allDone=[...doneDirect,...doneReassignedToMe,...doneReassignedByMe];
+  const allDone=[...doneDirect,...doneReassignedToMe,...doneReassignedByMe].sort((a,b)=>(b.completedAt||0)-(a.completedAt||0));
 
   // Employee notifications
   const empUnread=S.notifications.filter(n=>{
@@ -2400,6 +2407,9 @@ function pgEmployee(){
           💰${(()=>{const pe=S.expenses.filter(e=>e.empName===name&&e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
         </div>
         ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
+        <div class="rel icon-btn" onclick="toggleTheme()" style="width:26px;height:26px;font-size:11px;">
+          ${S.theme==="dark"?"🌙":"☀️"}
+        </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
@@ -2416,7 +2426,7 @@ function pgEmployee(){
     </div>
 
     <div style="padding:0 20px 10px;">
-      <div onclick="document.getElementById('dueTodaySec')?.scrollIntoView({behavior:'smooth'})" style="background:${dueToday.length?"rgba(239,68,68,0.1)":"rgba(16,185,129,0.08)"};border:1px solid ${dueToday.length?"rgba(239,68,68,0.3)":"rgba(16,185,129,0.25)"};border-radius:12px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;">
+      <div onclick="S.empFilter=S.empFilter==='dueToday'?'all':'dueToday';R()" style="background:${dueToday.length?"rgba(239,68,68,0.1)":"rgba(16,185,129,0.08)"};border:1px solid ${S.empFilter==='dueToday'?'var(--accent)':dueToday.length?"rgba(239,68,68,0.3)":"rgba(16,185,129,0.25)"};border-radius:12px;padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;">
         <div style="font-size:24px;">📅</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:800;color:${dueToday.length?"var(--red)":"var(--green)"};">${dueToday.length?dueToday.length+" Task"+(dueToday.length>1?"s":"")+" Due Today":"No Tasks Due Today"}</div>
@@ -2469,6 +2479,13 @@ function pgEmployee(){
         <span>📁 ${t.category||"—"}</span><span>📅 ${t.due||"—"}</span>${t.reassignedTo?`<span>↪️ ${t.reassignedTo}</span>`:""}
       </div>
     </div>`).join(""):`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No completed tasks yet</div>`}`
+
+    :S.empFilter==="dueToday"?`
+    <div style="padding:0 20px;font-size:11px;color:var(--red);font-weight:700;letter-spacing:1px;margin-bottom:8px;">📅 DUE TODAY (${dueToday.length})</div>
+    ${dueToday.length?dueToday.map(t=>{
+      const type=pendDirect.includes(t)?"direct":pendReassignedToMe.includes(t)?"reassignedToMe":pendNeedsMyApproval.includes(t)?"needsMyApproval":"waiting";
+      return buildTaskCard(t,type);
+    }).join(""):`<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No tasks due today 🎉</div>`}`
 
     :`
     ${dueToday.length?`
@@ -2689,11 +2706,37 @@ function doMarkAtt(type){
 
 // ── APPLY LEAVE ──
 function pgApplyLeave(){
-  const leaveTypes=["Casual Leave","Sick Leave","Earned Leave"];
   return `<div style="padding:0 0 40px;">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
-      <div><div class="page-title">Apply Leave</div></div>
+      <div><div class="page-title">✈️ Apply Leave</div><div class="page-sub">Select leave duration</div></div>
+    </div>
+    <div class="section" style="margin-top:10px;">
+      <div onclick="S.f.leaveMode='half';go('leaveForm')" style="background:var(--card);border:2px solid ${S.f.leaveMode==='half'?'var(--accent)':'var(--border)'};border-radius:14px;padding:20px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;border-radius:12px;background:rgba(234,179,8,0.12);display:flex;align-items:center;justify-content:center;font-size:26px;">🌗</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);">Half Day</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">Select one date and AM or PM session</div>
+        </div>
+      </div>
+      <div onclick="S.f.leaveMode='full';go('leaveForm')" style="background:var(--card);border:2px solid ${S.f.leaveMode==='full'?'var(--accent)':'var(--border)'};border-radius:14px;padding:20px;cursor:pointer;display:flex;align-items:center;gap:16px;">
+        <div style="width:52px;height:52px;border-radius:12px;background:rgba(6,182,212,0.12);display:flex;align-items:center;justify-content:center;font-size:26px;">📅</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);">Full Day(s)</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">Select from and to date for one or more days</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function pgLeaveForm(){
+  const isHalf=S.f.leaveMode==="half";
+  const leaveTypes=["Casual Leave","Sick Leave","Earned Leave"];
+  return `<div style="padding:0 0 40px;">
+    <div class="back-row">
+      <div class="back-btn" onclick="go('applyLeave')">←</div>
+      <div><div class="page-title">${isHalf?"🌗 Half Day Leave":"📅 Full Day Leave"}</div></div>
     </div>
     <div class="section">
       <div class="f-group"><div class="f-label">Leave Type</div>
@@ -2701,12 +2744,26 @@ function pgApplyLeave(){
           ${leaveTypes.map(t=>`<option value="${t}" ${S.f.leaveType===t?"selected":""}>${t}</option>`).join("")}
         </select>
       </div>
+      ${isHalf?`
+      <div class="f-group"><div class="f-label">Date</div>
+        <input class="f-input" type="date" value="${S.f.leaveFrom}" onchange="S.f.leaveFrom=this.value;S.f.leaveTo=this.value;"/>
+      </div>
+      <div class="f-group"><div class="f-label">Session</div>
+        <div style="display:flex;gap:10px;">
+          <div onclick="S.f.leaveHalf='AM';R()" style="flex:1;padding:14px;text-align:center;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;background:${S.f.leaveHalf==='AM'?'var(--accent)':'var(--card)'};color:${S.f.leaveHalf==='AM'?'#fff':'var(--text2)'};border:1px solid ${S.f.leaveHalf==='AM'?'var(--accent)':'var(--border)'};">
+            ☀️ First Half<div style="font-size:10px;font-weight:400;margin-top:2px;opacity:0.7;">Morning</div>
+          </div>
+          <div onclick="S.f.leaveHalf='PM';R()" style="flex:1;padding:14px;text-align:center;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;background:${S.f.leaveHalf==='PM'?'var(--accent)':'var(--card)'};color:${S.f.leaveHalf==='PM'?'#fff':'var(--text2)'};border:1px solid ${S.f.leaveHalf==='PM'?'var(--accent)':'var(--border)'};">
+            🌙 Second Half<div style="font-size:10px;font-weight:400;margin-top:2px;opacity:0.7;">Afternoon</div>
+          </div>
+        </div>
+      </div>`:`
       <div class="f-group"><div class="f-label">From Date</div>
         <input class="f-input" type="date" value="${S.f.leaveFrom}" onchange="S.f.leaveFrom=this.value"/>
       </div>
       <div class="f-group"><div class="f-label">To Date</div>
         <input class="f-input" type="date" value="${S.f.leaveTo}" onchange="S.f.leaveTo=this.value"/>
-      </div>
+      </div>`}
       <div class="f-group"><div class="f-label">Reason (Optional)</div>
         <textarea class="f-input" placeholder="Reason for leave..." oninput="S.f.leaveReason=this.value">${S.f.leaveReason}</textarea>
       </div>
@@ -2716,25 +2773,30 @@ function pgApplyLeave(){
 }
 
 function submitLeave(){
-  const from=S.f.leaveFrom; const to=S.f.leaveTo;
-  if(!from){toast("Select from date","err");return;}
-  if(!to){toast("Select to date","err");return;}
-  if(from>to){toast("From date must be before to date","err");return;}
-  confirm2({icon:"✈️",title:"Are You Sure?",msg:`Apply ${S.f.leaveType} from ${fmtDate(from)} to ${fmtDate(to)}?`,
-    detail:`<div class="lbl">Type</div>${S.f.leaveType}<div class="lbl">Duration</div>${fmtDate(from)} → ${fmtDate(to)}<div class="lbl">Reason</div>${S.f.leaveReason||"Not specified"}`,
+  const isHalf=S.f.leaveMode==="half";
+  const from=S.f.leaveFrom; const to=isHalf?from:S.f.leaveTo;
+  if(!from){toast("Select "+(isHalf?"date":"from date"),"err");return;}
+  if(!isHalf&&!to){toast("Select to date","err");return;}
+  if(!isHalf&&from>to){toast("From date must be before to date","err");return;}
+  const halfLabel=isHalf?(" ("+S.f.leaveHalf+" - "+(S.f.leaveHalf==="AM"?"First Half":"Second Half")+")"):"";
+  const durLabel=isHalf?("Half Day"+halfLabel+" on "+fmtDate(from)):(fmtDate(from)+" → "+fmtDate(to));
+  confirm2({icon:"✈️",title:"Are You Sure?",msg:`Apply ${S.f.leaveType}?`,
+    detail:`<div class="lbl">Type</div>${S.f.leaveType}<div class="lbl">Duration</div>${durLabel}<div class="lbl">Reason</div>${S.f.leaveReason||"Not specified"}`,
     yesLabel:"\u{2705} Yes, Apply",yesType:"success",
     onYes:()=>{
       const l={id:"lv"+Date.now(),empName:S.user?.name,leaveType:S.f.leaveType,
-        from,to,reason:S.f.leaveReason,status:"pending",createdAt:Date.now()};
+        from,to:to||from,reason:S.f.leaveReason,status:"pending",
+        isHalf:isHalf,halfSession:isHalf?S.f.leaveHalf:null,
+        createdAt:Date.now()};
       S.leaves.push(l);
       if(window.FB) FB.saveLeave(l);
-      // Notify appropriate approver
+      const notifMsg=(S.user?.name||"")+" applied for "+S.f.leaveType+(isHalf?" (Half Day - "+(S.f.leaveHalf==="AM"?"1st Half":"2nd Half")+")":" (Full Day)")+" "+durLabel;
       if(SENIOR_EMP.includes(S.user?.name)){
-        addNotif("partner","leaveRequest",S.user?.name,(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")");
+        addNotif("partner","leaveRequest",S.user?.name,notifMsg);
       } else {
-        addNotif("seniors","leaveRequest",S.user?.name,(S.user?.name||"")+" applied for "+S.f.leaveType+" ("+fmtDate(from)+" → "+fmtDate(to)+")");
+        addNotif("seniors","leaveRequest",S.user?.name,notifMsg);
       }
-      S.f.leaveFrom=""; S.f.leaveTo=""; S.f.leaveReason="";
+      S.f.leaveFrom=""; S.f.leaveTo=""; S.f.leaveReason=""; S.f.leaveMode=""; S.f.leaveHalf="AM";
       toast("Leave applied! Awaiting approval.","ok");
       go("employee");
     }
