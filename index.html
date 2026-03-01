@@ -702,9 +702,43 @@ const S = window.S = {
 // Apply theme
 document.documentElement.classList.toggle("light", S.theme==="light");
 
+// Cookie helpers for iOS session persistence (localStorage gets wiped on iOS PWAs)
+function setCookie(k,v,days){
+  const d=new Date();d.setTime(d.getTime()+(days||365)*86400000);
+  document.cookie=k+"="+encodeURIComponent(v)+";expires="+d.toUTCString()+";path=/;SameSite=Lax";
+}
+function getCookie(k){
+  const m=document.cookie.match(new RegExp("(^| )"+k+"=([^;]+)"));
+  return m?decodeURIComponent(m[2]):null;
+}
+function delCookie(k){document.cookie=k+"=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";}
+
+// Save session to both localStorage AND cookie
+function saveSession(user){
+  const json=JSON.stringify(user);
+  try{localStorage.setItem("aga-session",json);}catch(e){}
+  setCookie("aga-session",json,365);
+}
+function clearSession(){
+  try{localStorage.removeItem("aga-session");}catch(e){}
+  delCookie("aga-session");
+}
+function getSession(){
+  try{
+    const ls=localStorage.getItem("aga-session");
+    if(ls) return JSON.parse(ls);
+  }catch(e){}
+  // Fallback to cookie (iOS fix)
+  try{
+    const ck=getCookie("aga-session");
+    if(ck) return JSON.parse(ck);
+  }catch(e){}
+  return null;
+}
+
 // Restore session
 try{
-  const sess=JSON.parse(localStorage.getItem("aga-session"));
+  const sess=getSession();
   if(sess&&sess.name&&sess.role){
     S.user=sess;
     S.screen=sess.role==="boss"?"boss":"employee";
@@ -759,7 +793,7 @@ function buildScreen(){
 }
 
 function go(s){ S.screen=s; R(); window.scrollTo(0,0); }
-function doLogout(){ S.user=null; localStorage.removeItem("aga-session"); window._fbNotifsLoaded=false; window._fbChatsLoaded=false; window._fbExpLoaded=false; S.screen="login"; R(); }
+function doLogout(){ S.user=null; clearSession(); window._fbNotifsLoaded=false; window._fbChatsLoaded=false; window._fbExpLoaded=false; S.screen="login"; R(); }
 function toggleTheme(){
   S.theme = S.theme==="dark"?"light":"dark";
   document.documentElement.classList.toggle("light", S.theme==="light");
@@ -1058,7 +1092,7 @@ function doEmpLogin(){
   if(!emp.approved){toast("Account not approved","err");return;}
   if(pass!==emp.password){toast("Incorrect password","err");return;}
   S.user={name:emp.name,role:"employee",code:emp.code};
-  localStorage.setItem("aga-session",JSON.stringify(S.user));
+  saveSession(S.user);
   requestNotifPermission();
   startGPS();
   go("employee");
@@ -1093,7 +1127,7 @@ function doPartnerLogin(){
   if(!p){toast("Enter password","err");return;}
   if(p!==S.partnerPass){toast("Incorrect password","err");return;}
   S.user={name:"Chintan",role:"boss"};
-  localStorage.setItem("aga-session",JSON.stringify(S.user));
+  saveSession(S.user);
   requestNotifPermission();
   go("boss");
 }
