@@ -499,9 +499,13 @@ textarea.f-input { min-height: 80px; resize: vertical; }
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getMessaging,getToken,onMessage}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-assigner.firebaseapp.com",projectId:"ag-task-assigner",storageBucket:"ag-task-assigner.appspot.com",messagingSenderId:"694340088537",appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"};
 const app=initializeApp(cfg);
 const db=getFirestore(app);
+let messaging=null;
+try{messaging=getMessaging(app);}catch(e){console.log("FCM not supported in this browser");}
+const VAPID_KEY="BDnxskWRpK1rgHfNEBuC4odpbCBuLO_e2Ay3YCUA3k6i2n7Q60731FtIoAE3jSceoSG4IS2Ppno_7bpwUwXkPW0";
 // Seed default employees
 async function seed(){
   const defaults=[
@@ -889,12 +893,44 @@ function refreshGPS(){
 }
 // GPS starts only after employee login
 
-// ── BROWSER PUSH NOTIFICATIONS ──
+// ── FCM PUSH NOTIFICATIONS ──
 function requestNotifPermission(){
   if("Notification" in window && Notification.permission==="default"){
-    Notification.requestPermission();
+    Notification.requestPermission().then(p=>{
+      if(p==="granted") registerFCMToken();
+    });
+  } else if("Notification" in window && Notification.permission==="granted"){
+    registerFCMToken();
   }
 }
+
+async function registerFCMToken(){
+  if(!messaging||!S.user) return;
+  try{
+    const sw=await navigator.serviceWorker.ready;
+    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+    if(token){
+      const userName=S.user.role==="boss"?"Chintan":S.user.name;
+      await setDoc(doc(db,"pushTokens",token),{
+        token:token,
+        userName:userName,
+        role:S.user.role,
+        updatedAt:Date.now()
+      });
+      console.log("FCM token registered for",userName);
+    }
+  }catch(e){console.log("FCM registration failed:",e);}
+}
+
+// Handle foreground messages
+if(messaging){
+  onMessage(messaging,(payload)=>{
+    const title=payload.notification?.title||payload.data?.title||"AGA Tasks";
+    const body=payload.notification?.body||payload.data?.body||"";
+    swNotify(title,body);
+  });
+}
+
 // Use Service Worker notifications (work even when app is minimized/background)
 function swNotify(title,body){
   if(!("Notification" in window) || Notification.permission!=="granted") return;
