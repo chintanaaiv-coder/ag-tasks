@@ -6,3 +6,10 @@
         "sha256_cert_fingerprints": ["1A:59:86:EC:CF:5F:84:70:69:67:9A:4D:A6:A1:A1:78:25:B9:A6:80:F6:6B:3A:67:46:FB:38:ED:DB:67:5B:AF"]
       }
     }]
+```
+
+**Step 7:** Commit changes
+
+**Step 8:** Create another file → `_config.yml` with content:
+```
+include: [".well-known"]
