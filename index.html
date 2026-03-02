@@ -2502,6 +2502,7 @@ async function debugFCM(){
   }catch(e){info.push("Token error: "+e.message);}
   alert(info.join("\n"));
 }
+window.debugFCM=debugFCM;
 
 function pgEmployee(){
   const name=S.user?.name||"";
@@ -3053,7 +3054,16 @@ R();
 if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 <div id="fcmDebugBtn" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;">
-<button onclick="debugFCM()" style="font-size:18px;padding:16px 32px;background:#ff0000;color:#fff;border:none;border-radius:12px;box-shadow:0 4px 15px rgba(255,0,0,0.5);font-weight:bold;cursor:pointer;">🔧 DEBUG NOTIFICATIONS</button>
+<button id="debugBtn" style="font-size:18px;padding:16px 32px;background:#ff0000;color:#fff;border:none;border-radius:12px;box-shadow:0 4px 15px rgba(255,0,0,0.5);font-weight:bold;cursor:pointer;-webkit-tap-highlight-color:rgba(255,0,0,0.3);">🔧 DEBUG NOTIFICATIONS</button>
 </div>
+<script>
+document.getElementById("debugBtn").addEventListener("touchstart",function(e){
+  e.preventDefault();
+  if(window.debugFCM){window.debugFCM();}else{alert("debugFCM not loaded yet. Please login first and try again.");}
+});
+document.getElementById("debugBtn").addEventListener("click",function(){
+  if(window.debugFCM){window.debugFCM();}else{alert("debugFCM not loaded yet. Please login first and try again.");}
+});
+</script>
 </body>
 </html>
