@@ -504,7 +504,7 @@ const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-
 const app=initializeApp(cfg);
 const db=getFirestore(app);
 let messaging=null;
-try{messaging=getMessaging(app);}catch(e){console.log("FCM not supported in this browser");}
+try{messaging=getMessaging(app);console.log("FCM messaging initialized");}catch(e){console.log("FCM not supported:",e.message);}
 const VAPID_KEY="BDnxskWRpK1rgHfNEBuC4odpbCBuLO_e2Ay3YCUA3k6i2n7Q60731FtIoAE3jSceoSG4IS2Ppno_7bpwUwXkPW0";
 // Seed default employees
 async function seed(){
@@ -702,7 +702,7 @@ const S = window.S = {
 // Apply theme
 document.documentElement.classList.toggle("light", S.theme==="light");
 
-// Cookie helpers for iOS session persistence (localStorage gets wiped on iOS PWAs)
+// Session persistence — uses localStorage + cookie + IndexedDB (iOS PWAs wipe localStorage & cookies)
 function setCookie(k,v,days){
   const d=new Date();d.setTime(d.getTime()+(days||365)*86400000);
   document.cookie=k+"="+encodeURIComponent(v)+";expires="+d.toUTCString()+";path=/;SameSite=Lax";
@@ -713,32 +713,46 @@ function getCookie(k){
 }
 function delCookie(k){document.cookie=k+"=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";}
 
-// Save session to both localStorage AND cookie
+// IndexedDB helpers (most persistent on iOS)
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open("agaDB",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("kv");
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function idbSet(k,v){
+  try{const db=await idbOpen();const tx=db.transaction("kv","readwrite");tx.objectStore("kv").put(v,k);await new Promise(r=>{tx.oncomplete=r;});}catch(e){}
+}
+async function idbGet(k){
+  try{const db=await idbOpen();const tx=db.transaction("kv","readonly");const req=tx.objectStore("kv").get(k);return new Promise(r=>{req.onsuccess=()=>r(req.result);req.onerror=()=>r(null);});}catch(e){return null;}
+}
+async function idbDel(k){
+  try{const db=await idbOpen();const tx=db.transaction("kv","readwrite");tx.objectStore("kv").delete(k);}catch(e){}
+}
+
+// Save session to ALL three stores
 function saveSession(user){
   const json=JSON.stringify(user);
   try{localStorage.setItem("aga-session",json);}catch(e){}
   setCookie("aga-session",json,365);
+  idbSet("aga-session",json);
 }
 function clearSession(){
   try{localStorage.removeItem("aga-session");}catch(e){}
   delCookie("aga-session");
+  idbDel("aga-session");
 }
-function getSession(){
-  try{
-    const ls=localStorage.getItem("aga-session");
-    if(ls) return JSON.parse(ls);
-  }catch(e){}
-  // Fallback to cookie (iOS fix)
-  try{
-    const ck=getCookie("aga-session");
-    if(ck) return JSON.parse(ck);
-  }catch(e){}
+function getSessionSync(){
+  try{const ls=localStorage.getItem("aga-session");if(ls) return JSON.parse(ls);}catch(e){}
+  try{const ck=getCookie("aga-session");if(ck) return JSON.parse(ck);}catch(e){}
   return null;
 }
 
-// Restore session
+// Restore session — try sync first, then async IndexedDB
 try{
-  const sess=getSession();
+  const sess=getSessionSync();
   if(sess&&sess.name&&sess.role){
     S.user=sess;
     S.screen=sess.role==="boss"?"boss":"employee";
@@ -746,6 +760,23 @@ try{
     requestNotifPermission();
   }
 }catch(e){}
+// Async IndexedDB restore (catches iOS cases where localStorage+cookies are wiped)
+(async()=>{
+  if(S.user) return; // already restored
+  try{
+    const val=await idbGet("aga-session");
+    if(val){
+      const sess=JSON.parse(val);
+      if(sess&&sess.name&&sess.role){
+        S.user=sess;
+        S.screen=sess.role==="boss"?"boss":"employee";
+        if(sess.role==="employee") startGPS();
+        requestNotifPermission();
+        R();
+      }
+    }
+  }catch(e){}
+})();
 
 // === RENDER ===
 window.R = function(){
@@ -931,29 +962,47 @@ function refreshGPS(){
 function requestNotifPermission(){
   if("Notification" in window && Notification.permission==="default"){
     Notification.requestPermission().then(p=>{
-      if(p==="granted") registerFCMToken();
+      if(p==="granted") registerFCMTokenWithRetry();
     });
   } else if("Notification" in window && Notification.permission==="granted"){
-    registerFCMToken();
+    registerFCMTokenWithRetry();
+  }
+}
+
+async function registerFCMTokenWithRetry(attempt){
+  attempt=attempt||1;
+  if(attempt>5) return;
+  try{
+    await registerFCMToken();
+  }catch(e){
+    console.log("FCM attempt",attempt,"failed, retrying in 3s...",e);
+    setTimeout(()=>registerFCMTokenWithRetry(attempt+1),3000);
   }
 }
 
 async function registerFCMToken(){
-  if(!messaging||!S.user) return;
-  try{
-    const sw=await navigator.serviceWorker.ready;
-    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
-    if(token){
-      const userName=S.user.role==="boss"?"Chintan":S.user.name;
-      await setDoc(doc(db,"pushTokens",token),{
-        token:token,
-        userName:userName,
-        role:S.user.role,
-        updatedAt:Date.now()
-      });
-      console.log("FCM token registered for",userName);
-    }
-  }catch(e){console.log("FCM registration failed:",e);}
+  if(!messaging){console.log("FCM: messaging not available");return;}
+  if(!S.user){console.log("FCM: no user");return;}
+  // Ensure SW is registered first
+  if("serviceWorker" in navigator){
+    try{await navigator.serviceWorker.register("./sw.js");}catch(e){}
+  }
+  const sw=await navigator.serviceWorker.ready;
+  const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+  if(token){
+    const userName=S.user.role==="boss"?"Chintan":S.user.name;
+    await setDoc(doc(db,"pushTokens",token),{
+      token:token,
+      userName:userName,
+      role:S.user.role,
+      updatedAt:Date.now()
+    });
+    console.log("FCM token registered for",userName);
+    toast("🔔 Push notifications enabled","ok");
+  }else{
+    console.log("FCM: no token received");
+    toast("⚠️ Push token failed","err");
+  }
 }
 
 // Handle foreground messages
