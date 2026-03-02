@@ -653,6 +653,9 @@ window.FB={
   updateExpense:async(id,d)=>updateDoc(doc(db,"expenses",id),d),
   deleteExpense:async id=>deleteDoc(doc(db,"expenses",id)),
 };
+
+// Expose FCM variables to regular script block
+window._fcm={messaging:messaging,getToken:getToken,onMessage:onMessage,setDoc:setDoc,doc:doc,db:db,VAPID_KEY:VAPID_KEY};
 </script>
 
 <script>
@@ -970,13 +973,14 @@ function requestNotifPermission(){
 }
 
 async function registerFCMToken(){
-  if(!messaging||!S.user) return;
+  var F=window._fcm;
+  if(!F||!F.messaging||!S.user) return;
   try{
     const sw=await navigator.serviceWorker.ready;
-    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+    const token=await F.getToken(F.messaging,{vapidKey:F.VAPID_KEY,serviceWorkerRegistration:sw});
     if(token){
       const userName=S.user.role==="boss"?"Chintan":S.user.name;
-      await setDoc(doc(db,"pushTokens",token),{
+      await F.setDoc(F.doc(F.db,"pushTokens",token),{
         token:token,
         userName:userName,
         role:S.user.role,
@@ -988,8 +992,8 @@ async function registerFCMToken(){
 }
 
 // Handle foreground messages
-if(messaging){
-  onMessage(messaging,(payload)=>{
+if(window._fcm&&window._fcm.messaging){
+  window._fcm.onMessage(window._fcm.messaging,(payload)=>{
     const title=payload.notification?.title||payload.data?.title||"AGA Tasks";
     const body=payload.notification?.body||payload.data?.body||"";
     swNotify(title,body);
