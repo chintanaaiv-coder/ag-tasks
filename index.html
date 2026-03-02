@@ -985,7 +985,7 @@ async function registerFCMToken(){
   if(!S.user){console.log("FCM: no user");return;}
   // Ensure SW is registered first
   if("serviceWorker" in navigator){
-    try{await navigator.serviceWorker.register("./sw.js");}catch(e){}
+    try{await navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./"});}catch(e){}
   }
   const sw=await navigator.serviceWorker.ready;
   const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
@@ -3012,7 +3012,25 @@ function buildSeniorLeaveApproval(){
 
 // === INIT ===
 R();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./"}).catch(()=>{});
+
+// Expose all functions used in onclick/onchange/onfocus handlers (required for type="module")
+Object.assign(window,{
+  go,doLogout,toggleTheme,closeConfirm,closePinOverlay,pk,toast,
+  doEmpLogin,doPartnerLogin,doRegister,
+  openCreateTask,submitTask,openEdit,saveEdit,confirmComplete,confirmDelTask,
+  sendChat,toggleEmojiPicker,closeEmojiPicker,insertEmoji,renderEmojiPicker,
+  doMarkAtt,refreshGPS,downloadAtt,
+  submitLeave,confirmApproveLeave,confirmRejectLeave,
+  submitExpense,approveExpense,rejectExpense,deleteExpense,viewReceiptPhoto,handleExpPhoto,downloadExpenseExcel,
+  downloadTaskExcel,emailTaskReport,
+  confirmApprove,confirmDelUser,confirmResetAllData,
+  doChangePass,clearMyNotifs,
+  empComplete,empCompleteAsReassignee,openReassign,
+  requestNotifPermission,registerFCMTokenWithRetry
+});
+// Expose emojiCatIdx as getter/setter on window
+Object.defineProperty(window,'emojiCatIdx',{get(){return emojiCatIdx;},set(v){emojiCatIdx=v;},configurable:true});
 </script>
 </body>
 </html>
