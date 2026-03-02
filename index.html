@@ -962,43 +962,29 @@ function refreshGPS(){
 function requestNotifPermission(){
   if("Notification" in window && Notification.permission==="default"){
     Notification.requestPermission().then(p=>{
-      if(p==="granted") registerFCMTokenWithRetry();
+      if(p==="granted") registerFCMToken();
     });
   } else if("Notification" in window && Notification.permission==="granted"){
-    registerFCMTokenWithRetry();
-  }
-}
-
-async function registerFCMTokenWithRetry(attempt){
-  attempt=attempt||1;
-  if(attempt>5) return;
-  try{
-    await registerFCMToken();
-  }catch(e){
-    console.log("FCM attempt",attempt,"failed, retrying in 3s...",e);
-    setTimeout(()=>registerFCMTokenWithRetry(attempt+1),3000);
+    registerFCMToken();
   }
 }
 
 async function registerFCMToken(){
-  if(!messaging){console.log("FCM: messaging not available");return;}
-  if(!S.user){console.log("FCM: no user");return;}
-  // Ensure SW is registered first
-  if("serviceWorker" in navigator){
-    try{await navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./"});}catch(e){}
-  }
-  const sw=await navigator.serviceWorker.ready;
-  const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
-  if(token){
-    const userName=S.user.role==="boss"?"Chintan":S.user.name;
-    await setDoc(doc(db,"pushTokens",token),{
-      token:token,
-      userName:userName,
-      role:S.user.role,
-      updatedAt:Date.now()
-    });
-    console.log("FCM token registered for",userName);
-  }
+  if(!messaging||!S.user) return;
+  try{
+    const sw=await navigator.serviceWorker.ready;
+    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+    if(token){
+      const userName=S.user.role==="boss"?"Chintan":S.user.name;
+      await setDoc(doc(db,"pushTokens",token),{
+        token:token,
+        userName:userName,
+        role:S.user.role,
+        updatedAt:Date.now()
+      });
+      console.log("FCM token registered for",userName);
+    }
+  }catch(e){console.log("FCM registration failed:",e);}
 }
 
 // Handle foreground messages
@@ -3012,25 +2998,7 @@ function buildSeniorLeaveApproval(){
 
 // === INIT ===
 R();
-if("serviceWorker" in navigator) navigator.serviceWorker.register("./firebase-messaging-sw.js",{scope:"./"}).catch(()=>{});
-
-// Expose all functions used in onclick/onchange/onfocus handlers (required for type="module")
-Object.assign(window,{
-  go,doLogout,toggleTheme,closeConfirm,closePinOverlay,pk,toast,
-  doEmpLogin,doPartnerLogin,doRegister,
-  openCreateTask,submitTask,openEdit,saveEdit,confirmComplete,confirmDelTask,
-  sendChat,toggleEmojiPicker,closeEmojiPicker,insertEmoji,renderEmojiPicker,
-  doMarkAtt,refreshGPS,downloadAtt,
-  submitLeave,confirmApproveLeave,confirmRejectLeave,
-  submitExpense,approveExpense,rejectExpense,deleteExpense,viewReceiptPhoto,handleExpPhoto,downloadExpenseExcel,
-  downloadTaskExcel,emailTaskReport,
-  confirmApprove,confirmDelUser,confirmResetAllData,
-  doChangePass,clearMyNotifs,
-  empComplete,empCompleteAsReassignee,openReassign,
-  requestNotifPermission,registerFCMTokenWithRetry
-});
-// Expose emojiCatIdx as getter/setter on window
-Object.defineProperty(window,'emojiCatIdx',{get(){return emojiCatIdx;},set(v){emojiCatIdx=v;},configurable:true});
+if("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 </script>
 </body>
 </html>
