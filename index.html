@@ -499,13 +499,9 @@ textarea.f-input { min-height: 80px; resize: vertical; }
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import{getMessaging,getToken,onMessage}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-assigner.firebaseapp.com",projectId:"ag-task-assigner",storageBucket:"ag-task-assigner.appspot.com",messagingSenderId:"694340088537",appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"};
 const app=initializeApp(cfg);
 const db=getFirestore(app);
-let messaging=null;
-try{messaging=getMessaging(app);}catch(e){console.log("FCM not supported in this browser");}
-const VAPID_KEY="BDnxskWRpK1rgHfNEBuC4odpbCBuLO_e2Ay3YCUA3k6i2n7Q60731FtIoAE3jSceoSG4IS2Ppno_7bpwUwXkPW0";
 // Seed default employees
 async function seed(){
   const defaults=[
@@ -652,10 +648,37 @@ window.FB={
   saveExpense:async e=>setDoc(doc(db,"expenses",e.id),e),
   updateExpense:async(id,d)=>updateDoc(doc(db,"expenses",id),d),
   deleteExpense:async id=>deleteDoc(doc(db,"expenses",id)),
+  savePushToken:async(tokenId,data)=>setDoc(doc(db,"pushTokens",tokenId),data),
 };
 
-// Expose FCM variables to regular script block
-window._fcm={messaging:messaging,getToken:getToken,onMessage:onMessage,setDoc:setDoc,doc:doc,db:db,VAPID_KEY:VAPID_KEY};
+// Expose FCM registration function to regular script
+window._doFCMRegister=async function(userName,role){
+  if(!messaging) return;
+  try{
+    const sw=await navigator.serviceWorker.ready;
+    const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
+    if(token){
+      await setDoc(doc(db,"pushTokens",token),{token:token,userName:userName,role:role,updatedAt:Date.now()});
+      console.log("FCM token registered for",userName);
+    }
+  }catch(e){console.log("FCM registration failed:",e);}
+};
+
+// Handle foreground FCM messages
+if(messaging){
+  onMessage(messaging,(payload)=>{
+    const title=payload.notification?.title||payload.data?.title||"AGA Tasks";
+    const body=payload.notification?.body||payload.data?.body||"";
+    if(window.swNotify) window.swNotify(title,body);
+  });
+}
+
+// Module runs AFTER regular script, so if user was already restored from session, register token now
+if(window.S && window.S.user){
+  const u=window.S.user;
+  const userName=u.role==="boss"?"Chintan":u.name;
+  window._doFCMRegister(userName,u.role).catch(()=>{});
+}
 </script>
 
 <script>
@@ -973,32 +996,15 @@ function requestNotifPermission(){
 }
 
 async function registerFCMToken(){
-  var F=window._fcm;
-  if(!F||!F.messaging||!S.user) return;
+  if(!S.user) return;
+  if(!window._doFCMRegister) return;
   try{
-    const sw=await navigator.serviceWorker.ready;
-    const token=await F.getToken(F.messaging,{vapidKey:F.VAPID_KEY,serviceWorkerRegistration:sw});
-    if(token){
-      const userName=S.user.role==="boss"?"Chintan":S.user.name;
-      await F.setDoc(F.doc(F.db,"pushTokens",token),{
-        token:token,
-        userName:userName,
-        role:S.user.role,
-        updatedAt:Date.now()
-      });
-      console.log("FCM token registered for",userName);
-    }
+    const userName=S.user.role==="boss"?"Chintan":S.user.name;
+    await window._doFCMRegister(userName,S.user.role);
   }catch(e){console.log("FCM registration failed:",e);}
 }
 
-// Handle foreground messages
-if(window._fcm&&window._fcm.messaging){
-  window._fcm.onMessage(window._fcm.messaging,(payload)=>{
-    const title=payload.notification?.title||payload.data?.title||"AGA Tasks";
-    const body=payload.notification?.body||payload.data?.body||"";
-    swNotify(title,body);
-  });
-}
+// Foreground FCM messages handled in module block above
 
 // Use Service Worker notifications (work even when app is minimized/background)
 function swNotify(title,body){
