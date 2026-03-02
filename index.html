@@ -675,9 +675,20 @@ if(messaging){
 
 // Module runs AFTER regular script, so if user was already restored from session, register token now
 if(window.S && window.S.user){
-  const u=window.S.user;
-  const userName=u.role==="boss"?"Chintan":u.name;
-  window._doFCMRegister(userName,u.role).catch(()=>{});
+  // Request permission and register in one flow
+  (async()=>{
+    try{
+      if(!messaging) return;
+      if(!("Notification" in window)) return;
+      let perm=Notification.permission;
+      if(perm==="default") perm=await Notification.requestPermission();
+      if(perm!=="granted") return;
+      const u=window.S.user;
+      const userName=u.role==="boss"?"Chintan":u.name;
+      await window._doFCMRegister(userName,u.role);
+    }catch(e){console.log("FCM auto-register failed:",e);}
+  })();
+}
 }
 </script>
 
