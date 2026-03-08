@@ -100,6 +100,7 @@ html, body {
 /* ═══ LOGIN PAGE ═══ */
 .login-page {
   min-height: 100vh; padding: 40px 24px 40px;
+  padding-top: calc(40px + env(safe-area-inset-top, 0px));
   display: flex; flex-direction: column; align-items: center;
 }
 .login-logo {
@@ -372,7 +373,7 @@ textarea.f-input { min-height: 80px; resize: vertical; }
 .user-actions { display: flex; flex-direction: column; gap: 6px; }
 
 /* ═══ BACK BUTTON ═══ */
-.back-row { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; }
+.back-row { display: flex; align-items: center; gap: 12px; padding: 16px 20px 8px; padding-top: calc(16px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 50; background: var(--bg); }
 .back-btn {
   width: 36px; height: 36px; border-radius: 10px;
   background: var(--card); border: 1px solid var(--border);
@@ -505,9 +506,13 @@ textarea.f-input { min-height: 80px; resize: vertical; }
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import{getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot,query,orderBy,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getMessaging,getToken,onMessage}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 const cfg={apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",authDomain:"ag-task-assigner.firebaseapp.com",projectId:"ag-task-assigner",storageBucket:"ag-task-assigner.appspot.com",messagingSenderId:"694340088537",appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"};
 const app=initializeApp(cfg);
 const db=getFirestore(app);
+let messaging=null;
+try{messaging=getMessaging(app);}catch(e){console.log("FCM not supported in this browser");}
+const VAPID_KEY="BDnxskWRpK1rgHfNEBuC4odpbCBuLO_e2Ay3YCUA3k6i2n7Q60731FtIoAE3jSceoSG4IS2Ppno_7bpwUwXkPW0";
 // Seed default employees
 async function seed(){
   const defaults=[
@@ -659,15 +664,26 @@ window.FB={
 
 // Expose FCM registration function to regular script
 window._doFCMRegister=async function(userName,role){
-  if(!messaging) return;
+  if(!messaging){console.log("FCM: messaging is null");return;}
   try{
-    const sw=await navigator.serviceWorker.ready;
+    // Register SW explicitly for FCM
+    let sw;
+    if("serviceWorker" in navigator){
+      sw=await navigator.serviceWorker.register("./sw.js",{scope:"./"});
+      await navigator.serviceWorker.ready;
+    }
     const token=await getToken(messaging,{vapidKey:VAPID_KEY,serviceWorkerRegistration:sw});
     if(token){
       await setDoc(doc(db,"pushTokens",token),{token:token,userName:userName,role:role,updatedAt:Date.now()});
-      console.log("FCM token registered for",userName);
+      console.log("FCM token registered for",userName,"token:",token.substring(0,20)+"...");
+    }else{
+      console.log("FCM: getToken returned null");
     }
-  }catch(e){console.log("FCM registration failed:",e);}
+  }catch(e){
+    console.log("FCM registration error:",e.message||e);
+    // Show visible error for debugging
+    if(window.toast) window.toast("FCM: "+String(e.message||e).substring(0,60),"err");
+  }
 };
 
 // Handle foreground FCM messages
