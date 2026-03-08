@@ -73,22 +73,28 @@ html, body {
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 20px 12px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   background: var(--bg);
   position: sticky; top: 0; z-index: 50;
+  flex-wrap: wrap; gap: 8px 0;
 }
 .topbar-title { font-size: 22px; font-weight: 800; color: var(--text); }
 .topbar-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-.topbar-right { display: flex; gap: 8px; align-items: center; }
+.topbar-right { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .icon-btn {
-  width: 36px; height: 36px; border-radius: 10px;
+  width: 40px; height: 40px; border-radius: 10px;
   background: var(--card); border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 16px;
+  cursor: pointer; font-size: 18px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .logout-btn {
   background: var(--red); color: #fff; border: none;
-  border-radius: 10px; padding: 7px 14px; font-size: 12px;
+  border-radius: 10px; padding: 8px 16px; font-size: 12px;
   font-weight: 700; cursor: pointer; font-family: "Inter", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* ═══ LOGIN PAGE ═══ */
@@ -1290,7 +1296,7 @@ function pgBoss(){
         <div class="rel icon-btn" onclick="go('expenseAdmin')">
           💰${(()=>{const pe=S.expenses.filter(e=>e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
         </div>
-        <div class="rel icon-btn" onclick="toggleTheme()" style="width:26px;height:26px;font-size:11px;">
+        <div class="rel icon-btn" onclick="toggleTheme()">
           ${S.theme==="dark"?"🌙":"☀️"}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
@@ -2577,7 +2583,7 @@ function pgEmployee(){
           💰${(()=>{const pe=S.expenses.filter(e=>e.empName===name&&e.status==="pending").length;return pe?'<div class="notif-dot"></div>':"";})()}
         </div>
         ${canApprove&&pendLeaveCount?`<div class="rel icon-btn" onclick="go('leaveAdmin')">✈️<div class="notif-dot"></div></div>`:""}
-        <div class="rel icon-btn" onclick="toggleTheme()" style="width:26px;height:26px;font-size:11px;">
+        <div class="rel icon-btn" onclick="toggleTheme()">
           ${S.theme==="dark"?"🌙":"☀️"}
         </div>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
