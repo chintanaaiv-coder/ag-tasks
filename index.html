@@ -681,8 +681,6 @@ window._doFCMRegister=async function(userName,role){
     }
   }catch(e){
     console.log("FCM registration error:",e.message||e);
-    // Show visible error for debugging
-    if(window.toast) window.toast("FCM: "+String(e.message||e).substring(0,60),"err");
   }
 };
 
@@ -932,25 +930,34 @@ async function requireBiometric(onSuccess){
         const emp=S.employees.find(e=>e.name===S.user?.name);
         const ch=new Uint8Array(32); crypto.getRandomValues(ch);
         if(emp?.credentialId){
+          // Returning user: verify with saved biometric
           try{
-            const r=await navigator.credentials.get({publicKey:{challenge:ch,allowCredentials:[{type:"public-key",id:b64buf(emp.credentialId)}],userVerification:"required",timeout:30000}});
+            const r=await navigator.credentials.get({publicKey:{challenge:ch,allowCredentials:[{type:"public-key",id:b64buf(emp.credentialId)}],userVerification:"required",timeout:60000}});
             if(r){onSuccess();return;}
-          }catch(e){}
-        } else {
-          try{
-            const uid=new TextEncoder().encode(S.user?.name||"user");
-            const c=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:"AGA Tasks",id:location.hostname},user:{id:uid,name:S.user?.name,displayName:S.user?.name},pubKeyCredParams:[{type:"public-key",alg:-7}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required"},timeout:30000}});
-            if(c){
-              const e2=S.employees.find(e=>e.name===S.user?.name);
-              if(e2){e2.credentialId=bufb64(c.rawId);if(window.FB)FB.updateEmp(e2.code,{credentialId:e2.credentialId});}
-              onSuccess(); return;
-            }
-          }catch(e){}
+          }catch(e){
+            console.log("Biometric verify failed:",e.message||e);
+            // If user cancelled, don't fall through to PIN
+            if(e.name==="NotAllowedError"){showPin(onSuccess);return;}
+          }
         }
+        // First time or credential missing: register biometric
+        try{
+          const uid=new TextEncoder().encode(S.user?.name||"user");
+          const c=await navigator.credentials.create({publicKey:{challenge:ch,rp:{name:"AGA Tasks",id:location.hostname},user:{id:uid,name:S.user?.name,displayName:S.user?.name},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},timeout:60000}});
+          if(c){
+            const e2=S.employees.find(e=>e.name===S.user?.name);
+            if(e2){e2.credentialId=bufb64(c.rawId);if(window.FB)FB.updateEmp(e2.code,{credentialId:e2.credentialId});}
+            onSuccess(); return;
+          }
+        }catch(e){
+          console.log("Biometric register failed:",e.message||e);
+        }
+      }else{
+        console.log("Biometric: platform authenticator not available");
       }
-    }catch(e){}
+    }catch(e){console.log("Biometric check error:",e.message||e);}
   }
-  // Desktop browser or biometric failed: use PIN
+  // Desktop browser or biometric not available: use PIN
   showPin(onSuccess);
 }
 function b64buf(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u.buffer;}
