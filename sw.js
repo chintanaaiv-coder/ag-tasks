@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aga-tasks-v37';
+const CACHE_NAME = 'aga-tasks-v38';
 
 // Import Firebase Messaging SW
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
@@ -9,9 +9,9 @@ firebase.initializeApp({
   apiKey:"AIzaSyAbUPspsGxAx2YAR6gY7R9rdV2_qn4T8TU",
   authDomain:"ag-task-assigner.firebaseapp.com",
   projectId:"ag-task-assigner",
-  storageBucket:"ag-task-assigner.appspot.com",
-  messagingSenderId:"694340088537",
-  appId:"1:694340088537:web:1f14fb2bf3b62d5c7ae7bc"
+  storageBucket:"ag-task-assigner.firebasestorage.app",
+  messagingSenderId:"694766567825",
+  appId:"1:694766567825:web:02b43ec9946150f47b6ad3"
 });
 
 const fcmMessaging = firebase.messaging();
