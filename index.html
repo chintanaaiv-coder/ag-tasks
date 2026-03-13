@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -58,15 +58,24 @@ html, body {
   height: 100%; font-family: "Inter", sans-serif;
   background: var(--bg); color: var(--text);
   -webkit-font-smoothing: antialiased;
+  margin: 0; padding: 0;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* ═══ LAYOUT ═══ */
 #app {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   max-width: 430px;
   margin: 0 auto;
   position: relative;
   background: var(--bg);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ═══ TOPBAR ═══ */
@@ -99,7 +108,7 @@ html, body {
 
 /* ═══ LOGIN PAGE ═══ */
 .login-page {
-  min-height: 100vh; padding: 40px 24px 40px;
+  min-height: 100vh; min-height: 100dvh; padding: 40px 24px 40px;
   padding-top: calc(40px + env(safe-area-inset-top, 0px));
   display: flex; flex-direction: column; align-items: center;
 }
@@ -1218,7 +1227,7 @@ function doPartnerLogin(){
 
 // ── REGISTER ──
 function pgRegister(){
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('login')">←</div>
       <div><div class="page-title">Register</div></div>
@@ -1390,7 +1399,7 @@ function pgCreateTask(){
   const approved=S.employees.filter(e=>e.approved===true||(e.approved===undefined&&!e.pendingApproval));
   const catOpts=CATS.map(c=>`<option value="${c}" ${S.f.category===c?"selected":""}>${c}</option>`).join("");
   const empOpts=approved.map(e=>`<option value="${e.name}" ${S.f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">Assign Task</div></div>
@@ -1463,7 +1472,7 @@ function pgEditTask(){
   const catOpts=CATS.map(c=>`<option value="${c}" ${S.f.category===c?"selected":""}>${c}</option>`).join("");
   const empOpts=approved.map(e=>`<option value="${e.name}" ${S.f.assignedTo===e.name?"selected":""}>${e.name}</option>`).join("");
   const t=S.tasks.find(x=>x.id===S.editId)||{};
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">Edit Task</div></div>
@@ -1531,7 +1540,7 @@ function pgManageUsers(){
   const approved=S.employees.filter(e=>e.approved===true||(e.approved===undefined&&!e.pendingApproval));
   const pLeaves=pendingLeaves();
 
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">👥 Manage Team</div><div class="page-sub">Employees &amp; Leaves</div></div>
@@ -1701,7 +1710,7 @@ function pgAttReport(){
     return {onLeave:false};
   }
 
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">Attendance Report</div></div>
@@ -1784,7 +1793,7 @@ function pgLeaveAdmin(){
   const pLeaves=pendingLeaves();
   const allLeaves=allLeavesForAdmin();
   const backScreen=S.user?.role==="boss"?"boss":"employee";
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('${backScreen}')">←</div>
       <div><div class="page-title">Leave Requests</div><div class="page-sub">${S.user?.role==="boss"?"Senior employee leaves":"Employee leaves"}</div></div>
@@ -1820,7 +1829,7 @@ function pgTaskReport(){
     if(to&&t.due>to) return false;
     return true;
   });
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">Completed Tasks</div><div class="page-sub">Report & Export</div></div>
@@ -1910,7 +1919,7 @@ function emailTaskReport(){
 
 // ── CHANGE PASS ──
 function pgChangePass(){
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go(S.user?.role==='boss'?'boss':'employee')">←</div>
       <div><div class="page-title">Change Password</div></div>
@@ -1963,7 +1972,7 @@ function pgNotifications(){
   const unreadCount=myNotifs.filter(n=>!n.read).length;
   // Mark all as read
   myNotifs.forEach(n=>{if(!n.read){n.read=true;if(window.FB)FB.saveNotif({...n,read:true});}});
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('${backScreen}')">←</div>
       <div><div class="page-title">🔔 Notifications</div><div class="page-sub">${unreadCount?unreadCount+" new":"All read"}</div></div>
@@ -2017,7 +2026,7 @@ function pgMyExpenses(){
   const pendAmt=pending.reduce((s,e)=>s+Number(e.amount||0),0);
   const appAmt=approved.reduce((s,e)=>s+Number(e.amount||0),0);
   const filtered=S.expFilter==="pending"?pending:S.expFilter==="approved"?approved:S.expFilter==="rejected"?rejected:myExp;
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
       <div><div class="page-title">💰 My Expenses</div><div class="page-sub">${myExp.length} total</div></div>
@@ -2067,7 +2076,7 @@ function pgMyExpenses(){
 }
 
 function pgAddExpense(){
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('myExpenses')">←</div>
       <div><div class="page-title">💰 New Expense</div></div>
@@ -2166,7 +2175,7 @@ function pgExpenseAdmin(){
   const f=S.expPartnerFilter;
   const filtered=f==="pending"?pending:f==="approved"?approved:f==="rejected"?rejected:allExp;
 
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('boss')">←</div>
       <div><div class="page-title">💰 Expenses</div><div class="page-sub">Team Expense Claims</div></div>
@@ -2247,7 +2256,7 @@ function rejectExpense(id){
 
 // ── EXPENSE REPORT ──
 function pgExpenseReport(){
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('expenseAdmin')">←</div>
       <div><div class="page-title">📥 Expense Report</div></div>
@@ -2346,7 +2355,7 @@ function pgChatList(){
     return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short"});
   }
 
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('${backScreen}')">←</div>
       <div><div class="page-title">💬 Chats</div></div>
@@ -2401,7 +2410,7 @@ function pgChatConvo(){
   const memberCount=S.employees.filter(e=>e.approved!==false).length+1;
 
   // Reply preview bar
-  const replyBar=S._replyTo?`<div id="replyBar" style="display:flex;align-items:center;gap:8px;padding:8px 20px;background:var(--surface);border-top:1px solid var(--border);border-left:3px solid var(--accent);">
+  const replyBar=S._replyTo?`<div id="replyBar" style="display:flex;align-items:center;gap:8px;padding:8px 20px;background:var(--surface);border-top:1px solid var(--border);border-left:3px solid var(--accent);flex-shrink:0;">
     <div style="flex:1;min-width:0;">
       <div style="font-size:10px;font-weight:700;color:var(--accent);">${S._replyTo.sender}</div>
       <div style="font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${S._replyTo.text.substring(0,60)}</div>
@@ -2409,8 +2418,8 @@ function pgChatConvo(){
     <div onclick="S._replyTo=null;R();" style="cursor:pointer;font-size:18px;color:var(--text3);padding:4px;">✕</div>
   </div>`:"";
 
-  return `<div style="padding:0 0 0;">
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;padding-top:calc(14px + env(safe-area-inset-top, 0px));background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;">
+  return `<div style="display:flex;flex-direction:column;height:100vh;height:100dvh;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;padding-top:calc(14px + env(safe-area-inset-top, 0px));background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
       <div class="back-btn" onclick="S._replyTo=null;go('chatList')">←</div>
       <div style="width:36px;height:36px;border-radius:50%;background:${avatarBg};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">${avatar}</div>
       <div>
@@ -2419,7 +2428,7 @@ function pgChatConvo(){
       </div>
     </div>
 
-    <div id="chatMsgs" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;height:calc(100vh - ${S._replyTo?190:140}px);overflow-y:auto;">
+    <div id="chatMsgs" style="padding:16px 20px;display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       ${msgs.length?msgs.map(m=>{
         const isMine=m.sender===myName;
         const time=new Date(m.createdAt).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
@@ -2438,12 +2447,12 @@ function pgChatConvo(){
       }).join(""):`<div style="text-align:center;padding:40px 0;color:var(--text3);font-size:12px;">No messages yet. Say hello! 👋</div>`}
     </div>
 
-    <div id="emojiPicker" style="display:none;background:var(--surface);border-top:1px solid var(--border);">
+    <div id="emojiPicker" style="display:none;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;">
       <div id="emojiTabs" style="display:flex;border-bottom:1px solid var(--border);overflow-x:auto;"></div>
       <div id="emojiGrid" style="padding:8px 12px;max-height:220px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:2px;"></div>
     </div>
     ${replyBar}
-    <div style="display:flex;gap:8px;padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--surface);border-top:1px solid var(--border);">
+    <div style="display:flex;gap:8px;padding:12px 20px;padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;">
       <button onclick="toggleEmojiPicker()" style="width:40px;height:40px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">😊</button>
       <input class="f-input" id="chatInput" placeholder="Type a message..." style="flex:1;border-radius:24px;padding:10px 16px;font-size:13px;" onkeydown="if(event.key==='Enter')sendChat()" onfocus="closeEmojiPicker()"/>
       <button onclick="sendChat()" style="width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">➤</button>
@@ -2825,7 +2834,7 @@ function pgMarkAtt(){
   const outRec=dayRecs.find(a=>a.type==="OUT");
   const cal=buildAttCal(name);
 
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
       <div>
@@ -2949,7 +2958,7 @@ function doMarkAtt(type){
 
 // ── APPLY LEAVE ──
 function pgApplyLeave(){
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
       <div><div class="page-title">✈️ Apply Leave</div><div class="page-sub">Select leave duration</div></div>
@@ -2976,7 +2985,7 @@ function pgApplyLeave(){
 function pgLeaveForm(){
   const isHalf=S.f.leaveMode==="half";
   const leaveTypes=["Casual Leave","Sick Leave","Earned Leave"];
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('applyLeave')">←</div>
       <div><div class="page-title">${isHalf?"🌗 Half Day Leave":"📅 Full Day Leave"}</div></div>
@@ -3050,7 +3059,7 @@ function submitLeave(){
 function pgMyLeaves(){
   const name=S.user?.name;
   const leaves=myLeaves(name);
-  return `<div style="padding:0 0 40px;">
+  return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
     <div class="back-row">
       <div class="back-btn" onclick="go('employee')">←</div>
       <div><div class="page-title">My Leaves</div></div>
