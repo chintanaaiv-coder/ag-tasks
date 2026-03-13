@@ -1012,24 +1012,40 @@ function refreshGPS(){
 // GPS starts only after employee login
 
 // ── FCM PUSH NOTIFICATIONS ──
+// Auto-register: tries on every app open, not just login
+var _fcmRegistered=false;
 function requestNotifPermission(){
-  if("Notification" in window && Notification.permission==="default"){
+  if(!("Notification" in window)) return;
+  if(Notification.permission==="default"){
     Notification.requestPermission().then(p=>{
       if(p==="granted") registerFCMToken();
     });
-  } else if("Notification" in window && Notification.permission==="granted"){
+  } else if(Notification.permission==="granted"){
     registerFCMToken();
   }
 }
 
 async function registerFCMToken(){
+  if(_fcmRegistered) return;
   if(!S.user) return;
-  if(!window._doFCMRegister) return;
+  if(!window._doFCMRegister){
+    // Module not loaded yet, retry in 2 seconds
+    setTimeout(registerFCMToken,2000);
+    return;
+  }
   try{
     const userName=S.user.role==="boss"?"Chintan":S.user.name;
     await window._doFCMRegister(userName,S.user.role);
+    _fcmRegistered=true;
   }catch(e){console.log("FCM registration failed:",e);}
 }
+
+// Try registering every 5 seconds until successful (for slow-loading pages)
+setInterval(()=>{
+  if(!_fcmRegistered&&S.user&&"Notification" in window&&Notification.permission==="granted"){
+    registerFCMToken();
+  }
+},5000);
 
 // Foreground FCM messages handled in module block above
 
