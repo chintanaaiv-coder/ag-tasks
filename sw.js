@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aga-tasks-v35';
+const CACHE_NAME = 'aga-tasks-v36';
 
 // Import Firebase Messaging SW
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
