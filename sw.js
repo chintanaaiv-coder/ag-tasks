@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aga-tasks-v36';
+const CACHE_NAME = 'aga-tasks-v37';
 
 // Import Firebase Messaging SW
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
@@ -6,7 +6,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-com
 
 // Initialize Firebase in SW
 firebase.initializeApp({
-  apiKey:"AIzaSyC4oF4oNzPtQNPaKQaOnnJeIFKXLNMOA9g",
+  apiKey:"AIzaSyAbUPspsGxAx2YAR6gY7R9rdV2_qn4T8TU",
   authDomain:"ag-task-assigner.firebaseapp.com",
   projectId:"ag-task-assigner",
   storageBucket:"ag-task-assigner.appspot.com",
