@@ -857,6 +857,10 @@ window.R = function(){
     const updClk=()=>{const n=new Date();const h=n.getHours()%12||12;clk.textContent=h+":"+String(n.getMinutes()).padStart(2,"0")+":"+String(n.getSeconds()).padStart(2,"0")+" "+(n.getHours()>=12?"PM":"AM");};
     updClk();if(!window._attClkInt) window._attClkInt=setInterval(updClk,1000);
   } else { if(window._attClkInt){clearInterval(window._attClkInt);window._attClkInt=null;} }
+  // Show notification permission popup if needed
+  if(S.user && "Notification" in window && Notification.permission==="default" && !window._notifPromptShown){
+    setTimeout(showNotifPrompt,1500);
+  }
 };
 R();
 
@@ -1023,12 +1027,48 @@ function refreshGPS(){
 // ── FCM PUSH NOTIFICATIONS ──
 // Auto-register: tries on every app open, not just login
 var _fcmRegistered=false;
+
+// Full-screen notification permission prompt
+function showNotifPrompt(){
+  if(window._notifPromptShown) return;
+  if(!("Notification" in window)) return;
+  if(Notification.permission!=="default") return;
+  window._notifPromptShown=true;
+  const ov=document.createElement("div");
+  ov.id="notifPromptOverlay";
+  ov.innerHTML=`<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--surface);border-radius:20px;padding:30px 24px;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+      <div style="font-size:48px;margin-bottom:12px;">🔔</div>
+      <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px;">Enable Notifications</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:24px;">Get instant alerts for new tasks, messages, expenses & leave updates — even when the app is closed.</div>
+      <button onclick="acceptNotifPrompt()" style="width:100%;padding:14px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;margin-bottom:10px;">Allow Notifications</button>
+      <button onclick="skipNotifPrompt()" style="width:100%;padding:10px;border-radius:12px;background:transparent;color:var(--text3);border:none;font-size:12px;cursor:pointer;font-family:Inter,sans-serif;">Not now</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function acceptNotifPrompt(){
+  const ov=document.getElementById("notifPromptOverlay");
+  if(ov) ov.remove();
+  Notification.requestPermission().then(p=>{
+    if(p==="granted"){
+      registerFCMToken();
+      toast("Notifications enabled! 🔔","success");
+    }
+  });
+}
+
+function skipNotifPrompt(){
+  const ov=document.getElementById("notifPromptOverlay");
+  if(ov) ov.remove();
+}
+
 function requestNotifPermission(){
   if(!("Notification" in window)) return;
   if(Notification.permission==="default"){
-    Notification.requestPermission().then(p=>{
-      if(p==="granted") registerFCMToken();
-    });
+    // On mobile, show our custom prompt first (more visible)
+    showNotifPrompt();
   } else if(Notification.permission==="granted"){
     registerFCMToken();
   }
