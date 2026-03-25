@@ -866,6 +866,15 @@ R();
 
 function buildScreen(){
   const s = S.screen;
+  // Auto-logout if employee was deactivated while logged in
+  if(S.user && S.user.role==="employee"){
+    const emp=S.employees.find(e=>e.name===S.user.name);
+    if(emp && emp.active===false){
+      toast("Your account has been deactivated","err");
+      S.user=null; clearSession(); S.screen="login";
+      return pgLogin();
+    }
+  }
   if(s==="login")        return pgLogin();
   if(s==="partnerLogin") return pgPartnerLogin();
   if(s==="register")     return pgRegister();
@@ -1223,6 +1232,7 @@ function doEmpLogin(){
   if(!emp){toast("Employee not found","err");return;}
   if(emp.pendingApproval&&!emp.approved){toast("Account pending partner approval","err");return;}
   if(!emp.approved){toast("Account not approved","err");return;}
+  if(emp.active===false){toast("Your account has been temporarily deactivated. Contact your partner.","err");return;}
   if(pass!==emp.password){toast("Incorrect password","err");return;}
   S.user={name:emp.name,role:"employee",code:emp.code};
   saveSession(S.user);
@@ -1577,7 +1587,8 @@ function pgManageUsers(){
     n.read=true; if(window.FB)FB.saveNotif({...n,read:true});
   });
   const pending=S.employees.filter(e=>e.pendingApproval&&!e.approved);
-  const approved=S.employees.filter(e=>e.approved===true||(e.approved===undefined&&!e.pendingApproval));
+  const approved=S.employees.filter(e=>(e.approved===true||(e.approved===undefined&&!e.pendingApproval))&&e.active!==false);
+  const inactive=S.employees.filter(e=>e.active===false);
   const pLeaves=pendingLeaves();
 
   return `<div style="padding:0 0 40px;padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px));">
@@ -1634,8 +1645,26 @@ function pgManageUsers(){
             <div class="user-name">${e.name}</div>
             <div class="user-meta">Code: ${e.code} · Pass: ${e.password||"\u{2014}"}</div>
           </div>
-          <button class="btn btn-red btn-sm" onclick="confirmDelUser('${e.code}','${e.name}')">🗑️</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-sm" style="background:var(--yellow);color:#000;font-size:10px;" onclick="confirmDeactivate('${e.code}','${e.name}')">⏸ Deactivate</button>
+            <button class="btn btn-red btn-sm" onclick="confirmDelUser('${e.code}','${e.name}')">🗑️</button>
+          </div>
         </div>`).join("")}
+
+      ${inactive.length?`
+      <div class="section-title" style="margin-top:16px;color:var(--text3);">⏸ Deactivated Employees (${inactive.length})</div>
+      ${inactive.map(e=>`
+        <div class="user-card" style="opacity:0.6;">
+          <div class="user-avatar" style="background:var(--text3);">${e.name[0]}</div>
+          <div class="user-info">
+            <div class="user-name">${e.name} <span style="font-size:10px;color:var(--red);font-weight:600;">INACTIVE</span></div>
+            <div class="user-meta">Code: ${e.code}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-green btn-sm" style="font-size:10px;" onclick="confirmActivate('${e.code}','${e.name}')">▶ Activate</button>
+            <button class="btn btn-red btn-sm" onclick="confirmDelUser('${e.code}','${e.name}')">🗑️</button>
+          </div>
+        </div>`).join("")}`:""}
 
       <div style="margin-top:30px;padding-top:20px;border-top:1px solid var(--border);">
         <div class="section-title" style="color:var(--red);">⚠️ Danger Zone</div>
@@ -1657,6 +1686,34 @@ function confirmApprove(code,name){
       e.approved=true; e.pendingApproval=false; e.password=pass;
       if(window.FB) FB.saveEmp(e);
       toast(`${name} approved! Password: ${pass}`,"ok");
+      R();
+    }
+  });
+}
+
+function confirmDeactivate(code,name){
+  confirm2({icon:"⏸",title:"Deactivate Account?",msg:`Temporarily deactivate ${name}'s account?`,
+    detail:`<span style="font-size:12px;color:var(--text2);">The employee will not be able to login until you reactivate their account. Their data (tasks, attendance, etc.) will be preserved.</span>`,
+    yesLabel:"⏸ Yes, Deactivate",yesType:"danger",
+    onYes:()=>{
+      const e=S.employees.find(x=>x.code===code); if(!e) return;
+      e.active=false;
+      if(window.FB) FB.updateEmp(e.code,{active:false});
+      toast(`${name} has been deactivated`,"ok");
+      R();
+    }
+  });
+}
+
+function confirmActivate(code,name){
+  confirm2({icon:"▶",title:"Reactivate Account?",msg:`Reactivate ${name}'s account?`,
+    detail:`<span style="font-size:12px;color:var(--text2);">The employee will be able to login again.</span>`,
+    yesLabel:"▶ Yes, Activate",yesType:"success",
+    onYes:()=>{
+      const e=S.employees.find(x=>x.code===code); if(!e) return;
+      e.active=true;
+      if(window.FB) FB.updateEmp(e.code,{active:true});
+      toast(`${name} has been reactivated`,"ok");
       R();
     }
   });
