@@ -850,7 +850,7 @@ window.R = function(){
   el.innerHTML = buildScreen();
   el.querySelectorAll("input,textarea,select").forEach(i=>i.setAttribute("autocomplete","off"));
   const chatBox=document.getElementById("chatMsgs");
-  if(chatBox) chatBox.scrollTop=chatBox.scrollHeight;
+  if(chatBox){chatBox.scrollTop=chatBox.scrollHeight;initSwipeReply();}
   // Live attendance clock
   const clk=document.getElementById("attLiveClock");
   if(clk){
@@ -2542,11 +2542,14 @@ function pgChatConvo(){
           <div style="font-size:12px;color:${isMine?"#a8c8a0":"#8696a0"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${m.replyTo.text.substring(0,50)}</div>
         </div>`:"";
         const imgHtml=m.image?`<img src="${m.image}" style="max-width:100%;border-radius:8px;margin-bottom:4px;cursor:pointer;" onclick="window.open(this.src)"/>`:"";
-        return `<div id="msg-${m.id}" style="max-width:80%;padding:6px 8px;border-radius:8px;font-size:14px;line-height:1.4;align-self:${isMine?"flex-end":"flex-start"};background:${isMine?"#005c4b":"#1f2c34"};color:#e9edef;position:relative;${isMine?"border-top-right-radius:0;":"border-top-left-radius:0;"}" ondblclick="setReply('${m.id}')">
+        return `<div class="msg-swipe-wrap" data-msgid="${m.id}" style="display:flex;align-items:center;justify-content:${isMine?"flex-end":"flex-start"};position:relative;overflow:hidden;">
+          <div class="msg-reply-hint" style="position:absolute;${isMine?"right":"left"}:0;opacity:0;font-size:18px;color:#8696a0;padding:0 8px;transition:opacity 0.2s;">↩</div>
+          <div id="msg-${m.id}" class="msg-bubble" ondblclick="setReply('${m.id}')" style="max-width:80%;padding:6px 8px;border-radius:8px;font-size:14px;line-height:1.4;background:${isMine?"#005c4b":"#1f2c34"};color:#e9edef;position:relative;${isMine?"border-top-right-radius:0;":"border-top-left-radius:0;"}transition:transform 0.15s ease-out;">
           ${isTeam&&!isMine?`<div style="font-size:12px;font-weight:700;color:#25D366;margin-bottom:2px;">${m.sender}</div>`:""}
           ${replySnip}${imgHtml}${m.text?`<span>${m.text}</span>`:""}
           <span style="float:right;margin-left:12px;margin-top:4px;font-size:10px;color:#8696a0;white-space:nowrap;">${time}${readTicks}</span>
           <div style="clear:both;"></div>
+        </div>
         </div>`;
       }).join(""):`<div style="text-align:center;padding:40px 0;"><div style="display:inline-block;background:#1f2c34;border-radius:8px;padding:8px 16px;font-size:12px;color:#8696a0;">Messages are end-to-end synced 🔒</div></div>`}
     </div>
@@ -2694,9 +2697,57 @@ function scrollToMsg(msgId){
   if(el){
     el.scrollIntoView({behavior:"smooth",block:"center"});
     el.style.transition="background 0.3s";
-    el.style.outline="2px solid var(--accent)";
+    el.style.outline="2px solid #25D366";
     setTimeout(()=>{el.style.outline="none";},1500);
   }
+}
+
+// Swipe-to-reply handler (WhatsApp style)
+function initSwipeReply(){
+  const wraps=document.querySelectorAll(".msg-swipe-wrap");
+  wraps.forEach(wrap=>{
+    let startX=0,startY=0,swiping=false,moved=false;
+    const bubble=wrap.querySelector(".msg-bubble");
+    const hint=wrap.querySelector(".msg-reply-hint");
+    if(!bubble) return;
+
+    wrap.addEventListener("touchstart",function(e){
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      swiping=true; moved=false;
+    },{passive:true});
+
+    wrap.addEventListener("touchmove",function(e){
+      if(!swiping) return;
+      const dx=e.touches[0].clientX-startX;
+      const dy=e.touches[0].clientY-startY;
+      // Only swipe horizontally
+      if(Math.abs(dy)>Math.abs(dx)&&!moved){swiping=false;return;}
+      if(Math.abs(dx)>10) moved=true;
+      if(!moved) return;
+      // Clamp swipe distance
+      const dist=Math.max(-60,Math.min(60,dx));
+      bubble.style.transform="translateX("+dist+"px)";
+      if(hint) hint.style.opacity=Math.min(1,Math.abs(dist)/40);
+      if(Math.abs(dist)>10) e.preventDefault();
+    },{passive:false});
+
+    wrap.addEventListener("touchend",function(){
+      if(!swiping&&!moved){return;}
+      const tx=bubble.style.transform;
+      const match=tx.match(/translateX\((-?\d+)/);
+      const dist=match?parseInt(match[1]):0;
+      // Reset position
+      bubble.style.transform="translateX(0)";
+      if(hint) hint.style.opacity="0";
+      // Trigger reply if swiped far enough
+      if(Math.abs(dist)>=40){
+        const msgId=wrap.getAttribute("data-msgid");
+        if(msgId) setReply(msgId);
+      }
+      swiping=false; moved=false;
+    },{passive:true});
+  });
 }
 
 // =======================================
