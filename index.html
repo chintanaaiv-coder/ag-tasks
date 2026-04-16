@@ -669,6 +669,24 @@ window.FB={
   updateExpense:async(id,d)=>updateDoc(doc(db,"expenses",id),d),
   deleteExpense:async id=>deleteDoc(doc(db,"expenses",id)),
   savePushToken:async(tokenId,data)=>setDoc(doc(db,"pushTokens",tokenId),data),
+  checkMetaFlag:async(key)=>{
+    try{
+      const ref=doc(db,"meta","flags");
+      // Use getDoc-like approach via onSnapshot one-time
+      return new Promise((resolve)=>{
+        const unsub=onSnapshot(ref,(snap)=>{
+          unsub();
+          const data=snap.exists?(snap.data?snap.data():{}):{};
+          resolve(!!data[key]);
+        },()=>resolve(false));
+      });
+    }catch(e){return false;}
+  },
+  setMetaFlag:async(key,val)=>{
+    try{
+      return setDoc(doc(db,"meta","flags"),{[key]:val},{merge:true});
+    }catch(e){}
+  },
 };
 
 // Expose FCM registration function to regular script
@@ -861,8 +879,46 @@ window.R = function(){
   if(S.user && "Notification" in window && Notification.permission==="default" && !window._notifPromptShown){
     setTimeout(showNotifPrompt,1500);
   }
+  // Check for today's leave reminders (once per day, by partner only to avoid duplicates)
+  if(S.user && S.user.role==="boss" && !window._leaveReminderChecked){
+    window._leaveReminderChecked=true;
+    setTimeout(checkTodayLeaveReminders,3000);
+  }
 };
 R();
+
+// Day-of-leave reminder: notify everyone about who's on leave today
+async function checkTodayLeaveReminders(){
+  try{
+    const today=todayStr();
+    // Check meta to see if we already sent today's reminders
+    const reminderKey="leaveReminder_"+today;
+    if(window.FB && FB.checkMetaFlag){
+      const already=await FB.checkMetaFlag(reminderKey);
+      if(already) return;
+    }
+    // Find everyone on approved leave today
+    const todaysLeaves=S.leaves.filter(l=>l.status==="approved"&&l.from<=today&&l.to>=today);
+    if(!todaysLeaves.length) return;
+    // For each person on leave, notify everyone else
+    todaysLeaves.forEach(l=>{
+      const body=l.empName+" is on "+l.leaveType+" leave today";
+      // Notify partner
+      addNotif("partner","leaveTodayReminder",l.empName,body);
+      // Notify all other active employees
+      S.employees.forEach(e=>{
+        if(e.name===l.empName) return;
+        if(e.active===false) return;
+        if(!e.approved) return;
+        addNotif(e.name,"leaveTodayReminder",l.empName,body);
+      });
+    });
+    // Mark as done in meta so it doesn't repeat
+    if(window.FB && FB.setMetaFlag){
+      FB.setMetaFlag(reminderKey,true);
+    }
+  }catch(e){console.log("Leave reminder error:",e);}
+}
 
 function buildScreen(){
   const s = S.screen;
@@ -1762,8 +1818,23 @@ function confirmApproveLeave(id,empName){
       const l=S.leaves.find(x=>x.id===id); if(!l) return;
       l.status="approved"; l.approvedBy=S.user?.name||"Partner";
       if(window.FB) FB.updateLeave(id,{status:"approved",approvedBy:l.approvedBy});
+      // Notify the employee whose leave got approved
       addNotif(empName,"leaveApproved",l.approvedBy,"Your "+l.leaveType+" ("+fmtDate(l.from)+" → "+fmtDate(l.to)+") has been approved by "+l.approvedBy);
-      toast("Leave approved for "+empName,"ok"); R();
+      // Notify everyone else (partner + all employees) about who's on leave
+      const dateRange=l.from===l.to?fmtDate(l.from):fmtDate(l.from)+" to "+fmtDate(l.to);
+      const teamBody=empName+" will be on "+l.leaveType+" leave on "+dateRange;
+      // Notify partner (if approver is not partner)
+      if(l.approvedBy!=="Chintan"&&l.approvedBy!=="Partner"){
+        addNotif("partner","leaveApprovedTeam",l.approvedBy,teamBody+" (approved by "+l.approvedBy+")");
+      }
+      // Notify all other active employees
+      S.employees.forEach(e=>{
+        if(e.name===empName) return; // skip the leave applicant
+        if(e.active===false) return; // skip deactivated
+        if(!e.approved) return; // skip unapproved
+        addNotif(e.name,"leaveApprovedTeam",l.approvedBy,teamBody);
+      });
+      toast("Leave approved for "+empName+" — team notified","ok"); R();
     }
   });
 }
@@ -2078,7 +2149,7 @@ function pgNotifications(){
     <div class="section">
       ${myNotifs.length?myNotifs.map(n=>`<div style="padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:16px;">${n.type==="attendance"?"📍":n.type==="taskDone"?"✅":n.type==="leaveRequest"?"✈️":n.type==="leaveApproved"?"✈️":n.type==="leaveRejected"?"❌":n.type==="taskAssigned"?"📋":n.type==="registration"?"🆕":"🔔"}</span>
+          <span style="font-size:16px;">${n.type==="attendance"?"📍":n.type==="taskDone"?"✅":n.type==="leaveRequest"?"✈️":n.type==="leaveApproved"?"✈️":n.type==="leaveRejected"?"❌":n.type==="taskAssigned"?"📋":n.type==="registration"?"🆕":n.type==="leaveApprovedTeam"?"👋":n.type==="leaveTodayReminder"?"🌴":"🔔"}</span>
           <div style="flex:1;font-size:12px;color:var(--text2);">${n.body}</div>
         </div>
         <div style="font-size:10px;color:var(--text3);margin-top:4px;text-align:right;">${new Date(n.createdAt).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
