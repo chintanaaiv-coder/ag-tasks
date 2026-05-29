@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    THEME VARIABLES
@@ -544,11 +544,10 @@ onSnapshot(doc(db,"settings","config"),snap=>{
 onSnapshot(collection(db,"employees"),snap=>{
   if(snap.empty){seed();return;}
   const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));
-  // If any default employee missing approved field, fix them
+  // If any default employee missing approved field, fix them (use updateDoc to preserve other fields like active)
   const needsFix=l.filter(e=>e.approved===undefined&&!e.pendingApproval);
   needsFix.forEach(async e=>{
-    const fixed={...e,approved:true,pendingApproval:false};
-    await setDoc(doc(db,"employees",e.code||e.id),fixed);
+    await updateDoc(doc(db,"employees",e.code||e.id),{approved:true,pendingApproval:false}).catch(()=>{});
   });
   if(window.S){
     const fbIds=new Set(l.map(e=>e.code||e.id));
@@ -1741,7 +1740,7 @@ function confirmApprove(code,name){
     onYes:()=>{
       const e=S.employees.find(x=>x.code===code); if(!e) return;
       e.approved=true; e.pendingApproval=false; e.password=pass;
-      if(window.FB) FB.saveEmp(e);
+      if(window.FB) FB.updateEmp(e.code,{approved:true,pendingApproval:false,password:pass});
       toast(`${name} approved! Password: ${pass}`,"ok");
       R();
     }
