@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
 /* ═══════════════════════════════════════
    THEME VARIABLES
@@ -1913,179 +1914,135 @@ function pgAttReport(){
     </div>
   </div>`;
 }
-function downloadAtt(){
+async function downloadAtt(){
   const from=S.f.rptFrom; const to=S.f.rptTo;
   if(!from||!to){toast("Please select both From and To dates","err");return;}
-  if(!window.XLSX){toast("Excel library not loaded","err");return;}
+  if(!window.ExcelJS){toast("Excel library not loaded","err");return;}
+  toast("Generating report...","ok");
 
-  const OFFICE_IN="10:30";const LATE_THRESHOLD="10:45";const OFFICE_OUT="18:30";
+  const LATE_THRESHOLD_MINS=10*60+45;const OFFICE_OUT_MINS=18*60+30;const BHAVANA="Bhavana Shinde";
   const activeEmps=S.employees.filter(e=>e.active!==false&&(e.approved||e.approved===undefined&&!e.pendingApproval));
 
-  // Helper: parse time string "10:45 am" to minutes since midnight
   function timeToMins(t){
     if(!t||t==="—") return -1;
     const s=t.toLowerCase().replace(/\s+/g,"");
     const m=s.match(/(\d{1,2}):(\d{2})\s*(am|pm)?/i);
     if(!m) return -1;
-    let h=parseInt(m[1]),min=parseInt(m[2]);
-    const ap=(m[3]||"").toLowerCase();
-    if(ap==="pm"&&h<12) h+=12;
-    if(ap==="am"&&h===12) h=0;
-    if(!ap&&h<8) h+=12; // assume PM for times like 1:30 without am/pm
+    let h=parseInt(m[1]),min=parseInt(m[2]);const ap=(m[3]||"").toLowerCase();
+    if(ap==="pm"&&h<12) h+=12;if(ap==="am"&&h===12) h=0;if(!ap&&h<8) h+=12;
     return h*60+min;
   }
-  const LATE_MINS=timeToMins(LATE_THRESHOLD.replace(":",":")+" am"); // 10:45 = 645
-  const OFFICE_OUT_MINS=timeToMins(OFFICE_OUT.replace(":",":")+" pm"); // 18:30 = 1110
-
-  // Generate all working days in range (Mon-Sat, skip Sun)
-  function getWorkingDays(fromDate,toDate){
-    const days=[];
-    let d=new Date(fromDate+"T00:00:00");
-    const end=new Date(toDate+"T00:00:00");
-    while(d<=end){
-      if(d.getDay()!==0) days.push(d.toISOString().split("T")[0]); // Skip Sunday
-      d.setDate(d.getDate()+1);
-    }
-    return days;
+  function is2nd4thSat(dateStr){
+    const d=new Date(dateStr+"T00:00:00");if(d.getDay()!==6) return false;
+    const first=new Date(d.getFullYear(),d.getMonth(),1);
+    const firstSatDay=(6-first.getDay()+7)%7+1;
+    const satNum=Math.ceil((d.getDate()-firstSatDay)/7)+1;
+    return satNum===2||satNum===4;
   }
-  const workingDays=getWorkingDays(from,to);
 
-  // Build attendance records
+  const allDates=[];let dd=new Date(from+"T00:00:00");const endD=new Date(to+"T00:00:00");
+  while(dd<=endD){allDates.push(dd.toISOString().split("T")[0]);dd.setDate(dd.getDate()+1);}
+
   const allRecs=S.attendance.filter(a=>a.date>=from&&a.date<=to);
   const grouped={};
   allRecs.forEach(a=>{
     const key=a.empName+"||"+a.date;
-    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:"",inMarkedOn:"",outMarkedOn:"",inMarkedTime:"",outMarkedTime:""};
-    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";grouped[key].inMarkedOn=a.markedOn||a.date;grouped[key].inMarkedTime=a.markedTime||a.time||"";}
-    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";grouped[key].outMarkedOn=a.markedOn||a.date;grouped[key].outMarkedTime=a.markedTime||a.time||"";}
+    if(!grouped[key]) grouped[key]={empName:a.empName,date:a.date,inTime:"",outTime:"",inLoc:"",outLoc:""};
+    if(a.type==="IN"){grouped[key].inTime=a.time||"";grouped[key].inLoc=a.location||"";}
+    if(a.type==="OUT"){grouped[key].outTime=a.time||"";grouped[key].outLoc=a.location||"";}
   });
+  function getLeave(emp,date){return S.leaves.find(l=>l.empName===emp&&l.status==="approved"&&l.from<=date&&l.to>=date);}
 
-  // Helper: check leave for employee on date
-  function getLeave(emp,date){
-    return S.leaves.find(l=>l.empName===emp&&l.status==="approved"&&l.from<=date&&l.to>=date);
-  }
+  const C={green:{argb:'FFD4EDDA'},red:{argb:'FFFFCCCC'},yellow:{argb:'FFFFF3CD'},blue:{argb:'FFCCE5FF'},grey:{argb:'FFF2F2F2'},orange:{argb:'FFFFE0B2'},header:{argb:'FF1B4332'},empHdr:{argb:'FF2D6A4F'},summary:{argb:'FFE8F5E9'},white:{argb:'FFFFFFFF'}};
+  const F={greenTxt:{argb:'FF006600'},redTxt:{argb:'FFCC0000'},blueTxt:{argb:'FF0000CC'},orangeTxt:{argb:'FFCC6600'},whiteTxt:{argb:'FFFFFFFF'},greyTxt:{argb:'FF666666'},darkGreen:{argb:'FF1B4332'}};
+  const bdr={top:{style:'thin',color:{argb:'FFCCCCCC'}},bottom:{style:'thin',color:{argb:'FFCCCCCC'}},left:{style:'thin',color:{argb:'FFCCCCCC'}},right:{style:'thin',color:{argb:'FFCCCCCC'}}};
 
-  // Build complete attendance data per employee
-  const empData={};
-  activeEmps.forEach(e=>{empData[e.name]={present:0,late:0,lateCompensated:0,onLeave:0,absent:0,records:[]};});
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet("Attendance Details");
+  ws.columns=[{width:22},{width:14},{width:8},{width:12},{width:12},{width:48},{width:20},{width:20}];
+
+  ws.mergeCells('A1:H1');ws.getCell('A1').value="ATTENDANCE REPORT: "+fmtDate(from)+" to "+fmtDate(to);
+  ws.getCell('A1').font={bold:true,size:14,color:F.darkGreen,name:'Arial'};
+  ws.mergeCells('A2:H2');ws.getCell('A2').value="Office: 10:30 AM - 6:30 PM | Late after 10:45 AM | 2nd & 4th Sat = Half Day (except Bhavana)";
+  ws.getCell('A2').font={size:10,color:F.greyTxt,name:'Arial'};
+
+  ws.addRow([]);
+  const hRow=ws.addRow(["Employee","Date","Day","IN Time","OUT Time","Status","IN Location","OUT Location"]);
+  hRow.eachCell(c=>{c.font={bold:true,color:F.whiteTxt,size:11,name:'Arial'};c.fill={type:'pattern',pattern:'solid',fgColor:C.header};c.alignment={horizontal:'center'};c.border=bdr;});
+
+  const summaryData={};
 
   activeEmps.forEach(emp=>{
-    const ed=empData[emp.name];
-    workingDays.forEach(day=>{
-      const key=emp.name+"||"+day;
-      const rec=grouped[key];
-      const leave=getLeave(emp.name,day);
+    let present=0,absent=0,late=0,lateComp=0,onLeave=0;
+    ws.addRow([]);
+    const ehRow=ws.addRow(["▶ "+emp.name.toUpperCase()]);
+    ws.mergeCells(ehRow.number,1,ehRow.number,8);
+    ehRow.getCell(1).font={bold:true,color:F.whiteTxt,size:11,name:'Arial'};
+    ehRow.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:C.empHdr};
 
-      if(leave){
-        // On approved leave
-        ed.onLeave++;
-        ed.records.push({date:day,inTime:"—",outTime:"—",status:"✈️ ON LEAVE ("+leave.leaveType+")",approvedBy:leave.approvedBy||"—",late:false,highlight:""});
-      } else if(rec&&rec.inTime){
-        // Has attendance
-        ed.present++;
-        const inMins=timeToMins(rec.inTime);
-        const outMins=timeToMins(rec.outTime);
-        let status="✅ ON TIME";
-        let highlight="";
-        let isLate=false;
+    allDates.forEach(dt=>{
+      const d=new Date(dt+"T00:00:00");const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+      const isSun=d.getDay()===0;const isHalfSat=is2nd4thSat(dt)&&emp.name!==BHAVANA;
+      const lv=getLeave(emp.name,dt);const rec=grouped[emp.name+"||"+dt];
+      let inT="—",outT="—",status="",fill=C.white,fc=F.darkGreen,inLoc="—",outLoc="—";
 
-        if(inMins>LATE_MINS){
-          // Late arrival
-          const lateBy=inMins-LATE_MINS;
-          isLate=true;
-          if(outMins>0&&outMins>(OFFICE_OUT_MINS+lateBy-5)){
-            // Compensated: stayed late enough
-            status="⚠️ LATE by "+lateBy+"min (Compensated - left late)";
-            highlight="compensated";
-            ed.lateCompensated++;
-          } else {
-            status="🔴 LATE by "+lateBy+" mins (IN: "+rec.inTime+")";
-            highlight="late";
-            ed.late++;
-          }
-        }
-        ed.records.push({date:day,inTime:rec.inTime||"—",outTime:rec.outTime||"—",inLoc:rec.inLoc||"—",outLoc:rec.outLoc||"—",inMarkedOn:rec.inMarkedOn,outMarkedOn:rec.outMarkedOn,inMarkedTime:rec.inMarkedTime||"—",outMarkedTime:rec.outMarkedTime||"—",status:status,approvedBy:"—",late:isLate,highlight:highlight});
-      } else {
-        // No attendance AND no leave
-        ed.absent++;
-        ed.records.push({date:day,inTime:"—",outTime:"—",status:"❌ ABSENT - NO LEAVE APPLIED",approvedBy:"—",late:false,highlight:"absent"});
+      if(isSun){status="🟢 SUNDAY (Holiday)";fill=C.grey;present++;}
+      else if(lv){status="✈️ ON LEAVE ("+lv.leaveType+")";fill=C.blue;fc=F.blueTxt;onLeave++;present++;}
+      else if(rec&&rec.inTime){
+        inT=rec.inTime;outT=rec.outTime||"—";inLoc=rec.inLoc||"—";outLoc=rec.outLoc||"—";
+        const inM=timeToMins(inT),outM=timeToMins(outT);
+        if(isHalfSat){status="✅ PRESENT (Half Day - 2nd/4th Sat)";fill=C.orange;fc=F.orangeTxt;present++;}
+        else if(inM>LATE_THRESHOLD_MINS){const lb=inM-LATE_THRESHOLD_MINS;
+          if(outM>0&&outM>(OFFICE_OUT_MINS+lb-5)){status="⚠️ LATE by "+lb+"min (Compensated)";fill=C.yellow;lateComp++;present++;}
+          else{status="🔴 LATE by "+lb+" mins";fill=C.red;fc=F.redTxt;late++;present++;}
+        } else{status="✅ ON TIME";fill=C.green;fc=F.greenTxt;present++;}
+      } else{
+        if(isHalfSat){status="❌ ABSENT (Half Day Sat)";} else{status="❌ ABSENT - NO LEAVE APPLIED";}
+        fill=C.red;fc=F.redTxt;absent++;
       }
+      const row=ws.addRow([emp.name,fmtDate(dt),dayName,inT,outT,status,inLoc,outLoc]);
+      row.eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:fill};c.font={size:10,name:'Arial'};c.border=bdr;});
+      row.getCell(6).font={size:10,name:'Arial',color:fc,bold:fill===C.red};
     });
-  });
 
-  // Sheet 1: Detailed Attendance
-  const xlRows=[["ATTENDANCE REPORT: "+fmtDate(from)+" to "+fmtDate(to)],
-    ["Office Hours: 10:30 AM to 6:30 PM | Late Threshold: 10:45 AM"],
-    [],
-    ["Employee","Date","Day","IN Time","OUT Time","Status","IN Location","OUT Location","IN Marked On","OUT Marked On"]];
+    const sRow=ws.addRow(["SUMMARY: Present="+present+" | Absent="+absent+" | Late="+late+" | Late(Comp)="+lateComp+" | Leave="+onLeave]);
+    ws.mergeCells(sRow.number,1,sRow.number,8);
+    sRow.getCell(1).font={bold:true,size:11,name:'Arial',color:F.darkGreen};
+    sRow.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:C.summary};
+    summaryData[emp.name]={present,absent,late,lateComp,onLeave,total:allDates.length};
+  });
+  ws.views=[{state:'frozen',ySplit:4}];
+
+  const ws2=wb.addWorksheet("Summary");
+  ws2.columns=[{width:25},{width:16},{width:16},{width:16}];
+  ws2.mergeCells('A1:D1');ws2.getCell('A1').value="ATTENDANCE SUMMARY";ws2.getCell('A1').font={bold:true,size:14,color:F.darkGreen,name:'Arial'};
+  ws2.mergeCells('A2:D2');ws2.getCell('A2').value="Period: "+fmtDate(from)+" to "+fmtDate(to)+" | Total Days: "+allDates.length;ws2.getCell('A2').font={size:10,color:F.greyTxt,name:'Arial'};
+  ws2.mergeCells('A3:D3');ws2.getCell('A3').value="Sundays = Present | Approved Leaves = Present | 2nd/4th Sat = Half Day (except Bhavana)";ws2.getCell('A3').font={size:9,color:F.greyTxt,italic:true,name:'Arial'};
+  ws2.addRow([]);
+  const shRow=ws2.addRow(["Employee","Present Days","Absent Days","Attendance %"]);
+  shRow.eachCell(c=>{c.font={bold:true,color:F.whiteTxt,size:11,name:'Arial'};c.fill={type:'pattern',pattern:'solid',fgColor:C.header};c.alignment={horizontal:'center'};c.border=bdr;});
 
   activeEmps.forEach(emp=>{
-    const ed=empData[emp.name];
-    // Add employee header
-    xlRows.push([]);
-    xlRows.push(["▶ "+emp.name.toUpperCase(),"","","","","","","","",""]);
-    ed.records.forEach(r=>{
-      const dayOfWeek=new Date(r.date+"T00:00:00").toLocaleDateString("en-IN",{weekday:"short"});
-      xlRows.push([
-        emp.name,
-        fmtDate(r.date),
-        dayOfWeek,
-        r.inTime||"—",
-        r.outTime||"—",
-        r.status,
-        r.inLoc||"—",
-        r.outLoc||"—",
-        r.inMarkedOn?fmtDate(r.inMarkedOn):"—",
-        r.outMarkedOn?fmtDate(r.outMarkedOn):"—"
-      ]);
-    });
-    // Employee subtotal
-    xlRows.push(["","","","","","SUMMARY: Present="+ed.present+" | Late="+ed.late+" | Late(Compensated)="+ed.lateCompensated+" | Leave="+ed.onLeave+" | Absent(No Leave)="+ed.absent,"","","",""]);
+    const sd=summaryData[emp.name];if(!sd)return;
+    const pct=sd.total?Math.round((sd.present/sd.total)*100):0;
+    const row=ws2.addRow([emp.name,sd.present,sd.absent,pct+"%"]);
+    row.getCell(1).font={bold:true,size:11,name:'Arial'};
+    row.getCell(2).font={bold:true,size:12,color:F.greenTxt,name:'Arial'};row.getCell(2).fill={type:'pattern',pattern:'solid',fgColor:C.green};row.getCell(2).alignment={horizontal:'center'};
+    row.getCell(3).alignment={horizontal:'center'};
+    if(sd.absent>0){row.getCell(3).font={bold:true,size:12,color:F.redTxt,name:'Arial'};row.getCell(3).fill={type:'pattern',pattern:'solid',fgColor:C.red};}
+    else{row.getCell(3).font={bold:true,size:12,color:F.greenTxt,name:'Arial'};row.getCell(3).fill={type:'pattern',pattern:'solid',fgColor:C.green};}
+    row.getCell(4).alignment={horizontal:'center'};
+    if(pct>=95){row.getCell(4).font={bold:true,size:12,color:F.greenTxt,name:'Arial'};row.getCell(4).fill={type:'pattern',pattern:'solid',fgColor:C.green};}
+    else if(pct>=80){row.getCell(4).font={bold:true,size:12,color:F.orangeTxt,name:'Arial'};row.getCell(4).fill={type:'pattern',pattern:'solid',fgColor:C.yellow};}
+    else{row.getCell(4).font={bold:true,size:12,color:F.redTxt,name:'Arial'};row.getCell(4).fill={type:'pattern',pattern:'solid',fgColor:C.red};}
+    row.eachCell(c=>{c.border=bdr;});
   });
+  ws2.views=[{state:'frozen',ySplit:5}];
 
-  const ws=XLSX.utils.aoa_to_sheet(xlRows);
-  ws["!cols"]=[{wch:22},{wch:14},{wch:6},{wch:12},{wch:12},{wch:45},{wch:22},{wch:22},{wch:14},{wch:14}];
-
-  // Apply red background to late/absent rows using cell styling
-  // Note: SheetJS community edition has limited style support
-  // We rely on the clear Status text markers instead
-
-  // Sheet 2: Summary
-  const summaryRows=[
-    ["ATTENDANCE SUMMARY: "+fmtDate(from)+" to "+fmtDate(to)],
-    ["Total Working Days: "+workingDays.length+" (Mon-Sat, excl. Sundays)"],
-    [],
-    ["Employee","Present Days","Late Days","Late (Compensated)","On Leave","Absent (No Leave)","Attendance %"]
-  ];
-  activeEmps.forEach(emp=>{
-    const ed=empData[emp.name];
-    const attPct=workingDays.length?Math.round(((ed.present+ed.onLeave)/workingDays.length)*100):0;
-    summaryRows.push([
-      emp.name,
-      ed.present,
-      ed.late,
-      ed.lateCompensated,
-      ed.onLeave,
-      ed.absent,
-      attPct+"%"
-    ]);
-  });
-  summaryRows.push([]);
-  summaryRows.push(["Legend:"]);
-  summaryRows.push(["✅ ON TIME = Arrived before 10:45 AM"]);
-  summaryRows.push(["🔴 LATE = Arrived after 10:45 AM"]);
-  summaryRows.push(["⚠️ LATE (Compensated) = Arrived late but stayed late to compensate"]);
-  summaryRows.push(["✈️ ON LEAVE = Approved leave for that day"]);
-  summaryRows.push(["❌ ABSENT - NO LEAVE = No attendance punched and no leave applied"]);
-
-  const ws2=XLSX.utils.aoa_to_sheet(summaryRows);
-  ws2["!cols"]=[{wch:22},{wch:14},{wch:12},{wch:20},{wch:12},{wch:20},{wch:14}];
-
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Attendance Details");
-  XLSX.utils.book_append_sheet(wb,ws2,"Summary");
-  XLSX.writeFile(wb,"AGA_Attendance_"+from+"_to_"+to+".xlsx");
-  toast("Excel downloaded with summary ✅","ok");
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download="AGA_Attendance_"+from+"_to_"+to+".xlsx";a.click();
+  URL.revokeObjectURL(url);toast("Excel downloaded with colors ✅","ok");
 }
 
 // ── LEAVE ADMIN ──
