@@ -1920,7 +1920,8 @@ async function downloadAtt(){
   toast("Generating report...","ok");
 
   const LATE_THRESHOLD_MINS=10*60+45;const OFFICE_OUT_MINS=18*60+30;const BHAVANA="Bhavana Shinde";
-  const activeEmps=S.employees.filter(e=>e.active!==false&&(e.approved||e.approved===undefined&&!e.pendingApproval));
+  // Only active, approved employees (exclude deactivated)
+  const activeEmps=S.employees.filter(e=>e.active!==false&&e.approved!==false&&!e.pendingApproval);
 
   function timeToMins(t){
     if(!t||t==="—") return -1;
@@ -1931,16 +1932,24 @@ async function downloadAtt(){
     if(ap==="pm"&&h<12) h+=12;if(ap==="am"&&h===12) h=0;if(!ap&&h<8) h+=12;
     return h*60+min;
   }
+  // Format date as YYYY-MM-DD using local timezone (avoids UTC offset bug)
+  function localDateStr(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
   function is2nd4thSat(dateStr){
-    const d=new Date(dateStr+"T00:00:00");if(d.getDay()!==6) return false;
+    const p=dateStr.split("-");const d=new Date(+p[0],+p[1]-1,+p[2]);
+    if(d.getDay()!==6) return false;
     const first=new Date(d.getFullYear(),d.getMonth(),1);
     const firstSatDay=(6-first.getDay()+7)%7+1;
     const satNum=Math.ceil((d.getDate()-firstSatDay)/7)+1;
     return satNum===2||satNum===4;
   }
 
-  const allDates=[];let dd=new Date(from+"T00:00:00");const endD=new Date(to+"T00:00:00");
-  while(dd<=endD){allDates.push(dd.toISOString().split("T")[0]);dd.setDate(dd.getDate()+1);}
+  // Generate all dates using local timezone
+  const allDates=[];
+  const fp=from.split("-");let dd=new Date(+fp[0],+fp[1]-1,+fp[2]);
+  const tp=to.split("-");const endD=new Date(+tp[0],+tp[1]-1,+tp[2]);
+  while(dd<=endD){allDates.push(localDateStr(dd));dd.setDate(dd.getDate()+1);}
 
   const allRecs=S.attendance.filter(a=>a.date>=from&&a.date<=to);
   const grouped={};
@@ -1980,7 +1989,7 @@ async function downloadAtt(){
     ehRow.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:C.empHdr};
 
     allDates.forEach(dt=>{
-      const d=new Date(dt+"T00:00:00");const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
+      const dp=dt.split("-");const d=new Date(+dp[0],+dp[1]-1,+dp[2]);const dayName=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()];
       const isSun=d.getDay()===0;const isHalfSat=is2nd4thSat(dt)&&emp.name!==BHAVANA;
       const lv=getLeave(emp.name,dt);const rec=grouped[emp.name+"||"+dt];
       let inT="—",outT="—",status="",fill=C.white,fc=F.darkGreen,inLoc="—",outLoc="—";
