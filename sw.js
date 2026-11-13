@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aga-tasks-v54';
+const CACHE_NAME = 'aga-tasks-v55';
 
 // Import Firebase Messaging SW
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
@@ -18,16 +18,27 @@ const fcmMessaging = firebase.messaging();
 
 // Handle background FCM push (app closed or minimized)
 fcmMessaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || payload.data?.title || 'AGA Tasks';
-  const body = payload.notification?.body || payload.data?.body || 'New update';
-  return self.registration.showNotification(title, {
-    body: body,
-    icon: './icon-192.png',
-    badge: './icon-192.png',
-    vibrate: [200, 100, 200],
-    tag: 'aga-fcm-' + Date.now(),
-    renotify: true,
-    data: { url: './' }
+  // Check if any app window is focused (visible & active)
+  return self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients => {
+    const hasFocused = clients.some(c => c.visibilityState === 'visible');
+    if(hasFocused){
+      // App is open & visible — Firestore onSnapshot already shows the notification
+      console.log('SW: app is focused, skipping FCM background notification');
+      return;
+    }
+    const title = payload.notification?.title || payload.data?.title || 'AGA Tasks';
+    const body = payload.notification?.body || payload.data?.body || 'New update';
+    // Use a stable tag based on body content so duplicates replace each other
+    const tag = 'aga-' + (body||'').replace(/[^a-zA-Z0-9]/g,'').slice(0,40);
+    return self.registration.showNotification(title, {
+      body: body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      vibrate: [200, 100, 200],
+      tag: tag,
+      renotify: true,
+      data: { url: './' }
+    });
   });
 });
 const ASSETS = [
@@ -98,18 +109,4 @@ self.addEventListener('notificationclick', e => {
   );
 });
 
-// Handle push events (for future FCM integration)
-self.addEventListener('push', e => {
-  const data = e.data ? e.data.json() : {};
-  const title = data.title || 'AGA Tasks';
-  const options = {
-    body: data.body || 'New update',
-    icon: './icon-192.png',
-    badge: './icon-192.png',
-    vibrate: [200, 100, 200],
-    tag: 'aga-push-' + Date.now(),
-    renotify: true,
-    data: {url: './index.html'}
-  };
-  e.waitUntil(self.registration.showNotification(title, options));
-});
+// Push events are handled by onBackgroundMessage above — no separate handler needed
